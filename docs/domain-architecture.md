@@ -10,13 +10,62 @@ This proposal uses four service boundaries for the [MVP workflows](business-proc
 | Evacuation Management | `EvacuationCase(caseId)` | `ProgressConfirmation` | `SubjectRef`, `MobilityProfile`, `ProgressState` | One case per known subject and incident. Explicit progress confirmations and corrections. |
 | Situation Data | `HazardAssessment(hazardId)` | `HazardRevision` | `HazardExtent`, `TimeWindow`, `Evidence` | Versioned hazard extents and their evidence, including reports, confirmed observations and forecasts |
 | Situation Data | `NetworkSegment(segmentId)` | `AccessRestriction` | `TravelModeSet`, `TimeWindow`, `TrafficEstimate`, `Evidence` | Effective access restrictions, supported modes and time-sensitive traffic information |
-| Evacuation Routing | `RouteInstruction(routeSubjectId)` | `RouteVersion` | `RouteSubject`, `RouteLeg`, `SegmentTraversal`, `SafePoint`, `Approval`, `SnapshotRef` | One current authorized route or bundle per civilian case or dispatch assignment. Versioning, validity and withdrawal. |
+| Evacuation Routing | `RouteInstruction(routeSubject)` | `RouteVersion` | `RouteSubject`, `RouteLeg`, `SegmentTraversal`, `SafePoint`, `Approval`, `SnapshotRef` | One current authorized route or bundle per civilian case or dispatch assignment. Versioning, validity and withdrawal. |
 | Assistance Dispatch | `AssistanceRequest(requestId)` | `DispatchAssignment` | `CapabilityRequirements`, `PickupPoint`, `AssignmentState` | Open assistance, unit assignment history, acknowledgement, pickup, cancellation and completion |
 | Assistance Dispatch | `ResponseUnit(unitId)` | — | `UnitCapabilities`, `AvailabilityState`, `TravelMode` | Unit capability and readiness for dispatch |
 
 A `SituationSnapshot` is a versioned read model, assembled from infrastructure, hazards and population observations or estimates. It exposes source coverage and freshness. A `SafePoint` is a location eligible as an exit destination for a specific proposal, with evidence from the situation snapshot. It has no capacity, placement or stay lifecycle in the MVP.
 
 `RouteSubject` is a tagged reference: `CivilianCase(caseId)` or `ResponseAssignment(assignmentId)`. A civilian route has an exit leg. A response route has an approach leg and, when required by the task, an outbound leg. Responders use their own authorized access profile for approach. Civilian and assisted outbound legs must account for leaving an affected area safely under applicable restrictions. The routing domain service calculates candidates and live validation checks them before publication. A route binds estimated traversal windows to its evidence revision.
+
+## Entities and value objects by aggregate
+
+Each root below is also an entity. A child entity belongs to its root and changes through the root's operations. References to children use their parent identity when the child ID is local, for example `(routeSubject, versionNumber)`. A field of an entity can change through a domain operation while its identity stays the same. A value object is replaced as a whole when its value changes.
+
+### Evacuation Management
+
+**`EvacuationIncident` (root entity, `incidentId`).** Owns the alert history for the incident.
+
+- **Child entity `HazardAlert(alertId)`.** Records the client alert ID, reported hazard type, `ReportedArea` and `Evidence`. A review can record a disposition on the same alert while retaining its original report.
+- **Value object `ReportedArea`.** A geographic point or polygon submitted with the alert. Source and review status determine how it is shown in a situation view.
+
+**`EvacuationCase` (root entity, `caseId`).** Tracks the evacuation of one known subject in one incident.
+
+- **Child entity `ProgressConfirmation(reportId)`.** Records the confirmed milestone, `Evidence`, and the relevant instruction version when available. A correction is a new report referencing the earlier report. Replaying the same report ID does not advance the case twice.
+- **Value objects.** `SubjectRef` is an opaque reference to the evacuee. `MobilityProfile` holds a travel mode, essential access needs and a walking limit when known. `ProgressState` holds the latest confirmed milestone and its time. Observations and delivery receipts have separate meanings from a confirmed exit.
+
+### Situation Data
+
+**`HazardAssessment` (root entity, `hazardId`).** Publishes revisions of an assessed hazard.
+
+- **Child entity `HazardRevision(revisionNumber)`.** Holds a `HazardExtent` and its `Evidence`. New assessments append a revision, keeping previous revisions available to explain earlier route decisions.
+- **Value objects.** `HazardExtent` combines a geometry reference with the time window it describes. `Evidence` distinguishes a reported, observed, estimated or forecast extent from its verification status.
+
+**`NetworkSegment` (root entity, `segmentId`).** Resolves access and traffic conditions for a network segment.
+
+- **Child entity `AccessRestriction(restrictionId)`.** Holds the restriction type, affected `TravelModeSet`, effective `TimeWindow` and `Evidence`. Changing or lifting a confirmed restriction requires an authorized update tied to its identity.
+- **Value objects.** `TravelModeSet` is an immutable set of modes with order-independent equality. `TrafficEstimate` holds an estimated travel time or throughput, its unit if applicable, and timestamped evidence. Missing traffic data remain unknown.
+
+### Evacuation Routing
+
+**`RouteInstruction` (root entity, keyed by `RouteSubject`).** Controls the current route version for one civilian case or dispatch assignment.
+
+- **Child entity `RouteVersion(versionNumber)`.** Identifies a route or bundle with one or more typed `RouteLeg` values, an `Approval`, a validity `TimeWindow` and a `SnapshotRef`. Its published route details stay fixed. The root can supersede or withdraw it and retains its version for reconciliation.
+- **Value objects.** `RouteSubject` distinguishes a civilian case ID from a response assignment ID. `RouteLeg` contains a leg kind, travel mode, ordered `SegmentTraversal` items and an endpoint. Each traversal pairs a segment ID with its predicted time window. `SafePoint` captures the exit location and the evidence used to assess it. `Approval` records the authorizing actor, role and time. `SnapshotRef` identifies the data revision used for validation.
+
+### Assistance Dispatch
+
+**`AssistanceRequest` (root entity, `requestId`).** Owns the request and its assignment history.
+
+- **Child entity `DispatchAssignment(assignmentId)`.** Records the unit ID, `AssignmentState` and progress evidence. Its globally unique ID lets Routing address the assignment. The same assignment is acknowledged, started, completed or cancelled through explicit transitions. Assigning a different unit creates a new assignment.
+- **Value objects.** `CapabilityRequirements` lists the capabilities the task requires. `PickupPoint` captures the pickup location and access notes. `AssignmentState` records the current step and its effective time, with distinct states for acknowledgement, pickup and completion where applicable.
+
+**`ResponseUnit` (root entity, `unitId`).** Owns the unit's readiness and capabilities. The active booking points to the assignment owned by `AssistanceRequest`.
+
+- **Child entities.** The root itself carries the unit identity. The assignment stays under `AssistanceRequest`.
+- **Value objects.** `UnitCapabilities` describes supported assistance and transport capabilities. `AvailabilityState` records readiness and its effective time. `TravelMode` identifies the unit's routing mode. Dispatch checks readiness and active bookings together before assigning the unit.
+
+Across these aggregates, `Evidence` contains a source reference, observation time, evidence kind, verification status and validity where applicable. `TimeWindow` uses a UTC start and an end when known. A finite end must be later than the start, and the end is exclusive. Route instructions require a finite validity window.
 
 ## Service contracts
 
