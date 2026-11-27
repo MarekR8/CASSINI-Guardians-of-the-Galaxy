@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "nodes": [
+    {
+      "id": "A",
+      "lat": 52.23,
+      "lon": 21.01
+    },
+    {
+      "id": "B",
+      "lat": 52.231,
+      "lon": 21.012
+    },
+    {
+      "id": "C",
+      "lat": 52.232,
+      "lon": 21.01
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_001",
+      "source": "A",
+      "target": "B",
+      "mode": "pedestrian",
+      "length_m": 250,
+      "capacity_per_min": 120,
+      "travel_time_s": 180,
+      "status": "open"
+    },
+    {
+      "id": "edge_002",
+      "source": "A",
+      "target": "C",
+      "mode": "pedestrian",
+      "length_m": 280,
+      "capacity_per_min": 80,
+      "travel_time_s": 220,
+      "status": "open"
+    },
+    {
+      "id": "edge_003",
+      "source": "C",
+      "target": "B",
+      "mode": "pedestrian",
+      "length_m": 210,
+      "capacity_per_min": 80,
+      "travel_time_s": 160,
+      "status": "open"
+    },
+    {
+      "id": "edge_004",
+      "source": "A",
+      "target": "B",
+      "mode": "vehicle",
+      "length_m": 250,
+      "capacity_per_min": 15,
+      "travel_time_s": 40,
+      "status": "open"
+    }
+  ]
+}
