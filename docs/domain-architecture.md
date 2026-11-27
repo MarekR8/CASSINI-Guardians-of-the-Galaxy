@@ -18,6 +18,39 @@ A `SituationSnapshot` is a versioned read model, assembled from infrastructure, 
 
 `RouteSubject` is a tagged reference: `CivilianCase(caseId)` or `ResponseAssignment(assignmentId)`. A civilian route has an exit leg. A response route has an approach leg and, when required by the task, an outbound leg. Responders use their own authorized access profile for approach. Civilian and assisted outbound legs must account for leaving an affected area safely under applicable restrictions. The routing domain service calculates candidates and live validation checks them before publication. A route binds estimated traversal windows to its evidence revision.
 
+## Aggregate diagram
+
+Each box names one aggregate root and lists the child entities and value objects it owns. The surrounding boxes show service boundaries. Dotted arrows show references to another aggregate or a service's published data.
+
+```mermaid
+flowchart TB
+    subgraph Management[Evacuation Management]
+        Incident["Root: EvacuationIncident<br/>Child entity: HazardAlert<br/>Value objects: ReportedArea, Evidence"]
+        Case["Root: EvacuationCase<br/>Child entity: ProgressConfirmation<br/>Value objects: SubjectRef, MobilityProfile,<br/>ProgressState, Evidence"]
+    end
+
+    subgraph Situation[Situation Data]
+        Hazard["Root: HazardAssessment<br/>Child entity: HazardRevision<br/>Value objects: HazardExtent, TimeWindow, Evidence"]
+        Network["Root: NetworkSegment<br/>Child entity: AccessRestriction<br/>Value objects: TravelModeSet, TimeWindow,<br/>TrafficEstimate, Evidence"]
+    end
+
+    subgraph Routing[Evacuation Routing]
+        Route["Root: RouteInstruction<br/>Child entity: RouteVersion<br/>Value objects: RouteSubject, RouteLeg,<br/>SegmentTraversal, SafePoint,<br/>Approval, SnapshotRef, TimeWindow"]
+    end
+
+    subgraph Dispatch[Assistance Dispatch]
+        Request["Root: AssistanceRequest<br/>Child entity: DispatchAssignment<br/>Value objects: CapabilityRequirements,<br/>PickupPoint, AssignmentState, Evidence"]
+        Unit["Root: ResponseUnit<br/>Child entities: none<br/>Value objects: UnitCapabilities,<br/>AvailabilityState, TravelMode"]
+    end
+
+    Case -.->|incidentId| Incident
+    Request -.->|caseId| Case
+    Request -.->|unitId in assignment| Unit
+    Route -.->|civilian caseId| Case
+    Route -.->|response assignmentId| Request
+    Route -.->|snapshot reference| Situation
+```
+
 ## Entities and value objects by aggregate
 
 Each root below is also an entity. A child entity belongs to its root and changes through the root's operations. References to children use their parent identity when the child ID is local, for example `(routeSubject, versionNumber)`. A field of an entity can change through a domain operation while its identity stays the same. A value object is replaced as a whole when its value changes.
