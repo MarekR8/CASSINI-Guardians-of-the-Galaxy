@@ -145,4 +145,4 @@ Events carry stable IDs, subject revisions, occurrence times, and correlation an
 - **Monitoring and rerouting.** Maintain an index of valid instructions by segment and affected area. When Situation Data reports a change, revalidate affected instructions and withdraw those now in conflict. Publish replacements using the expected route version. Revalidate current constraints again before publishing as event propagation can lag. If a required check cannot be completed, keep the replacement pending and show the operator what needs verification. Withdrawal reaches offline users when contact is restored or via field communication.
 - **Progress.** A dashboard combines case progress, route state and dispatch status through projections. It shows the latest known data and the time it was observed. Explicit operator or verified self-reports confirm physical progress. The same immutable report ID cannot advance the case twice.
 
-See the [MVP domain invariants](domain-invariants.md).
+See the [MVP domain invariants](domain-invariants.md) and [implementation work packages](mvp-work-packages.md).
