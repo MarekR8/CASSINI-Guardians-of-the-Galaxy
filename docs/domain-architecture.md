@@ -115,26 +115,7 @@ Names below describe version-one contracts independently of the transport. Queri
 | Assistance Dispatch | `AssignmentChanged.v1` event | Carries request and assignment IDs, unit reference, task state, subject version and time of report. Acknowledgement, pickup and completion are distinct values. |
 | Evacuation Management | `ReportEvacuationProgress` command and `CaseProgressChanged.v1` event | Carry case ID, report type, source, observed time and instruction version if relevant. Allows an attributable exit confirmation or explicit correction. Location reports can update the monitor without confirming exit. |
 
-For example, a closure message can describe a restriction without disclosing sensitive operational details.
-
-```json
-{
-  "eventId": "evt-983",
-  "type": "SituationChanged.v1",
-  "producer": "situation-data",
-  "subjectId": "segment-bridge-2",
-  "subjectVersion": 7,
-  "occurredAt": "2026-11-27T19:32:00Z",
-  "correlationId": "incident-42",
-  "causationId": "closure-report-12",
-  "payload": {
-    "affectedSegmentIds": ["segment-bridge-2"],
-    "restriction": "closed",
-    "evidenceStatus": "confirmed",
-    "effectiveFrom": "2026-11-27T19:30:00Z"
-  }
-}
-```
+The [bridge closure example](mvp-interfaces.md#worked-contract-example-for-the-bridge-closure) gives the HTTP request, response and canonical `SituationChanged.v1` payload.
 
 Events carry stable IDs, subject revisions, occurrence times, and correlation and causation IDs. Use UTC and half-open time ranges. Publish through a transactional outbox. Consumers deduplicate by event ID and use subject revisions or reconcile with the authoritative owner when updates arrive out of order. A command timeout leaves its outcome unknown until the caller retries with the same key or reconciles via the owner. Projections and delivery retry logic preserve withdrawals and suppress stale route versions. For the design conventions, see [tactical DDD](https://learn.microsoft.com/en-us/azure/architecture/microservices/model/tactical-ddd) and [transactional outbox guidance](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/multi-container-microservice-net-applications/subscribe-events).
 
@@ -145,4 +126,4 @@ Events carry stable IDs, subject revisions, occurrence times, and correlation an
 - **Monitoring and rerouting.** Maintain an index of valid instructions by segment and affected area. When Situation Data reports a change, revalidate affected instructions and withdraw those now in conflict. Publish replacements using the expected route version. Revalidate current constraints again before publishing as event propagation can lag. If a required check cannot be completed, keep the replacement pending and show the operator what needs verification. Withdrawal reaches offline users when contact is restored or via field communication.
 - **Progress.** A dashboard combines case progress, route state and dispatch status through projections. It shows the latest known data and the time it was observed. Explicit operator or verified self-reports confirm physical progress. The same immutable report ID cannot advance the case twice.
 
-See the [MVP domain invariants](domain-invariants.md), [implementation work packages](mvp-work-packages.md), and [command and event catalog with sequence diagrams](mvp-commands-events.md).
+See the [MVP domain invariants](domain-invariants.md), [implementation work packages](mvp-work-packages.md), [command and event catalog with sequence diagrams](mvp-commands-events.md), and [service interface specification](mvp-interfaces.md).

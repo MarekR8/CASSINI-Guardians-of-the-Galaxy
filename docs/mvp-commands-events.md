@@ -1,6 +1,6 @@
 # MVP commands, events and sequence diagrams
 
-This proposed catalog expands the [service contracts](domain-architecture.md#service-contracts) into messages the team can implement and test. It follows the [MVP workflows](business-processes.md) and the shared flood demo in the [work packages](mvp-work-packages.md). The names and fields below are proposed application contracts.
+This proposed catalog expands the [service contracts](domain-architecture.md#service-contracts) into messages the team can implement and test. It follows the [MVP workflows](business-processes.md) and the shared flood demo in the [work packages](mvp-work-packages.md). See the [service interface specification](mvp-interfaces.md) for HTTP paths, RabbitMQ bindings and example payloads.
 
 ## Commands and queries
 
