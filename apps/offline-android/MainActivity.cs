@@ -1,0 +1,270 @@
+using Android;
+using Android.App;
+using Android.Content;
+using Android.Content.PM;
+using Android.OS;
+using Android.Views;
+using Android.Widget;
+
+namespace Cassini.Offline;
+
+[Activity(Label = "CASSINI Offline", MainLauncher = true, Exported = true,
+    Theme = "@android:style/Theme.Material.Light.NoActionBar")]
+public sealed class MainActivity : Activity
+{
+    private const int LocationRequest = 1;
+    private const int ImportRequest = 2;
+    private LinearLayout panel = null!;
+    private TextView routeStatus = null!;
+    private TextView distributionStatus = null!;
+    private TextView gnssStatus = null!;
+    private TextView layerStatus = null!;
+    private DemoMapView map = null!;
+    private GalileoReader reader = null!;
+    private Button nextStage = null!;
+    private Button drawRoute = null!;
+    private Button viewSwitch = null!;
+    private CopernicusLayer? layer;
+    private bool showLayer;
+    private bool monitorGnss;
+    private int stage;
+    private ScheduledWalkingRoute? selected;
+    private string LayerPath => Path.Combine(FilesDir!.AbsolutePath, "copernicus.geojson");
+
+    protected override void OnCreate(Bundle? state)
+    {
+        base.OnCreate(state);
+        stage = state?.GetInt("stage") ?? 0;
+        monitorGnss = state?.GetBoolean("monitorGnss") ?? false;
+
+        var scroll = new ScrollView(this);
+        scroll.SetOnApplyWindowInsetsListener(new SafeScreenInsets());
+        panel = new LinearLayout(this) { Orientation = Orientation.Vertical };
+        panel.SetPadding(Dp(20), Dp(20), Dp(20), Dp(20));
+        scroll.AddView(panel);
+        SetContentView(scroll);
+
+        AddText("CASSINI Offline", 32);
+        AddText("Demo ewakuacji pieszej", 20);
+        AddText("Scenariusz zawiera dane testowe. Obsługa mapy i obliczanie tras działają bez sieci.", 15);
+
+        map = new DemoMapView(this);
+        panel.AddView(map, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, Dp(290))
+        {
+            TopMargin = Dp(12), BottomMargin = Dp(12)
+        });
+        routeStatus = AddText("", 17);
+        distributionStatus = AddText("", 15);
+        drawRoute = AddButton("Wylosuj trasę w węźle", () =>
+        {
+            selected = OfflineScenario.Draw(OfflineScenario.Distribution(StartNode, OfflineScenario.Closures(stage), stage),
+                Random.Shared);
+            RefreshMap();
+        });
+        nextStage = AddButton("", () =>
+        {
+            stage = (stage + 1) % 3;
+            selected = null;
+            RefreshMap();
+        });
+
+        AddText("Dane satelitarne", 20);
+        gnssStatus = AddText("Odczyt Galileo jest wyłączony.", 15);
+        reader = new GalileoReader(this, text => gnssStatus.Text = text);
+        AddButton("Sprawdź odbiornik Galileo", EnableGnss);
+        layerStatus = AddText("Brak zapisanej warstwy Copernicus EMS.", 15);
+        AddButton("Wczytaj lokalny GeoJSON Copernicus EMS", PickLayer);
+        viewSwitch = AddButton("Pokaż Copernicus", () =>
+        {
+            showLayer = !showLayer;
+            RefreshMap();
+        });
+        viewSwitch.Visibility = ViewStates.Gone;
+        RefreshMap();
+        if (File.Exists(LayerPath))
+            _ = LoadSavedLayer();
+    }
+
+    protected override void OnResume()
+    {
+        base.OnResume();
+        if (monitorGnss && HasFineLocation)
+            reader.Start();
+    }
+
+    protected override void OnPause()
+    {
+        reader.Stop();
+        base.OnPause();
+    }
+
+    protected override void OnSaveInstanceState(Bundle outState)
+    {
+        base.OnSaveInstanceState(outState);
+        outState.PutInt("stage", stage);
+        outState.PutBoolean("monitorGnss", monitorGnss);
+    }
+
+    private bool HasFineLocation => CheckSelfPermission(Manifest.Permission.AccessFineLocation) == Permission.Granted;
+
+    private void EnableGnss()
+    {
+        if (HasFineLocation)
+        {
+            monitorGnss = true;
+            reader.Start();
+        }
+        else
+        {
+            RequestPermissions([Manifest.Permission.AccessFineLocation, Manifest.Permission.AccessCoarseLocation],
+                LocationRequest);
+        }
+    }
+
+    public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
+    {
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != LocationRequest)
+            return;
+
+        if (HasFineLocation)
+            EnableGnss();
+        else
+            gnssStatus.Text = "Odczyt satelitarny wymaga zgody na dokładną lokalizację.";
+    }
+
+    private void PickLayer()
+    {
+        var intent = new Intent(Intent.ActionOpenDocument);
+        intent.AddCategory(Intent.CategoryOpenable);
+        intent.SetType("*/*");
+        intent.PutExtra(Intent.ExtraLocalOnly, true);
+        StartActivityForResult(intent, ImportRequest);
+    }
+
+    protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
+    {
+        base.OnActivityResult(requestCode, resultCode, data);
+        if (requestCode == ImportRequest && resultCode == Result.Ok && data?.Data is { } uri)
+            _ = ImportLayer(uri);
+    }
+
+    private async Task ImportLayer(global::Android.Net.Uri uri)
+    {
+        try
+        {
+            using var stream = ContentResolver?.OpenInputStream(uri) ?? throw new IOException("Brak dostępu do pliku.");
+            using var output = new MemoryStream();
+            var buffer = new byte[65536];
+            int count;
+            while ((count = await stream.ReadAsync(buffer.AsMemory())) != 0)
+            {
+                if (output.Length + count > CopernicusLayer.MaxBytes)
+                    throw new InvalidDataException("Plik przekracza 8 MB.");
+                output.Write(buffer, 0, count);
+            }
+
+            var bytes = output.ToArray();
+            var imported = await Task.Run(() => CopernicusLayer.Read(bytes));
+            var temporaryPath = LayerPath + ".tmp";
+            await File.WriteAllBytesAsync(temporaryPath, bytes);
+            File.Move(temporaryPath, LayerPath, overwrite: true);
+            SetLayer(imported, open: true);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException
+                                       or Java.Lang.SecurityException)
+        {
+            layerStatus.Text = "Nie można wczytać pliku. " + ex.Message;
+        }
+    }
+
+    private async Task LoadSavedLayer()
+    {
+        try
+        {
+            var bytes = await File.ReadAllBytesAsync(LayerPath);
+            SetLayer(await Task.Run(() => CopernicusLayer.Read(bytes)), open: false);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException)
+        {
+            layerStatus.Text = "Zapisana warstwa jest niedostępna. Wczytaj ponownie plik GeoJSON.";
+        }
+    }
+
+    private void SetLayer(CopernicusLayer imported, bool open)
+    {
+        layer = imported;
+        showLayer = open;
+        var observedAt = imported.ObservedAt?.ToUniversalTime().ToString("yyyy-MM-dd HH:mm 'UTC'")
+            ?? "czas obserwacji nieznany";
+        layerStatus.Text = $"Import lokalny: {imported.Product ?? "brak ID produktu"} • {observedAt}";
+        viewSwitch.Visibility = ViewStates.Visible;
+        RefreshMap();
+    }
+
+    private void RefreshMap()
+    {
+        if (showLayer && layer is not null)
+        {
+            map.DisplayLayer(layer);
+            routeStatus.Text = "Warstwa archiwalna. Ten widok nie wyznacza rzeczywistych tras.";
+            nextStage.Visibility = ViewStates.Gone;
+            drawRoute.Visibility = ViewStates.Gone;
+            distributionStatus.Visibility = ViewStates.Gone;
+            viewSwitch.Text = "Pokaż demo";
+            return;
+        }
+
+        var closed = OfflineScenario.Closures(stage);
+        var options = OfflineScenario.Distribution(StartNode, closed, stage);
+        map.DisplayDemo(StartNode, closed, selected?.Route);
+        routeStatus.Text = selected is not null
+            ? $"Wylosowano: {ExitName(selected.Route.Exit)} • start {selected.DepartsAt:HH:mm} UTC"
+            : options.Count == 0 ? "Brak dostępnej trasy w scenariuszu." : "Wybierz losowanie trasy dla bieżącego węzła.";
+        distributionStatus.Text = string.Join("\n", options.Select(option =>
+            $"{ExitName(option.Route.Exit)} • {option.DepartsAt:HH:mm}–{option.ArrivesAt:HH:mm} UTC • {option.Weight:P0}"));
+        distributionStatus.Visibility = options.Count > 0 ? ViewStates.Visible : ViewStates.Gone;
+        drawRoute.Visibility = ViewStates.Visible;
+        drawRoute.Enabled = options.Count > 0;
+        nextStage.Visibility = ViewStates.Visible;
+        nextStage.Text = stage switch
+        {
+            0 => "Zamknij most w scenariuszu",
+            1 => "Zamknij północny odcinek",
+            _ => "Uruchom demo od początku"
+        };
+        viewSwitch.Text = "Pokaż Copernicus";
+    }
+
+    private string StartNode => stage == 0 ? OfflineScenario.InitialNode : OfflineScenario.LaterNode;
+
+    private static string ExitName(string exit) => exit == "exit-east" ? "Wyjście wschodnie" : "Wyjście północne";
+
+    private TextView AddText(string text, int size)
+    {
+        var label = new TextView(this) { Text = text, TextSize = size };
+        panel.AddView(label, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent,
+            ViewGroup.LayoutParams.WrapContent) { TopMargin = Dp(8) });
+        return label;
+    }
+
+    private Button AddButton(string text, Action action)
+    {
+        var button = new Button(this) { Text = text };
+        button.Click += (_, _) => action();
+        panel.AddView(button);
+        return button;
+    }
+
+    private int Dp(int value) => (int)Math.Round(value * (Resources?.DisplayMetrics?.Density ?? 1));
+
+    private sealed class SafeScreenInsets : Java.Lang.Object, View.IOnApplyWindowInsetsListener
+    {
+        public WindowInsets OnApplyWindowInsets(View view, WindowInsets insets)
+        {
+            var safeArea = insets.GetInsets(WindowInsets.Type.SystemBars() | WindowInsets.Type.DisplayCutout());
+            view.SetPadding(safeArea.Left, safeArea.Top, safeArea.Right, safeArea.Bottom);
+            return insets;
+        }
+    }
+}

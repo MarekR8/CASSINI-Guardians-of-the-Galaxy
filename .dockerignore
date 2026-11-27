@@ -1,0 +1,12 @@
+.git
+.github
+.dockerignore
+**/bin
+**/obj
+**/__pycache__
+artifacts
+apps/offline-android
+data
+docs
+scripts
+tests

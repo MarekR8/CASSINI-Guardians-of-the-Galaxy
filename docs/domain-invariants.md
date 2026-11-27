@@ -1,0 +1,20 @@
+# MVP domain invariants
+
+An invariant governs a valid system state or transition. A new field observation can invalidate a previously valid plan. The system records the observation, withdraws affected operational guidance when the conflict becomes known, and leaves uncertain outcomes visible.
+
+| ID | Invariant | Enforcement and owner |
+| --- | --- | --- |
+| INV-01 | A situation view preserves the source, observation time, validity, and evidence status of operational facts. | **Situation Data.** Distinguish reports, confirmed observations, estimates and forecasts. Expose stale data and gaps. An estimate of people in an area carries its time and coverage and stays distinct from observed or confirmed people. |
+| INV-02 | A newer update cannot silently lose an effective restriction. | **Situation Data.** Use source and revision rules for the same subject. A confirmed closure remains effective until its expiry or an authorized superseding update. Late observations retain their own observation time. |
+| INV-03 | A civilian exit instruction ends at a point assessed as eligible outside all applicable active danger zones at the expected arrival time. | **Evacuation Routing.** Validate the destination against the relevant hazard revisions and times. If there is no validated exit, show an unresolved case with the reason. |
+| INV-04 | Each route segment is eligible for its intended traveller over the expected traversal window. | **Evacuation Routing** validates against **Situation Data**. Check access, effective closures, hazard exposure and travel mode. Essential accessibility requirements must be met. A required check with unknown or expired evidence leaves the route pending. |
+| INV-05 | A person has at most one current civilian route instruction per incident, and a dispatch assignment has at most one current unit route bundle. | **Evacuation Routing.** Publish or withdraw under the expected version. A unit route bundle can include separate approach and outbound legs. An older message cannot supersede a newer instruction or restore a withdrawn version. |
+| INV-06 | An open assistance request is either assigned to an eligible unit or visibly unresolved. | **Assistance Dispatch.** An assignment requires the necessary capabilities and a validated approach route. A task that includes assisted transport also requires an eligible outbound route. Reassignments and cancellations retain task history. |
+| INV-07 | At most one assignment is active for an assistance request. A unit has at most one active assignment in the MVP. | **Assistance Dispatch.** Enforce both rules in the same local transaction. Release a unit only after completion, confirmed cancellation, or an authorized disposition. Duplicate commands cannot create additional assignments. |
+| INV-08 | Publishing a route instruction requires authorization and records its evidence and validity. | **Evacuation Routing.** Record the approval, subject, route version, evidence revisions and validity window. When a known change invalidates a published route, withdraw it and track follow-up for affected people or units. |
+| INV-09 | Delivery, acknowledgement, pickup and confirmed exit are distinct facts. | **Evacuation Management** derives case progress from attributable reports. A location fix, lack of telemetry or delivery receipt cannot alone confirm exit. A delayed update cannot reverse a later confirmed state. Corrections are explicit. |
+| INV-10 | External views expose only what each recipient needs for their role. | **All owners.** Public situation views use counts, coverage and practical access restrictions. Exact locations and identifying or assistance data are restricted to authorized operational roles. |
+
+Congestion and current road throughput inform route ranking in the MVP. End-to-end allocation of road capacity across all evacuees would require a separate design. Shelter occupancy and continuity of relationship-based groups belong to their later workflows.
+
+See the [business processes](business-processes.md) and [aggregate and contract ownership](domain-architecture.md).

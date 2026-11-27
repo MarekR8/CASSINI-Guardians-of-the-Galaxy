@@ -1,0 +1,102 @@
+using System.Net;
+using System.Net.Http.Headers;
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot"),
+});
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 9 * 1024 * 1024);
+var upstreams = new Dictionary<string, string>
+{
+    ["management"] = builder.Configuration["Services:Management"] ?? "http://127.0.0.1:5081",
+    ["situation"] = builder.Configuration["Services:Situation"] ?? "http://127.0.0.1:5082",
+    ["routing"] = builder.Configuration["Services:Routing"] ?? "http://127.0.0.1:5083",
+    ["dispatch"] = builder.Configuration["Services:Dispatch"] ?? "http://127.0.0.1:5084",
+};
+builder.Services.AddHttpClient("services", client => client.Timeout = TimeSpan.FromSeconds(6))
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        UseProxy = false,
+        AllowAutoRedirect = false,
+        UseCookies = false,
+    });
+
+var app = builder.Build();
+app.Use(async (context, next) =>
+{
+    if (context.Request.Host.Host is not ("localhost" or "127.0.0.1" or "[::1]"))
+    {
+        context.Response.StatusCode = 400;
+        return;
+    }
+    context.Response.Headers.ContentSecurityPolicy =
+        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+    context.Response.Headers.XContentTypeOptions = "nosniff";
+    context.Response.Headers.CacheControl = "no-store";
+    await next();
+});
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapGet("/health", () => Results.Ok(new { service = "gateway" }));
+app.MapGet("/api/{service}/queries/{operation}/{id?}", (
+    string service, string operation, string? id, HttpContext context, IHttpClientFactory clients) =>
+    Forward(service, "queries", operation, id, context, clients));
+app.MapPost("/api/{service}/commands/{operation}", (
+    string service, string operation, HttpContext context, IHttpClientFactory clients) =>
+    Forward(service, "commands", operation, null, context, clients));
+app.Run();
+
+async Task Forward(string service, string group, string operation, string? id, HttpContext context,
+    IHttpClientFactory clients)
+{
+    if (!upstreams.TryGetValue(service, out var baseUrl) || !IsSegment(operation) ||
+        (id is not null && !IsSegment(id)))
+    {
+        context.Response.StatusCode = 404;
+        return;
+    }
+
+    var uri = $"{baseUrl.TrimEnd('/')}/{group}/{operation}";
+    if (id is not null)
+        uri += $"/{id}";
+    uri += context.Request.QueryString.ToUriComponent();
+    using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), uri);
+    if (group == "commands")
+    {
+        if (!context.Request.HasJsonContentType())
+        {
+            context.Response.StatusCode = 415;
+            return;
+        }
+        request.Content = new StreamContent(context.Request.Body);
+        request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(context.Request.ContentType!);
+        request.Content.Headers.ContentLength = context.Request.ContentLength;
+    }
+
+    try
+    {
+        using var response = await clients.CreateClient("services").SendAsync(
+            request, HttpCompletionOption.ResponseContentRead, context.RequestAborted);
+        context.Response.StatusCode = (int)response.StatusCode;
+        context.Response.ContentType = response.Content.Headers.ContentType?.ToString();
+        await response.Content.CopyToAsync(context.Response.Body, context.RequestAborted);
+    }
+    catch (HttpRequestException)
+    {
+        await Unavailable();
+    }
+    catch (OperationCanceledException) when (!context.RequestAborted.IsCancellationRequested)
+    {
+        await Unavailable();
+    }
+
+    async Task Unavailable()
+    {
+        context.Response.StatusCode = (int)HttpStatusCode.ServiceUnavailable;
+        await context.Response.WriteAsJsonAsync(new { code = "ServiceUnavailable", service });
+    }
+}
+
+static bool IsSegment(string value) =>
+    value.Length is > 0 and <= 120 && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');

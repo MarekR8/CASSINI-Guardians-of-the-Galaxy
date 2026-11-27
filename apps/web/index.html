@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a23">
+  <title>CASSINI · Koordynacja ewakuacji</title>
+  <link rel="icon" href="/cassini.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand"><img src="/cassini.svg" width="42" height="42" alt=""><div><strong>CASSINI</strong><span>Guardians of the Galaxy</span></div></div>
+    <div class="connection"><span class="beacon" aria-hidden="true"></span> Tryb lokalny offline</div>
+  </header>
+  <main>
+    <div class="heading">
+      <div><p class="eyebrow" id="incident">DEMO · POWÓDŹ</p><h1>Koordynacja ewakuacji</h1></div>
+      <div class="timestamp"><span>Czas scenariusza</span><strong id="clock">—</strong></div>
+    </div>
+    <p id="notice" role="status" aria-live="polite">Ładowanie scenariusza lokalnego…</p>
+
+    <div class="workspace">
+      <section class="card map-card" aria-labelledby="map-title">
+        <div class="card-heading"><div><h2 id="map-title">Mapa sytuacji</h2><p>Schemat obszaru ćwiczeń</p></div><span class="badge" id="revision">Rewizja —</span></div>
+        <svg id="map" viewBox="0 0 760 420" role="img" aria-label="Graf przejść, wyjścia i obszar zalania"></svg>
+        <div class="legend"><span><i class="legend-hazard"></i> Obszar zalania</span><span><i class="legend-path"></i> Wylosowana trasa</span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span><i class="legend-exit"></i> Wyjście</span></div>
+        <div class="scenario">
+          <h3>Scenariusz drogowy</h3>
+          <div class="buttons">
+            <button id="bridge" disabled>Zamknij most</button>
+            <button id="north" disabled>Zamknij północne dojście</button>
+            <button id="reopen" disabled>Otwórz przejścia</button>
+          </div>
+        </div>
+      </section>
+      <section class="card routing-card" aria-labelledby="routing-title">
+        <div class="card-heading"><div><h2 id="routing-title">Rozkład tras</h2><p id="recipient">Przejścia piesze z wybranego węzła</p></div></div>
+        <div class="route-body">
+          <label for="node">Węzeł startowy</label>
+          <select id="node" disabled><option value="walk-start">Punkt zbiórki</option><option value="pickup">Węzeł przy odbiorze</option></select>
+          <div id="options" class="options" aria-live="polite"></div>
+          <button class="primary" id="draw" disabled>Wylosuj trasę w węźle</button>
+          <div id="draw-result" aria-live="polite" class="draw-result">Tutaj pojawi się wynik losowania.</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="operations">
+      <section class="card" aria-labelledby="cases-title">
+        <div class="card-heading"><div><h2 id="cases-title">Zgłoszenia i mieszkańcy</h2><p id="alert-count">Ładowanie…</p></div><button id="alert" disabled>Zgłoś zalanie</button></div>
+        <ul class="records" id="cases"></ul>
+      </section>
+      <section class="card" aria-labelledby="dispatch-title">
+        <div class="card-heading"><div><h2 id="dispatch-title">Pomoc terenowa</h2><p id="unit-status">Ładowanie…</p></div></div>
+        <ul class="records" id="requests"></ul>
+      </section>
+    </div>
+
+    <details class="card data">
+      <summary>Źródła satelitarne i lokalny import</summary>
+      <div class="data-body">
+        <p id="sources">Scenariusz korzysta z jawnie oznaczonych danych syntetycznych.</p>
+        <form id="import">
+          <label>ID produktu Copernicus EMS<input id="product" required maxlength="120" placeholder="Wpisz ID produktu"></label>
+          <label>Czas obserwacji (UTC)<input id="observed" type="datetime-local" required></label>
+          <label>Warstwa GeoJSON<input id="geojson" type="file" accept=".geojson,.json,application/geo+json,application/json" required></label>
+          <button id="import-button" disabled>Zaimportuj warstwę</button>
+        </form>
+      </div>
+    </details>
+    <footer>Dane demonstracyjne · czas w UTC. Trasy na mapie służą do ćwiczeń.</footer>
+  </main>
+</body>
+</html>

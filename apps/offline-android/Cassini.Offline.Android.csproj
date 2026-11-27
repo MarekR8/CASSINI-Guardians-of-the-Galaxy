@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>30</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <ApplicationId>org.cassini.guardians.offline</ApplicationId>
+    <ApplicationTitle>CASSINI Offline</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1</ApplicationDisplayVersion>
+    <AndroidPackageFormats>apk</AndroidPackageFormats>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>
