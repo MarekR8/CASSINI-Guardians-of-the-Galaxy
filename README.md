@@ -1,6 +1,12 @@
-# CASSINI-Guardians-of-the-Galaxy
+# CASSINI Guardians of the Galaxy
 
-An MVP for coordinating civilian evacuation during a flood. The demo follows a hazard alert, routes a pedestrian out of the affected area, dispatches assistance, and revises affected instructions after a bridge closure.
+A prototype for coordinating civilian evacuation during a flood. The offline demo follows a hazard alert, draws a timed pedestrian route, dispatches assistance, and revises instructions after a bridge closure. Capacity planning and shelter allocation are part of the wider project design.
+
+- [Pitch and flood demo](docs/pitch/README.md) and [project one-pager](docs/pitch/project-one-pager.md)
+- [Business processes](docs/domain/business-processes.md) and [domain invariants](docs/domain/domain-invariants.md)
+- [Planned source layout and stack](src/README.md) and [sample data](data/sample/README.md)
+- [Space technologies and tools](docs/tools/README.md)
+- [Git workflow](CONTRIBUTING.md) and [agent guide](docs/agents/README.md)
 
 ## Uruchom demo offline
 
