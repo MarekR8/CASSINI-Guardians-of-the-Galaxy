@@ -1,0 +1,111 @@
+namespace Cassini.Routing;
+
+internal sealed record RouteOption(
+    string Id, string Exit, int Seconds, double Weight, string[] Segments, string[] Nodes,
+    DateTimeOffset DepartsAt, DateTimeOffset ArrivesAt);
+internal sealed record Distribution(string Node, long Revision, DateTimeOffset At, RouteOption[] Options);
+internal sealed record AssistanceRoute(
+    long Revision, string Exit, string[] ApproachSegments, string[] OutboundSegments,
+    int ApproachSeconds, int OutboundSeconds);
+internal sealed record DrawStatus(string State, RouteOption? Route, long Revision);
+
+internal sealed class RoutingQueries(SituationGateway situation, DrawJournal journal)
+{
+    internal static readonly DateTimeOffset StartTime = new(2026, 11, 27, 19, 20, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset ScheduleCloses = StartTime.AddMinutes(40);
+
+    internal async Task<Distribution> DistributionAsync(
+        string node, DateTimeOffset? at, string? mode, string? destination, bool accessible,
+        CancellationToken cancellationToken)
+    {
+        ValidateDistribution(node, mode, destination);
+        var snapshot = await situation.ReadAsync(cancellationToken);
+        return BuildDistribution(snapshot, node, at, mode, destination, accessible);
+    }
+
+    internal async Task<AssistanceRoute> AssistanceAsync(
+        string from, string pickup, CancellationToken cancellationToken)
+    {
+        if (!Network.Contains(from) || !Network.Contains(pickup))
+            throw new RoutingException(400, "InvalidNode", "Nieznany węzeł początku lub odbioru.");
+
+        var snapshot = await situation.ReadAsync(cancellationToken);
+        var closed = snapshot.ClosedSegments.ToHashSet(StringComparer.Ordinal);
+        var approach = Network.FindPath(from, pickup, driving: true, closed);
+        var outbound = Network.Exits
+            .Select(exit => Network.FindPath(pickup, exit, driving: true, closed))
+            .OfType<GraphPath>().OrderBy(path => path.Seconds).ThenBy(path => path.Nodes[^1], StringComparer.Ordinal)
+            .FirstOrDefault();
+        if (approach is null || outbound is null)
+            throw new RoutingException(422, "NoEligibleRoute", "Brak zweryfikowanego dojazdu lub wyjazdu dla pojazdu.");
+
+        return new(snapshot.Revision, outbound.Nodes[^1], approach.Segments, outbound.Segments,
+            approach.Seconds, outbound.Seconds);
+    }
+
+    internal async Task<DrawStatus> DrawStatusAsync(string commandId, CancellationToken cancellationToken)
+    {
+        var saved = journal.Get(commandId)
+            ?? throw new RoutingException(404, "UnknownDraw", "Nie znaleziono wyniku losowania.");
+        var snapshot = await situation.ReadAsync(cancellationToken);
+        var closed = snapshot.ClosedSegments.ToHashSet(StringComparer.Ordinal);
+        var revised = snapshot.SegmentRevisions is null
+            ? snapshot.Revision != saved.Revision
+            : saved.Route.Segments.Any(segment => snapshot.SegmentRevisions.GetValueOrDefault(segment) > saved.Revision);
+        if (snapshot.Revision < saved.Revision || revised || saved.Route.Segments.Any(closed.Contains))
+            return new("Withdrawn", null, snapshot.Revision);
+        if (ScenarioTime(snapshot.Stage) > saved.Route.ArrivesAt)
+            return new("Expired", null, snapshot.Revision);
+        return new("Active", saved.Route, snapshot.Revision);
+    }
+
+    internal static void ValidateDistribution(string? node, string? mode, string? destination)
+    {
+        if (!Network.Contains(node) || (destination is not null && !Network.Exits.Contains(destination)))
+            throw new RoutingException(400, "InvalidNode", "Nieznany węzeł początkowy lub niedozwolone wyjście.");
+        if (mode is not (null or "walking" or "driving"))
+            throw new RoutingException(400, "InvalidRequest", "Tryb musi mieć wartość walking lub driving.");
+    }
+
+    internal static Distribution BuildDistribution(
+        SituationSnapshot snapshot, string node, DateTimeOffset? requestedAt, string? mode, string? destination,
+        bool accessible)
+    {
+        var scenarioTime = ScenarioTime(snapshot.Stage);
+        var at = requestedAt?.ToUniversalTime() ?? scenarioTime;
+        if (at < scenarioTime)
+            throw new RoutingException(400, "InvalidTime", "Czas zapytania jest wcześniejszy od zegara symulacji.");
+
+        if (accessible || at >= ScheduleCloses)
+            return new(node, snapshot.Revision, at, []);
+
+        var closed = snapshot.ClosedSegments.ToHashSet(StringComparer.Ordinal);
+        var options = new List<RouteOption>();
+        var destinations = destination is null ? Network.Exits : [destination];
+
+        foreach (var exit in destinations)
+        {
+            var windowOpens = exit == "exit-north" ? StartTime.AddMinutes(2) : StartTime;
+            var departsAt = at >= windowOpens ? at : windowOpens;
+            var path = Network.FindPath(node, exit, mode == "driving", closed);
+            if (path is null)
+                continue;
+
+            var totalSeconds = path.Seconds + (departsAt - at).TotalSeconds;
+            options.Add(new($"{node}:{exit}", exit, path.Seconds, 1 / Math.Max(1, totalSeconds), path.Segments,
+                path.Nodes, departsAt, departsAt.AddSeconds(path.Seconds)));
+        }
+
+        var total = options.Sum(option => option.Weight);
+        return new(node, snapshot.Revision, at,
+            options.Select(option => option with { Weight = option.Weight / total }).ToArray());
+    }
+
+    private static DateTimeOffset ScenarioTime(int stage) => StartTime.AddMinutes(stage switch
+    {
+        0 => 0,
+        1 => 10,
+        2 => 13,
+        _ => throw new ArgumentOutOfRangeException(nameof(stage)),
+    });
+}
