@@ -7,6 +7,11 @@ if (string.IsNullOrEmpty(builder.Configuration["urls"]))
 builder.Services.AddSingleton(new DispatchStore(builder.Configuration["Demo:DataDirectory"]));
 builder.Services.AddSingleton<DispatchQueries>();
 builder.Services.AddSingleton<DispatchCommands>();
+builder.Services.AddHttpClient<ManagementClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Management:BaseUrl"] ?? "http://127.0.0.1:5081");
+    client.Timeout = TimeSpan.FromSeconds(3);
+});
 builder.Services.AddHttpClient<RoutingClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Routing:BaseUrl"] ?? "http://127.0.0.1:5083");
@@ -27,10 +32,13 @@ queries.MapGet("/assignments", (DispatchQueries handler, CancellationToken cance
     handler.GetAssignments(cancellation));
 
 var commands = app.MapGroup("/commands");
+commands.MapPost("/request", (RequestAssistance command, DispatchCommands handler, CancellationToken cancellation) =>
+    handler.RequestAssistance(command, cancellation));
 commands.MapPost("/assign", (AssignUnit command, DispatchCommands handler, CancellationToken cancellation) =>
     handler.AssignUnit(command, cancellation));
 commands.MapPost("/replan", (ReplanAssignment command, DispatchCommands handler, CancellationToken cancellation) =>
     handler.Replan(command, cancellation));
-commands.MapPost("/progress", (ReportProgress command, DispatchCommands handler) => handler.ReportProgress(command));
+commands.MapPost("/progress", (ReportProgress command, DispatchCommands handler, CancellationToken cancellation) =>
+    handler.ReportProgress(command, cancellation));
 
 app.Run();

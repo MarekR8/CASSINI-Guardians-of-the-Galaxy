@@ -1,0 +1,19 @@
+{
+  "copernicus": {
+    "productId": "",
+    "observedAtUtc": "",
+    "areaOfInterest": "",
+    "geoJsonFile": "",
+    "sourceUrl": ""
+  },
+  "routing": {
+    "validatedRoadGraphFile": "",
+    "validatedExitsFile": "",
+    "departureWindowsFile": ""
+  },
+  "equipment": {
+    "galileoReceiverModel": "",
+    "egnosEvidenceFormat": "",
+    "authorizedSatelliteTerminal": ""
+  }
+}

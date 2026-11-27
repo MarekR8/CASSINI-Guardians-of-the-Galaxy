@@ -1,0 +1,90 @@
+name: cassini-offline
+
+x-service: &service
+  pull_policy: never
+  init: true
+  networks: [operations]
+
+services:
+  management:
+    <<: *service
+    image: cassini-offline/management:demo
+    build:
+      context: .
+      args:
+        PROJECT: src/Management/Cassini.Management.csproj
+    command: ["Cassini.Management.dll"]
+    environment:
+      Demo__DataDirectory: /state
+    volumes: [management:/state]
+
+  situation:
+    <<: *service
+    image: cassini-offline/situation:demo
+    build:
+      context: .
+      args:
+        PROJECT: src/Situation/Situation.csproj
+    command: ["Situation.dll"]
+    environment:
+      Situation__StateFile: /state/situation.json
+    volumes: [situation:/state]
+
+  routing:
+    <<: *service
+    image: cassini-offline/routing:demo
+    build:
+      context: .
+      args:
+        PROJECT: src/Routing/Cassini.Routing.csproj
+    command: ["Cassini.Routing.dll"]
+    environment:
+      Situation__BaseUrl: http://situation:8080
+      Routing__StatePath: /state/routing-draws.json
+    depends_on: [situation]
+    volumes: [routing:/state]
+
+  dispatch:
+    <<: *service
+    image: cassini-offline/dispatch:demo
+    build:
+      context: .
+      args:
+        PROJECT: src/Dispatch/Cassini.Dispatch.csproj
+    command: ["Cassini.Dispatch.dll"]
+    environment:
+      Demo__DataDirectory: /state
+      Situation__BaseUrl: http://situation:8080
+      Routing__BaseUrl: http://routing:8080
+      Management__BaseUrl: http://management:8080
+    depends_on: [management, situation, routing]
+    volumes: [dispatch:/state]
+
+  gateway:
+    <<: *service
+    image: cassini-offline/gateway:demo
+    build:
+      context: .
+      args:
+        PROJECT: src/Gateway/Gateway.csproj
+    command: ["Gateway.dll"]
+    environment:
+      Services__Management: http://management:8080
+      Services__Situation: http://situation:8080
+      Services__Routing: http://routing:8080
+      Services__Dispatch: http://dispatch:8080
+    depends_on: [management, situation, routing, dispatch]
+    networks: [operations, local-ui]
+    ports: ["127.0.0.1:${CASSINI_PORT:-5080}:8080"]
+
+networks:
+  operations:
+    internal: true
+  local-ui:
+    driver: bridge
+
+volumes:
+  management:
+  situation:
+  routing:
+  dispatch:

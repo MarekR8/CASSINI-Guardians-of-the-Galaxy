@@ -4,7 +4,34 @@ using System.Text.Json;
 namespace Cassini.Dispatch;
 
 internal sealed record RouteLookup(TransportRoute? Route, bool ServiceAvailable);
+internal sealed record CasePosition(string Node, string Progress);
+internal sealed record CaseLookup(CasePosition? Case, bool ServiceAvailable);
 internal sealed record SituationRevision(long Revision);
+
+internal sealed class ManagementClient(HttpClient client)
+{
+    public async Task<CaseLookup> GetPosition(string caseId, CancellationToken cancellation)
+    {
+        try
+        {
+            using var response = await client.GetAsync($"/queries/cases/{Uri.EscapeDataString(caseId)}", cancellation);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return new(null, true);
+            if (!response.IsSuccessStatusCode)
+                return new(null, false);
+
+            var position = await response.Content.ReadFromJsonAsync<CasePosition>(cancellation);
+            return position is { Node.Length: > 0, Progress.Length: > 0 }
+                ? new(position, true) : new(null, false);
+        }
+        catch (Exception exception) when (
+            exception is HttpRequestException or JsonException ||
+            exception is OperationCanceledException && !cancellation.IsCancellationRequested)
+        {
+            return new(null, false);
+        }
+    }
+}
 
 internal sealed class RoutingClient(HttpClient client)
 {

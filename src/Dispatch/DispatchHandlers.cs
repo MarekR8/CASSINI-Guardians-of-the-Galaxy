@@ -1,5 +1,6 @@
 namespace Cassini.Dispatch;
 
+internal sealed record RequestAssistance(string? CommandId, string? CaseId, string? PickupNode);
 internal sealed record AssignUnit(string? CommandId, string? RequestId, string? UnitId, int? ExpectedVersion);
 internal sealed record ReplanAssignment(string? CommandId, string? AssignmentId, int? ExpectedVersion);
 internal sealed record ReportProgress(string? CommandId, string? AssignmentId, string? Step, int? ExpectedVersion);
@@ -24,8 +25,49 @@ internal sealed class DispatchQueries(DispatchStore store, SituationClient situa
     }
 }
 
-internal sealed class DispatchCommands(DispatchStore store, RoutingClient routing, SituationClient situation)
+internal sealed class DispatchCommands(
+    DispatchStore store, ManagementClient management, RoutingClient routing, SituationClient situation)
 {
+    public async Task<IResult> RequestAssistance(RequestAssistance command, CancellationToken cancellation)
+    {
+        if (store.CheckReceipt(command.CommandId, command) is { } prior)
+            return prior;
+        if (string.IsNullOrWhiteSpace(command.CaseId) || command.CaseId.Length > 128 ||
+            string.IsNullOrWhiteSpace(command.PickupNode))
+            return DispatchStore.Error("InvalidRequest", "Provide a demo case and a pickup node.", 400);
+
+        var lookup = await management.GetPosition(command.CaseId, cancellation);
+        if (!lookup.ServiceAvailable)
+            return DispatchStore.Error("ManagementUnavailable", "Current case information is unavailable.", 503);
+        if (lookup.Case is null)
+            return DispatchStore.Error("CaseNotFound", "Unknown demo case.", 404);
+        if (lookup.Case.Progress == "ExitConfirmed")
+            return DispatchStore.Error("CaseAlreadyEvacuated", "This case already has a confirmed exit.", 409);
+        if (lookup.Case.Node != command.PickupNode)
+            return DispatchStore.Error("PickupUnverified", "Use the current confirmed node for the demo case.", 422);
+
+        return store.Execute(command.CommandId, command, view =>
+        {
+            var existing = view.Requests.FirstOrDefault(item =>
+                item.CaseId == command.CaseId && item.State is "Open" or "Assigned");
+            if (existing is not null)
+            {
+                if (existing.PickupNode == command.PickupNode)
+                    return (view, existing, 200);
+                if (existing.State == "Assigned")
+                    return Reject("RequestAlreadyAssigned", "An assigned request cannot change its pickup node.", 409);
+
+                var updated = existing with { PickupNode = command.PickupNode, Version = existing.Version + 1 };
+                return (view with { Requests = Replace(view.Requests, item => item.RequestId == existing.RequestId, updated) },
+                    updated, 200);
+            }
+
+            var request = new AssistanceRequest($"request-{command.CaseId}-{view.Requests.Length + 1}",
+                command.CaseId, command.PickupNode, "Open", 1);
+            return (view with { Requests = [.. view.Requests, request] }, request, 200);
+        });
+    }
+
     public async Task<IResult> AssignUnit(AssignUnit command, CancellationToken cancellation)
     {
         if (store.CheckReceipt(command.CommandId, command) is { } prior)
@@ -100,12 +142,34 @@ internal sealed class DispatchCommands(DispatchStore store, RoutingClient routin
         });
     }
 
-    public IResult ReportProgress(ReportProgress command) => store.Execute(command.CommandId, command, view =>
+    public async Task<IResult> ReportProgress(ReportProgress command, CancellationToken cancellation)
     {
+        if (store.CheckReceipt(command.CommandId, command) is { } prior)
+            return prior;
         if (command.ExpectedVersion is null || string.IsNullOrWhiteSpace(command.AssignmentId) ||
             command.Step is not ("acknowledge" or "arrive" or "pickup" or "complete" or "cancel"))
-            return Reject("InvalidProgress", "Provide an assignment, supported step and expected version.", 400);
+            return DispatchStore.Error("InvalidProgress", "Provide an assignment, supported step and expected version.", 400);
 
+        var current = store.Read().Assignments.FirstOrDefault(item => item.AssignmentId == command.AssignmentId);
+        if (current is null)
+            return DispatchStore.Error("AssignmentNotFound", "Unknown assignment.", 404);
+        if (current.Version != command.ExpectedVersion)
+            return DispatchStore.Error("VersionConflict", "Read the current assignment and its version.", 409);
+
+        if (command.Step is "acknowledge" or "complete")
+        {
+            var revision = await situation.GetRevision(cancellation);
+            if (revision is null)
+                return DispatchStore.Error("SituationUnavailable", "Current restrictions are unavailable.", 503);
+            if (revision != current.Route.Revision)
+                return DispatchStore.Error("RouteRequiresReview", "Replan the assignment against current restrictions.", 409);
+        }
+
+        return store.Execute(command.CommandId, command, view => ApplyProgress(command, view));
+    }
+
+    private static (DispatchView?, object, int) ApplyProgress(ReportProgress command, DispatchView view)
+    {
         var current = view.Assignments.FirstOrDefault(item => item.AssignmentId == command.AssignmentId);
         if (current is null)
             return Reject("AssignmentNotFound", "Unknown assignment.", 404);
@@ -148,7 +212,7 @@ internal sealed class DispatchCommands(DispatchStore store, RoutingClient routin
         }
 
         return (changed, updated, 200);
-    });
+    }
 
     private static (string Code, string Detail, int Status)? ValidateBooking(
         DispatchView view, AssistanceRequest? request, ResponseUnit? unit, int expectedVersion)
