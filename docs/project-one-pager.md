@@ -35,4 +35,4 @@ A flood alert returns a situation view with an observed flood layer and simulate
 
 Measure time from alert to the first situation view, time to assign assistance, time from closure to route withdrawal, and the number of cases with no confirmed exit.
 
-See the [business processes](business-processes.md), [invariants](domain-invariants.md), [aggregates and service contracts](domain-architecture.md), and [MVP implementation work packages](mvp-work-packages.md).
+See the [business processes](business-processes.md), [invariants](domain-invariants.md), [aggregates and service contracts](domain-architecture.md), [MVP implementation work packages](mvp-work-packages.md), and [selected technology stack](mvp-technology-stack.md).

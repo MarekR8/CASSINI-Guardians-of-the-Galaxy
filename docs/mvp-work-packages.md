@@ -1,6 +1,6 @@
 # MVP implementation work packages
 
-The seven work packages cover the four [MVP workflows](business-processes.md) and follow the ownership boundaries in the [aggregate diagram](domain-architecture.md#aggregate-diagram). Use the same flood scenario, graph and IDs across services. The [command and event catalog](mvp-commands-events.md) shows how the services interact during the demo. Fill in the owner fields when the team assigns the work.
+The seven work packages cover the four [MVP workflows](business-processes.md) and follow the ownership boundaries in the [aggregate diagram](domain-architecture.md#aggregate-diagram). Use the same flood scenario, graph and IDs across services. The [command and event catalog](mvp-commands-events.md) shows how the services interact during the demo. Use the [selected technology stack](mvp-technology-stack.md) to implement each package. Fill in the owner fields when the team assigns the work.
 
 ## 1. Receive alerts and open incidents
 

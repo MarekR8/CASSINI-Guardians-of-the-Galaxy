@@ -1,6 +1,6 @@
 # MVP interfaces between services and aggregates
 
-This specification proposes the interfaces for the [MVP workflows](business-processes.md). It gives the [command and event catalog](mvp-commands-events.md) an HTTP or RabbitMQ address and identifies the owner of each write. Names, payloads and bindings are intended as the starting contract for implementation.
+This specification proposes the interfaces for the [MVP workflows](business-processes.md). It gives the [command and event catalog](mvp-commands-events.md) an HTTP or RabbitMQ address and identifies the owner of each write. See the [technology stack](mvp-technology-stack.md) for runtime versions, provider integrations and deployment settings.
 
 ## Where each kind of interaction runs
 
