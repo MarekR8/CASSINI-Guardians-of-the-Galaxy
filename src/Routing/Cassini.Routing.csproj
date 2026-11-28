@@ -10,6 +10,7 @@
     <InternalsVisibleTo Include="Cassini.Routing.Tests" />
     <Compile Include="../Demo/CityNetwork.cs" Link="CityNetwork.cs" />
     <Compile Include="../Demo/RoadBounds.cs" Link="RoadBounds.cs" />
+    <Compile Include="../Demo/SiteCatalog/SiteRules.cs" Link="SiteRules.cs" />
     <Content Include="../../data/demo/ors/recorded/*.json" Link="ors/recorded/%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- Task 03 evacuation model inputs for the Valencia scenario. -->
