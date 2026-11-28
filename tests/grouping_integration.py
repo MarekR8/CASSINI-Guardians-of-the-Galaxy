@@ -32,6 +32,8 @@ def call(url, path, body=None, expected_status=200, code=None, token=None, servi
             status, payload = response.status, json.load(response)
     except HTTPError as error:
         status, payload = error.code, json.load(error)
+        if status == expected_status == 401:
+            assert error.headers.get("WWW-Authenticate") == "Bearer", (path, error.headers)
     assert status == expected_status, (path, status, payload)
     if code is not None:
         assert payload["code"] == code, payload
