@@ -28,6 +28,7 @@ To prove or investigate: MSA convergence on the demo graph, the effect of $\thet
 - [x] Fixtures `data/demo/routing/cases/*.json` and `expected.json` for: before closure, after the bridge closure, all exits unavailable, exit flooded before arrival, congestion at large $N$, wheelchair and steps, no re-entry into the flood. You provide **W4**.
 - [x] Port to C# in Routing: `GET /queries/distribution` also returns `expectedLoad` per exit and `model: "logit-sue"`. The draw (`POST /commands/draw`) uses the new $p_i$; the seed still works. Valencia scenario only; Kłodzko and Warsaw keep the previous formula.
 - [x] C# test that reads `expected.json` (tolerance $10^{-6}$).
+- [ ] Rehearse the Valencia planner end to end for the presentation. `--scenario valencia --test` exercises plan calculation, route distribution, drawing and withdrawal through the gateway. Add `--valencia-inputs-only` to test the 01/02 inputs and OSM route independently.
 
 ### Stage B (completion)
 - [ ] `IHazardForecast`: `MockGlofasForecast` (file) and `LiveGlofasForecast` (Open-Meteo Flood API) → $T^{safe}_e$.
