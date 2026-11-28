@@ -1,0 +1,35 @@
+{
+  "commandId": "cmd-reassign-case-14",
+  "correlationId": "corr-incident-42-shelter",
+  "fromShelterId": "shelter-a",
+  "expectedFromShelterVersion": 2,
+  "shelterId": "shelter-b",
+  "expectedShelterVersion": 1,
+  "reason": "ShelterClosed",
+  "groupPlanRef": null,
+  "holdsExpireAt": "2026-11-27T20:00:00Z",
+  "approvalRef": "approval-synthetic-coordinator",
+  "assignments": [
+    {
+      "incidentId": "incident-42",
+      "caseId": "case-14",
+      "legId": "leg-shelter",
+      "expectedVersion": 2,
+      "route": {
+        "evidenceId": "0259596abcd40ad027ceeb3df6618ac1817f1182039e22828a85193ba766314d",
+        "query": {
+          "mode": "walking",
+          "at": "2026-11-27T19:20:00+00:00",
+          "node": null,
+          "caseIds": "case-14",
+          "clearBy": "2026-11-27T19:58:00+00:00",
+          "stepFree": null,
+          "groupId": null,
+          "groupRevision": null,
+          "transportId": null,
+          "recordedRouteId": null
+        }
+      }
+    }
+  ]
+}

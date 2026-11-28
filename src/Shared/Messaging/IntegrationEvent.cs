@@ -36,6 +36,8 @@ public static class EventTypes
     public const string AssistanceRequested = "AssistanceRequested.v1";
     public const string AssignmentChanged = "AssignmentChanged.v1";
     public const string CaseProgressChanged = "CaseProgressChanged.v1";
+    public const string ShelterAvailabilityChanged = "ShelterAvailabilityChanged.v1";
+    public const string ShelterAssignmentChanged = "ShelterAssignmentChanged.v1";
 
     private static readonly Dictionary<string, string> Keys = new()
     {
@@ -46,6 +48,8 @@ public static class EventTypes
         [AssistanceRequested] = "dispatch.assistance-requested.v1",
         [AssignmentChanged] = "dispatch.assignment-changed.v1",
         [CaseProgressChanged] = "management.case-progress-changed.v1",
+        [ShelterAvailabilityChanged] = "sheltering.shelter-availability-changed.v1",
+        [ShelterAssignmentChanged] = "sheltering.shelter-assignment-changed.v1",
     };
 
     public static IReadOnlyCollection<string> All => Keys.Keys;

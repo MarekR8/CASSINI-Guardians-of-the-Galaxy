@@ -24,6 +24,8 @@ services:
     command: ["Cassini.Sheltering.dll"]
     environment:
       Situation__BaseUrl: http://situation:8080
+      Routing__BaseUrl: http://routing:8080
+      Management__BaseUrl: http://management:8080
       Sheltering__SeedFile: /app/sample-sites.json
       Sheltering__StateFile: /state/shelters.json
     depends_on: [situation]

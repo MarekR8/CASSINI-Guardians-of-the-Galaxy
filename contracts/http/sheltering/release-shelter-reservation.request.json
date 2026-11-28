@@ -1,0 +1,12 @@
+{
+  "commandId": "cmd-release-case-14",
+  "correlationId": "corr-incident-42-shelter",
+  "incidentId": "incident-42",
+  "caseId": "case-14",
+  "legId": "leg-shelter",
+  "expectedVersion": 4,
+  "reason": "Cancelled",
+  "stillRequired": false,
+  "approvalRef": "approval-synthetic-coordinator",
+  "observedAt": null
+}

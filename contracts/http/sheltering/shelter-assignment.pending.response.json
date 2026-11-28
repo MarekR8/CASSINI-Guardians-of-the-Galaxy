@@ -1,0 +1,18 @@
+{
+  "revision": 1,
+  "assignment": {
+    "incidentId": "incident-42",
+    "caseId": "case-14",
+    "legId": "leg-shelter",
+    "version": 1,
+    "status": "Pending",
+    "needs": {
+      "places": 1,
+      "accessiblePlaces": 0
+    },
+    "groupPlanRef": null,
+    "reservation": null,
+    "withdrawn": null,
+    "reason": null
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "incidentId": "incident-42",
+  "legId": "leg-shelter",
+  "caseIds": [
+    "case-14"
+  ],
+  "allocationRevision": 1,
+  "demand": {
+    "places": 1,
+    "accessiblePlaces": 0
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "shelterId": "shelter-a",
+      "shelterVersion": 1,
+      "sharedWithGroup": 0,
+      "departsAt": "2026-11-27T19:20:00+00:00",
+      "arrivalWindow": {
+        "earliest": "2026-11-27T19:33:00+00:00",
+        "latestExclusive": "2026-11-27T19:33:01+00:00"
+      },
+      "available": {
+        "places": 5,
+        "accessiblePlaces": 1
+      },
+      "route": {
+        "evidenceId": "715e1fb317c017708aca70c5a01afdc954182b698a4c3890a356babdbeecd578",
+        "query": {
+          "mode": "walking",
+          "at": "2026-11-27T19:20:00+00:00",
+          "node": null,
+          "caseIds": "case-14",
+          "clearBy": "2026-11-27T19:58:00+00:00",
+          "stepFree": null,
+          "groupId": null,
+          "groupRevision": null,
+          "transportId": null,
+          "recordedRouteId": null
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "shelterId": "shelter-b",
+      "shelterVersion": 1,
+      "sharedWithGroup": 0,
+      "departsAt": "2026-11-27T19:22:00+00:00",
+      "arrivalWindow": {
+        "earliest": "2026-11-27T19:40:00+00:00",
+        "latestExclusive": "2026-11-27T19:40:01+00:00"
+      },
+      "available": {
+        "places": 4,
+        "accessiblePlaces": 1
+      },
+      "route": {
+        "evidenceId": "18b5c12f63b0a3f5aa2c97dcacb77f6122d38c1a00e678661c1d13c8feb8a5c3",
+        "query": {
+          "mode": "walking",
+          "at": "2026-11-27T19:20:00+00:00",
+          "node": null,
+          "caseIds": "case-14",
+          "clearBy": "2026-11-27T19:58:00+00:00",
+          "stepFree": null,
+          "groupId": null,
+          "groupRevision": null,
+          "transportId": null,
+          "recordedRouteId": null
+        }
+      }
+    }
+  ],
+  "rejected": []
+}

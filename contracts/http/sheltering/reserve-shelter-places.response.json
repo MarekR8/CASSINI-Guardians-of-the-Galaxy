@@ -1,0 +1,53 @@
+{
+  "revision": 2,
+  "shelterId": "shelter-a",
+  "fromShelterId": null,
+  "assignments": [
+    {
+      "incidentId": "incident-42",
+      "caseId": "case-14",
+      "legId": "leg-shelter",
+      "version": 2,
+      "status": "Reserved",
+      "needs": {
+        "places": 1,
+        "accessiblePlaces": 0
+      },
+      "groupPlanRef": null,
+      "reservation": {
+        "reservationId": "cmd-reserve-case-14-case-14",
+        "shelterId": "shelter-a",
+        "shelterVersion": 1,
+        "resources": {
+          "places": 1,
+          "accessiblePlaces": 0
+        },
+        "arrivalWindow": {
+          "earliest": "2026-11-27T19:33:00+00:00",
+          "latestExclusive": "2026-11-27T19:33:01+00:00"
+        },
+        "holdsExpireAt": "2026-11-27T20:00:00+00:00",
+        "route": {
+          "evidenceId": "715e1fb317c017708aca70c5a01afdc954182b698a4c3890a356babdbeecd578",
+          "query": {
+            "mode": "walking",
+            "at": "2026-11-27T19:20:00+00:00",
+            "node": null,
+            "caseIds": "case-14",
+            "clearBy": "2026-11-27T19:58:00+00:00",
+            "stepFree": null,
+            "groupId": null,
+            "groupRevision": null,
+            "transportId": null,
+            "recordedRouteId": null
+          }
+        },
+        "situationRevision": 0,
+        "approvalRef": "approval-synthetic-coordinator",
+        "commandId": "cmd-reserve-case-14"
+      },
+      "withdrawn": null,
+      "reason": null
+    }
+  ]
+}

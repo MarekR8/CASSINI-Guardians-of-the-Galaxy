@@ -10,8 +10,9 @@ internal sealed class CatalogStore<T> where T : class
 {
     private sealed record Receipt(string Fingerprint, CatalogWrite<T> Result);
     private sealed record Outcome(string Fingerprint, JsonElement Result);
+    // Aux is an optional owner-defined document committed in the same file as the items (see Mutate).
     private sealed record State(int Revision, Dictionary<string, T> Items, Dictionary<string, Receipt> Receipts,
-        Dictionary<string, Outcome>? Outcomes = null);
+        Dictionary<string, Outcome>? Outcomes = null, JsonElement? Aux = null);
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private readonly object gate = new();
@@ -68,7 +69,7 @@ internal sealed class CatalogStore<T> where T : class
             }, new Dictionary<string, Receipt>(state.Receipts, StringComparer.Ordinal)
             {
                 [commandId!] = new Receipt(fingerprint, result),
-            }, state.Outcomes);
+            }, state.Outcomes, state.Aux);
 
             if (path is not null)
                 Persist(path, next);
@@ -108,7 +109,37 @@ internal sealed class CatalogStore<T> where T : class
                 new Dictionary<string, Outcome>(state.Outcomes ?? new(), StringComparer.Ordinal)
                 {
                     [commandId!] = new Outcome(fingerprint, JsonSerializer.SerializeToElement(result, Json)),
-                });
+                }, state.Aux);
+
+            if (path is not null)
+                Persist(path, next);
+            state = next;
+            return result;
+        }
+    }
+
+    /// <summary>Read the items and the auxiliary document under one lock.</summary>
+    internal (int Revision, IReadOnlyDictionary<string, T> Items, TAux? Aux) ReadWith<TAux>() where TAux : class
+    {
+        lock (gate)
+            return (state.Revision, state.Items, state.Aux?.Deserialize<TAux>(Json));
+    }
+
+    /// <summary>
+    /// Change items and the auxiliary document in one atomic commit. The callback owns its idempotency and version
+    /// checks (kept in the auxiliary document). The catalog revision is unchanged: it tracks configuration and reports,
+    /// while the owner of the auxiliary document keeps its own revision.
+    /// </summary>
+    internal TResult Mutate<TAux, TResult>(Func<IReadOnlyDictionary<string, T>, TAux?, (T[] Changed, TAux Aux, TResult Result)> change)
+        where TAux : class
+    {
+        lock (gate)
+        {
+            var (changed, aux, result) = change(state.Items, state.Aux?.Deserialize<TAux>(Json));
+            var items = new Dictionary<string, T>(state.Items, StringComparer.Ordinal);
+            foreach (var item in changed)
+                items[key(item)] = item;
+            var next = state with { Items = items, Aux = JsonSerializer.SerializeToElement(aux, Json) };
 
             if (path is not null)
                 Persist(path, next);
