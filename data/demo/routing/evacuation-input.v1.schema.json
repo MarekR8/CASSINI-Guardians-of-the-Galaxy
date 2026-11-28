@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CASSINI evacuation planning input v1",
+  "type": "object",
+  "required": ["inputVersion", "scenario", "bounds", "osmTimestamp", "situationRevision",
+    "hazardObservation", "closureEvidence", "boundaryNodeIds", "nodes", "roads"],
+  "properties": {
+    "inputVersion": {"const": "cassini.evacuation-input.v1"},
+    "scenario": {"type": "string", "minLength": 1},
+    "bounds": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number"},
+      "description": "WGS 84 decimal degrees in west, south, east, north order"},
+    "osmTimestamp": {"type": "string", "format": "date-time"},
+    "situationRevision": {"type": "integer", "minimum": 0},
+    "hazardObservation": {
+      "type": "object",
+      "required": ["productId", "sourceUrl", "source", "acquisitionsUtc", "coverage", "geoJson"],
+      "properties": {
+        "productId": {"type": "string", "minLength": 1},
+        "sourceUrl": {"type": ["string", "null"], "format": "uri"},
+        "source": {"type": "string", "minLength": 1},
+        "acquisitionsUtc": {"type": "array", "minItems": 1, "items": {"type": "string", "format": "date-time"}},
+        "coverage": {"$ref": "#/$defs/polygonal"},
+        "geoJson": {
+          "type": "object",
+          "required": ["type", "features"],
+          "properties": {
+            "type": {"const": "FeatureCollection"},
+            "features": {"type": "array", "items": {
+              "type": "object",
+              "required": ["type", "properties", "geometry"],
+              "properties": {
+                "type": {"const": "Feature"},
+                "properties": {"type": "object"},
+                "geometry": {"$ref": "#/$defs/polygonal"}
+              }
+            }}
+          }
+        }
+      }
+    },
+    "closureEvidence": {"type": "array", "items": {
+      "type": "object",
+      "required": ["roadId", "source", "decidedAt"],
+      "properties": {
+        "roadId": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "decidedAt": {"type": "string", "format": "date-time"},
+        "observedAt": {"type": ["string", "null"], "format": "date-time"},
+        "reviewFeatureId": {"type": ["string", "null"]}
+      }
+    }},
+    "boundaryNodeIds": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/nodeId"}},
+    "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/node"}},
+    "roads": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/road"}}
+  },
+  "$defs": {
+    "nodeId": {"type": "integer", "minimum": 1},
+    "zone": {"enum": ["safe", "hazard", "unknown"]},
+    "longitude": {"type": "number", "minimum": -180, "maximum": 180},
+    "latitude": {"type": "number", "minimum": -90, "maximum": 90},
+    "position": {"type": "array", "minItems": 2, "items": false,
+      "prefixItems": [{"$ref": "#/$defs/longitude"}, {"$ref": "#/$defs/latitude"}]},
+    "polygon": {"type": "array", "minItems": 1, "items": {
+      "type": "array", "minItems": 4, "items": {"$ref": "#/$defs/position"}
+    }},
+    "polygonal": {
+      "type": "object", "required": ["type", "coordinates"],
+      "oneOf": [
+        {"properties": {"type": {"const": "Polygon"}, "coordinates": {"$ref": "#/$defs/polygon"}}},
+        {"properties": {"type": {"const": "MultiPolygon"}, "coordinates": {
+          "type": "array", "items": {"$ref": "#/$defs/polygon"}
+        }}}
+      ]
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "longitude", "latitude", "zone"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nodeId"},
+        "longitude": {"$ref": "#/$defs/longitude"},
+        "latitude": {"$ref": "#/$defs/latitude"},
+        "zone": {"$ref": "#/$defs/zone"}
+      }
+    },
+    "directionSeconds": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {"type": ["integer", "null"], "minimum": 1},
+      "description": "[from to, to from] travel seconds; null marks an unavailable direction"
+    },
+    "capacityPerHour": {"type": ["integer", "null"], "minimum": 1},
+    "road": {
+      "type": "object",
+      "required": ["id", "from", "to", "class", "lengthMetres", "geometry", "walk", "drive",
+        "pedestriansPerHour", "vehiclesPerHour", "zone", "closed", "intersectsObservedFlood"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "from": {"$ref": "#/$defs/nodeId"},
+        "to": {"$ref": "#/$defs/nodeId"},
+        "class": {"type": "string", "minLength": 1},
+        "lengthMetres": {"type": "number", "exclusiveMinimum": 0},
+        "geometry": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/position"}},
+        "walk": {"$ref": "#/$defs/directionSeconds"},
+        "drive": {"$ref": "#/$defs/directionSeconds"},
+        "pedestriansPerHour": {"$ref": "#/$defs/capacityPerHour"},
+        "vehiclesPerHour": {"$ref": "#/$defs/capacityPerHour"},
+        "zone": {"$ref": "#/$defs/zone"},
+        "closed": {"type": "boolean"},
+        "intersectsObservedFlood": {"type": "boolean"}
+      }
+    }
+  }
+}

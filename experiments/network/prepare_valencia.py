@@ -7,7 +7,9 @@ import gzip
 import json
 import math
 from pathlib import Path
+import shutil
 import tempfile
+from uuid import uuid4
 
 import rasterio as rio
 from rasterio.warp import Resampling, calculate_default_transform, reproject
@@ -22,6 +24,7 @@ from prepare_warsaw_osm import build, fetch, read_pbf, svg_map
 AREA = [-0.62, 39.24, -0.25, 39.61]
 OUTPUT = ROOT / "artifacts/valencia-city"
 EVIDENCE = ROOT / "artifacts/valencia-evidence"
+BUNDLED_IMAGERY = ROOT / "data/demo/valencia/imagery"
 SOURCE = "https://download.geofabrik.de/europe/spain/valencia-latest.osm.pbf"
 PRODUCT = "EMSR773_AOI01_DEL_PRODUCT_v1"
 EMS_URL = "https://mapping.emergency.copernicus.eu/activations/EMSR773/"
@@ -72,7 +75,7 @@ def describe_edge(edge, tags, metres):
     assumed_lanes = lanes or max(1, directions)
     per_lane = ACCESS.get(road.removesuffix("_link"), 350)
     foot_capacity = 300 if road in {"steps", "track"} else 600 if road in {"path", "footway"} else 900
-    edge.update(lengthMetres=round(metres, 1), lanes=lanes,
+    edge.update(lengthMetres=round(metres, 1) or metres, lanes=lanes,
                 vehiclesPerHour=round(per_lane * assumed_lanes) if directions else None,
                 pedestriansPerHour=foot_capacity if any(edge["walk"]) else None)
 
@@ -115,9 +118,9 @@ def write_images(directory, output):
     grid = None
     for name, day in SCENES.items():
         matches = sorted(path for path in directory.glob(day + "*") if path.suffix.lower() in {".tif", ".tiff"})
-        if len(matches) != 1:
-            raise ValueError(f"Place exactly one {day}*.tif or {day}*.tiff in {directory}")
-        path = matches[0]
+        if len(matches) > 1:
+            raise ValueError(f"Keep only one {day}*.tif or {day}*.tiff in {directory}")
+        path = matches[0] if matches else BUNDLED_IMAGERY / f"{day}-sentinel1-vv.tiff"
         with rio.open(path) as raster:
             if raster.crs is None or raster.count < 1 or raster.dtypes[0] != "uint8":
                 raise ValueError(f"{path.name}: expected a georeferenced 8-bit visualisation")
@@ -145,6 +148,16 @@ def write_images(directory, output):
 
 def write_json(path, obj):
     path.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+
+
+def publish_asset(source, directory):
+    # A file moved out of a private Windows temp directory retains its original ACL.
+    temporary = directory / f".{source.name}.{uuid4().hex}.tmp"
+    try:
+        shutil.copyfile(source, temporary)
+        temporary.replace(directory / source.name)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def run(output, evidence, inputs, refresh):
@@ -181,7 +194,7 @@ def run(output, evidence, inputs, refresh):
         write_json(stage / "city-imagery.json", {"scenes": scenes, "hazardAcquisitions": OBSERVATIONS})
         for file in stage.iterdir():
             if not file.name.endswith(".aux.xml"):
-                file.replace(output / file.name)
+                publish_asset(file, output)
     print(f"Valencia: {len(network['roads']):,} OSM edges; {len(network['nodes']):,} nodes {dict(counts)}; "
           f"{len(flood):,} EMS polygons; OSM snapshot {timestamp}")
 
