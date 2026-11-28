@@ -18,7 +18,7 @@ A person without a car asks for transport. The dispatcher sees a unit, its posit
 
 ### Stage A (demo)
 - [x] `IRouteProvider` + both providers; configuration `Integrations:Ors:Mode`, `Integrations:Ors:BaseUrl`, `Integrations:Ors:ApiKey` (user-secrets).
-- [ ] Record ORS responses for the scenario: approach and outbound before and after the bridge closure → `data/demo/ors/recorded/`.
+- [x] Capture and verify ORS approach and outbound responses before and after bridge closure. The repository includes synthetic fixtures in `data/demo/ors/recorded/` for repeatable tests. Verified hosted recordings are generated under `artifacts/`.
 - [x] Dispatch uses the provider for approach and outbound legs; keep the existing double-booking guard and `commandId` idempotency.
 - [x] Unit position with `positionEvidence { source, egnosApplied, hpl, mode }` in `GET /queries/assignments`.
 
@@ -101,7 +101,74 @@ known node in an assign or replan command.
 Local verification covers capturing responses from an ORS-compatible HTTP
 test server and replaying those files for both cities, missing recordings,
 manual start position, and rejection of a route crossing the closed bridge.
-The browser check covered the position
-label, both vehicle legs, withdrawal after bridge closure, the detour and the
-state with no available exit. Actual ORS responses and hosted service limits
-still need validation with an API key.
+The browser check covered the position label, both vehicle legs, withdrawal after
+bridge closure, the detour and the state with no available exit.
+
+Hosted HeiGIT Directions returned nine recordings on 2026-11-28. Both cities
+passed booking, withdrawal of the old route and replanning from those recordings.
+Kłodzko uses a separate vehicle endpoint for `exit-north`, at the actual road
+connection. The pedestrian waypoint keeps its original coordinates. The replay
+captures are local under `artifacts/ors-verified`.
+
+## Konfiguracja ORS na kolejnych komputerach
+
+Na komputerze z .NET 10 SDK i Pythonem 3 zwykłe demo offline uruchom poleceniem
+`python scripts/offline_demo.py`. Aby odtworzyć gotowe nagrania zespołu,
+rozpakuj `ors-verified.zip` do `artifacts/` na komputerze z tą samą wersją
+kodu. Pliki JSON powinny znaleźć się w `artifacts/ors-verified`.
+W PowerShellu uruchom:
+
+```powershell
+$env:Integrations__Ors__Mode = 'recorded'
+$env:Integrations__Ors__FixtureDirectory = (Resolve-Path 'artifacts/ors-verified').Path
+python scripts/offline_demo.py --scenario warsaw
+```
+
+W Bashu ustaw te same zmienne przez `export`. Wybierz `--scenario sample`
+dla Kłodzka. Gotowe nagrania i lokalny graf działają bez klucza.
+
+### Nagrywanie tras lokalnie
+
+1. Zaloguj się do [HeiGIT Account](https://account.heigit.org/). W zakładce
+   **API Key** skopiuj swój **Basic Key** przyciskiem **Copy**.
+2. W PowerShellu, w katalogu głównym repozytorium, zapisz klucz dla projektu
+   Routing. Wklej go dopiero po wyświetleniu pytania w terminalu.
+
+   ```powershell
+   $orsKey = Read-Host 'Wklej klucz ORS' -AsSecureString
+   dotnet user-secrets set 'Integrations:Ors:ApiKey' ([System.Net.NetworkCredential]::new('', $orsKey).Password) --project src/Routing/Cassini.Routing.csproj
+   Remove-Variable orsKey
+   ```
+
+   Na macOS i Linuksie można użyć zmiennej sesji w Bashu.
+
+   ```bash
+   read -rs -p "Wklej klucz ORS: " Integrations__Ors__ApiKey
+   printf '\n'
+   export Integrations__Ors__ApiKey
+   ```
+
+3. Nagraj i sprawdź trasy.
+
+   ```sh
+   python scripts/record_ors_routes.py artifacts/ors-recorded
+   dotnet build Cassini.Offline.slnx -m:1 -p:NuGetAudit=false
+   python tests/dispatch_ors_integration.py --recordings artifacts/ors-recorded
+   ```
+
+   Jeśli system ma polecenie `python3`, użyj go w miejsce `python`. Przy błędzie
+   wygasłego certyfikatu zaktualizuj zaufane certyfikaty systemu lub wskaż aktualny
+   plik CA przez `SSL_CERT_FILE`. Na komputerze z pakietem `certifi` można w
+   PowerShellu ustawić `$env:SSL_CERT_FILE = (python -m certifi)`.
+
+Używaj własnego klucza na komputerach, które nagrywają dane. Klucz pozostaje
+w lokalnym profilu lub sesji terminala. Gotowe nagrania można odtwarzać offline
+na pozostałych komputerach.
+
+### GitHub Actions
+
+Sekret repozytorium nosi nazwę `OPENROUTESERVICE_API_KEY`. Po przeniesieniu
+workflow na domyślną gałąź wybierz **Actions → OpenRouteService live verification
+→ Run workflow**. Klucz jest przekazywany tylko do kroku nagrywania. Test
+rezerwacji i przeliczenia trasy używa zapisów. Zwykłe **Offline demo CI**
+uruchamia się na pushach i PR-ach z lokalnym serwerem testowym.

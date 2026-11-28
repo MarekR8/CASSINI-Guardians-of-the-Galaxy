@@ -1,0 +1,26 @@
+name: OpenRouteService live verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build offline services
+        run: dotnet build Cassini.Offline.slnx -m:1 -p:NuGetAudit=false
+      - name: Record exercise routes from HeiGIT
+        env:
+          Integrations__Ors__ApiKey: ${{ secrets.OPENROUTESERVICE_API_KEY }}
+        run: python3 scripts/record_ors_routes.py artifacts/ors-ci-recordings
+      - name: Verify booking and replanning from captured routes
+        run: python3 tests/dispatch_ors_integration.py --recordings artifacts/ors-ci-recordings

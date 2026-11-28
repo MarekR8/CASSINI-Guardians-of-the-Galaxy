@@ -7,9 +7,10 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
 import json
 import os
+import ssl
 import xml.etree.ElementTree as ET
 
 
@@ -67,7 +68,11 @@ def main():
         parser.error("Use an HTTPS ORS base URL, or an HTTP loopback URL for a local instance.")
     index = ROOT / "data/demo/ors/index.json"
     entries = json.loads(index.read_text(encoding="utf-8"))
-    opener = build_opener(NoRedirect)
+    cafile = os.environ.get("SSL_CERT_FILE")
+    handlers = [NoRedirect]
+    if cafile:
+        handlers.append(HTTPSHandler(context=ssl.create_default_context(cafile=cafile)))
+    opener = build_opener(*handlers)
     args.output.mkdir(parents=True, exist_ok=True)
     for expected, entry in entries.items():
         profile = entry["profile"]
