@@ -5,6 +5,7 @@ Every event uses the envelope in [`src/Shared/Messaging/IntegrationEvent.cs`](..
 | Event | Routing key on `evacuation.events` | Producer | Consumers | Status |
 | --- | --- | --- | --- | --- |
 | [`SituationChanged.v1`](SituationChanged.v1.json) | `situation.changed.v1` | Situation (task 2) | Routing, Management, dashboard | Contract; producer to be wired by the owner |
+| [`AssemblyPointChanged.v1`](AssemblyPointChanged.v1.json) | `situation.assembly-point-changed.v1` | Situation (SH-T01) | Routing and coordinator projections (target) | Published from the site catalog outbox in the full profile |
 | [`RoutePublished.v1`](RoutePublished.v1.json) | `routing.route-published.v1` | Routing (task 3) | Management, Dispatch | Contract; producer to be wired by the owner |
 | [`RouteWithdrawn.v1`](RouteWithdrawn.v1.json) | `routing.route-withdrawn.v1` | Routing (task 3) | Management, Dispatch | Contract; producer to be wired by the owner |
 | [`AssistanceRequested.v1`](AssistanceRequested.v1.json) | `dispatch.assistance-requested.v1` | Dispatch (task 4) | Management | Contract; producer to be wired by the owner |

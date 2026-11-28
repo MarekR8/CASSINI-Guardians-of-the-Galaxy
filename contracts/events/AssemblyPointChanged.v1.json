@@ -1,0 +1,23 @@
+{
+  "eventId": "00000000-0000-4000-8000-000000000021",
+  "type": "AssemblyPointChanged.v1",
+  "producer": "situation-data",
+  "subjectId": "assembly-north",
+  "subjectVersion": 2,
+  "occurredAt": "2026-11-27T19:20:00Z",
+  "correlationId": "close-point",
+  "causationId": "close-point",
+  "payload": {
+    "incidentId": "incident-42",
+    "pointId": "assembly-north",
+    "status": "closed",
+    "operatingWindow": {
+      "opensAt": "2026-11-27T19:00:00Z",
+      "closesAt": "2026-11-27T20:30:00Z"
+    },
+    "evidenceRef": {
+      "source": "sample-flood-and-egress-v1",
+      "situationRevision": 0
+    }
+  }
+}

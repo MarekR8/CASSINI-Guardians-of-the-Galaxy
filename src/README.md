@@ -1,13 +1,18 @@
 # Source layout
 
-The planned stack is .NET and Python. Add projects and dependencies as the first concrete features need them.
+The running .NET 10 solution is [`Cassini.Offline.slnx`](../Cassini.Offline.slnx). Each service owns its writes and state.
 
-| Directory | Planned responsibility |
+| Directory | Current responsibility |
 | --- | --- |
-| [`dotnet/`](dotnet/) | Application, including the coordinator interface and orchestration. Choose the app template when the UI and hosting needs are clear. |
-| [`Shared/Messaging/`](Shared/Messaging/) | Integration event envelope, `IEventBus` (in-memory and RabbitMQ), outbox publisher and subscriptions. See [`contracts/events/`](../contracts/events/). |
-| [`python/`](python/) | Geospatial data preparation, route and flow calculations, and simulation. Split modules as their implementations arrive. |
+| [`Management/`](Management/) | Incidents, resident cases, progress, EWSS simulation and Grouping (including care). |
+| [`Situation/`](Situation/) | Versioned hazard and road evidence, closures, source imports and assembly-point catalog. |
+| [`Routing/`](Routing/) | Route calculation, distribution and draws, destination eligibility, instruction publication and withdrawal. |
+| [`Dispatch/`](Dispatch/) | Assistance requests, unit bookings and progress. |
+| [`Sheltering/`](Sheltering/) | Shelter catalog, resources, assignments, reservations, admission and departure. |
+| [`Gateway/`](Gateway/) | Local HTTP forwarding, dashboard hosting, authentication and link simulation. |
+| [`Demo/`](Demo/) | Source-shared demo helpers and site-catalog infrastructure. |
+| [`Shared/Messaging/`](Shared/Messaging/) | Integration event envelope, in-memory/RabbitMQ bus, outbox publisher and subscriptions. |
 
-Start with a file-based handoff using [sample JSON](../data/sample/README.md) or GeoJSON for geometry. Agree on IDs, units and expected outputs for the first .NET–Python integration before choosing a long-lived interface. Use an HTTP service if a later use case needs independent processes or remote access.
+The web UI is in [`apps/web`](../apps/web/), the Android exercise is in [`apps/offline-android`](../apps/offline-android/), and Python preparation and reference models are in [`experiments`](../experiments/). The old `dotnet/` and `python/` folders are empty placeholders, not runtime entry points.
 
-Add a `.csproj` with the first .NET project. Add a `pyproject.toml` once the Python project needs packaging or shared tool settings.
+Use [contracts](../contracts/) for HTTP and event boundaries, and the [offline runbook](../docs/offline-demo.md) for actual startup and test commands. The first MVP guide describes earlier target architecture, not the current file layout.

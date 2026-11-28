@@ -1,0 +1,46 @@
+# Refactor unification handoff
+
+Branch: `feature/refactor-unification`; verified base: `e73867ac8251b204504b64d65bb074698d639859` (`origin/develop`).
+The original working tree was clean; the guide remains on `feature/refactoring-guide` (`8394157`).
+
+## Checkpoint 1 — baseline CI and contract inventory
+
+- Removed the duplicate SH-A01 destination-routing invocation from standard CI; its original mandatory invocation remains.
+- Updated `src/README.md` to describe the actual projects and ownership, not the empty initial placeholders.
+- Added a synthetic `AssemblyPointChanged.v1` contract example matching the Situation catalog producer and documented its routing key. No runtime contract changed.
+- The current runtime comprises five independent .NET owners plus Gateway. All default state is local; optional broker and database paths are retained.
+
+## Runtime inventory (initial, to refine alongside each slice)
+
+| Owner | Writes / reads | Storage, events and profiles | Existing checks |
+| --- | --- | --- | --- |
+| Management | Alerts, progress, EWSS and Grouping commands; incident/case/plan queries | JSON / optional PostgreSQL, outbox and memory/RabbitMQ; Grouping fixture opt-in | Offline, Grouping, Management unit/full |
+| Situation | Closures, reviews, imports, assembly-point commands; snapshot and catalog reads | JSON, optional catalog PostgreSQL and outbox; sample/Valencia | Offline, destination, catalogs, site events |
+| Routing | Draw and instruction commands; distributions, destination and instruction reads | Local journal, optional RabbitMQ; graph, recorded/live ORS and forecast modes | Routing unit, destination, reservation/publication journeys |
+| Dispatch | Assistance, unit assignment and progress commands; task and ranking reads | JSON / optional PostgreSQL; optional RabbitMQ notifications | Offline, ORS, PostgreSQL and notification suites |
+| Sheltering | Catalog, assignment, reservation, admission/departure writes; availability and reception reads | JSON / optional PostgreSQL; catalog and allocation outboxes, optional RabbitMQ; demo/readonly/OIDC catalog access | Catalog/reception, reservation, publication, broker, database and browser suites |
+| Gateway | Forwarding, link-profile and queue operations; composed client views | Local state, optional sign-in, loopback-only public entry | Offline, connectivity, Gateway unit and browser suites |
+
+## Confirmed gaps and priorities
+
+| Priority | Evidence | Classification / acceptance |
+| --- | --- | --- |
+| P1 | `scripts/offline_demo.py` selects either offline or shelter tests; `compose.sheltering.yaml` is an opt-in overlay | Confirmed missing default integration. Default sample must include the fifth owner and a mandatory same-session workflow. |
+| P1 | Grouping evidence and Routing destination evidence only wired in test setup; existing rehearsal uses separate fresh-state suites | Confirmed integration gap, not yet a combined journey. Keep existing regression suites and add a real same-state scenario. |
+| P1 | `src/Management/Program.cs`, `src/Dispatch/Program.cs` and local Gateway demo wiring | Authorization and data-scope review required: confirm intended demo vs authenticated behavior and preserve fail-closed protected paths. No security defect claimed without validation. |
+| P2 | `docs/offline-demo.md` vs `README.md`; launcher accepts only sample/Valencia, while README still mentions Warsaw | Confirmed documentation discrepancy; preserve actual supported runtime and research removed Warsaw assets before making a behavior change. |
+| P2 | `offline-ci.yml` duplicate destination check | Corrected in this checkpoint. PostgreSQL job service blocks match the jobs that reference them on this base. |
+| P2 | `src/README.md` and missing event fixture | Corrected in this checkpoint. |
+| P2 | `docs/tools/README.md` only provides the initial short list | External verification and integration matrix pending. No live hardware, real provider credentials or partner APIs have been verified. |
+
+## Verification / limits
+
+- `dotnet build Cassini.Offline.slnx -m:1`: passed (0 errors; 4 NU1900 warnings, vulnerability feed unavailable).
+- `python -m json.tool contracts/events/AssemblyPointChanged.v1.json` and `git diff --check`: passed.
+- `docker compose config --quiet`: passed; engine access denied in restricted execution, so image build/start not verified.
+- GitHub connector returned no pull-request workflow run for the merge SHA; baseline remote CI status not established.
+- Initial HTTP tests in restricted execution could not reach the local ready endpoint although the service was listening. Repeat outside that restriction on alternate local ports: all passed (`offline_demo.py --test --no-build`, `offline_demo.py --sheltering --test --no-build`, `destination_routing_integration.py --no-build`). Coverage included alert/draw/closure, Dispatch, connectivity, catalogs and restart, reception and restart, first-leg fallback and blocked exit. No external live data was used.
+
+## Next step
+
+Make the standard local launcher enable Sheltering for the sample scenario without changing existing state directories or enabling synthetic sample sites in Valencia. Keep `--sheltering` as a compatible alias; verify base and legacy paths plus explicit no-data behavior. Then migrate default Compose and add the full same-session journey before declaring integration complete.
