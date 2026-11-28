@@ -25,88 +25,62 @@ internal sealed record DispatchView(AssistanceRequest[] Requests, ResponseUnit[]
 internal sealed record Receipt(string Command, JsonElement Result);
 internal sealed record DispatchState(DispatchView View, Dictionary<string, Receipt> Receipts);
 
-internal sealed class DispatchStore
+internal sealed class DispatchStore(IDispatchPersistence persistence)
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
-    private readonly object gate = new();
-    private readonly string? path;
-    private DispatchState state;
+    internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    public DispatchStore(string? dataDirectory)
-    {
-        if (!string.IsNullOrWhiteSpace(dataDirectory))
-        {
-            Directory.CreateDirectory(dataDirectory);
-            path = Path.Combine(dataDirectory, "dispatch.json");
-        }
-
-        state = path is not null && File.Exists(path)
-            ? JsonSerializer.Deserialize<DispatchState>(File.ReadAllBytes(path), Json)
-                ?? throw new InvalidDataException("Invalid Dispatch demo state.")
-            : new DispatchState(new DispatchView(
-                [
-                    new("request-15", "case-15", "pickup", "Open", 1),
-                    new("request-16", "case-16", "pickup", "Open", 1),
-                ],
-                [new("unit-3", "Jednostka 3", "Available", "exit-east"),
-                 new("unit-4", "Jednostka 4", "Available", "exit-east")], []), []);
-    }
-
-    public DispatchView Read()
-    {
-        lock (gate)
-            return state.View;
-    }
+    public DispatchView Read() => persistence.Read().View;
 
     public IResult? CheckReceipt<TCommand>(string? id, TCommand command)
     {
         if (string.IsNullOrWhiteSpace(id) || id.Length > 128)
-            return Error("CommandIdRequired", "Provide a command ID of at most 128 characters.", 400);
+            return InvalidCommandId();
 
-        var identity = Identify(command);
-        lock (gate)
-            return CheckReceipt(id, identity);
+        return CheckReceipt(persistence.Read(), id, Identify(command));
     }
 
     public IResult Execute<TCommand>(
         string? id, TCommand command, Func<DispatchView, (DispatchView? Changed, object Payload, int Status)> apply)
     {
         if (string.IsNullOrWhiteSpace(id) || id.Length > 128)
-            return Error("CommandIdRequired", "Provide a command ID of at most 128 characters.", 400);
+            return InvalidCommandId();
 
         var identity = Identify(command);
-        lock (gate)
+        return persistence.Update(state =>
         {
-            if (CheckReceipt(id, identity) is { } previous)
-                return previous;
+            if (CheckReceipt(state, id, identity) is { } previous)
+                return (null, previous);
 
             var (changed, payload, status) = apply(state.View);
             if (changed is null)
-                return Results.Json(payload, statusCode: status);
+                return (null, Results.Json(payload, statusCode: status));
 
             var result = JsonSerializer.SerializeToElement(payload, Json);
             var receipts = new Dictionary<string, Receipt>(state.Receipts) { [id] = new(identity, result) };
-            var next = new DispatchState(changed, receipts);
-            try
-            {
-                if (path is not null)
-                {
-                    var temporaryPath = path + ".tmp";
-                    File.WriteAllBytes(temporaryPath, JsonSerializer.SerializeToUtf8Bytes(next, Json));
-                    File.Move(temporaryPath, path, overwrite: true);
-                }
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-                return Error("StateUnavailable", "Dispatch could not write its local state.", 503);
-            }
-
-            state = next;
-            return Results.Ok(result);
-        }
+            return (new DispatchState(changed, receipts), Results.Ok(result));
+        });
     }
 
-    private IResult? CheckReceipt(string id, string identity)
+    internal static DispatchState InitialState(string? dataDirectory)
+    {
+        var path = StatePath(dataDirectory);
+        if (File.Exists(path))
+            return JsonSerializer.Deserialize<DispatchState>(File.ReadAllBytes(path), Json)
+                ?? throw new InvalidDataException("Invalid Dispatch demo state.");
+
+        return new DispatchState(new DispatchView(
+            [
+                new("request-15", "case-15", "pickup", "Open", 1),
+                new("request-16", "case-16", "pickup", "Open", 1),
+            ],
+            [new("unit-3", "Jednostka 3", "Available", "exit-east"),
+             new("unit-4", "Jednostka 4", "Available", "exit-east")], []), []);
+    }
+
+    internal static string? StatePath(string? dataDirectory) => string.IsNullOrWhiteSpace(dataDirectory)
+        ? null : Path.Combine(dataDirectory, "dispatch.json");
+
+    private static IResult? CheckReceipt(DispatchState state, string id, string identity)
     {
         if (!state.Receipts.TryGetValue(id, out var receipt))
             return null;
@@ -118,6 +92,9 @@ internal sealed class DispatchStore
 
     private static string Identify<TCommand>(TCommand command) =>
         typeof(TCommand).Name + ":" + JsonSerializer.Serialize(command, Json);
+
+    private static IResult InvalidCommandId() =>
+        Error("CommandIdRequired", "Provide a command ID of at most 128 characters.", 400);
 
     internal static IResult Error(string code, string detail, int status) =>
         Results.Json(new { code, detail }, statusCode: status);
