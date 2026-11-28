@@ -31,15 +31,24 @@ internal static class Network
         new("outside-connector", "exit-east", "exit-north", null, 300, true),
     ];
 
-    internal static readonly string[] Exits = ["exit-east", "exit-north"];
+    internal static string[] Exits { get; private set; } = ["exit-east", "exit-north"];
     internal static DemoNetwork? Warsaw { get; private set; }
     internal static CityNetwork? City { get; private set; }
 
     internal static void Configure(DemoNetwork? network, CityNetwork? city = null)
     {
-        if (network is null) return;
-        Warsaw = network;
         City = city;
+        if (network is null)
+        {
+            if (city is not null)
+            {
+                Nodes = [];
+                Segments = [];
+                Exits = [];
+            }
+            return;
+        }
+        Warsaw = network;
         Nodes = network.Nodes.Select(node => new Node(node.Id, node.Label, node.Longitude, node.Latitude)).ToArray();
         Segments = network.Segments.Select(link => new Segment(link.Id, link.From, link.To, link.WalkingSeconds,
             link.DrivingSeconds, link.BothWays, link.Geometry, link.DrivingGeometry, link.ReverseDrivingGeometry,

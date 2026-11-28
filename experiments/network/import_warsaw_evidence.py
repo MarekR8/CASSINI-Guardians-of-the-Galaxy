@@ -191,11 +191,11 @@ def timestamp(value):
     return observed.isoformat()
 
 
-def ensure_warsaw(geojson, empty_ok=False):
+def ensure_area(geojson, area, label, empty_ok=False):
     features = geojson["features"]
     if geojson["type"] != "FeatureCollection" or not isinstance(features, list) or (not features and not empty_ok):
-        raise ValueError("Provide a GeoJSON FeatureCollection of polygons clipped to the Warsaw AOI.")
-    west, south, east, north = AOI
+        raise ValueError(f"Provide a GeoJSON FeatureCollection of polygons clipped to the {label} AOI.")
+    west, south, east, north = area
     for feature in features:
         geom = feature["geometry"]
         if geom["type"] not in ("Polygon", "MultiPolygon"):
@@ -205,7 +205,11 @@ def ensure_warsaw(geojson, empty_ok=False):
             for ring in polygon:
                 for x, y, *_ in ring:
                     if not (west - 0.000001 <= x <= east + 0.000001 and south - 0.000001 <= y <= north + 0.000001):
-                        raise ValueError("Coordinates are outside the Warsaw AOI. Clip to the AOI in WGS 84 (lon, lat).")
+                        raise ValueError(f"Coordinates are outside the {label} AOI. Clip to the AOI in WGS 84 (lon, lat).")
+
+
+def ensure_warsaw(geojson, empty_ok=False):
+    ensure_area(geojson, AOI, "Warsaw", empty_ok)
 
 
 def import_layer(base, operation, payload):

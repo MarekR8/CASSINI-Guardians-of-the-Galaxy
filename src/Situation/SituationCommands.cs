@@ -19,17 +19,19 @@ internal sealed class SituationCommands(SituationStore store, ReviewNetwork revi
     {
         var (id, revision) = CheckVersion(command.CommandId, command.ExpectedRevision);
         if (command.SegmentId is not { } segment || command.Closed is not { } closed ||
-            (closed && !KnownSegments.Contains(segment) && !reviewNetwork.ContainsCitySegment(segment)))
+            (closed && !CanClose(segment)))
             throw Invalid("Specify a known segmentId and whether it is closed.");
 
         return store.Apply(id, revision, Fingerprint("closure", command), snapshot =>
         {
-            if (!closed && !KnownSegments.Contains(segment) && !reviewNetwork.ContainsCitySegment(segment)
-                && !snapshot.ClosedSegments.Contains(segment))
+            if (!closed && !CanClose(segment) && !snapshot.ClosedSegments.Contains(segment))
                 throw Invalid("Specify a known segmentId and whether it is closed.");
             var evidence = new ClosureEvidence("operator", null, null, DateTimeOffset.UtcNow);
             return UpdateClosures(snapshot, [segment], closed, evidence);
         });
+
+        bool CanClose(string id) => reviewNetwork.ContainsCitySegment(id)
+            || (!reviewNetwork.CityOnly && KnownSegments.Contains(id));
     }
 
     internal SituationSnapshot ImportReview(ImportReviewCommand command)
@@ -64,7 +66,7 @@ internal sealed class SituationCommands(SituationStore store, ReviewNetwork revi
                 throw new SituationError(409, "ReviewAlreadyDecided", "The review feature already has a decision.");
             var approve = command.Decision == "approve";
             if (approve && feature.SegmentIds.Length == 0)
-                throw Invalid("Confirm a feature that intersects at least one exercise corridor.");
+                throw Invalid("Confirm a feature that intersects at least one road segment.");
 
             var decidedAt = DateTimeOffset.UtcNow;
             var evidenceSource = feature.Mode == "synthetic" ? "exercise-verified" : "flypix-verified";
@@ -162,7 +164,7 @@ internal sealed class SituationCommands(SituationStore store, ReviewNetwork revi
     private static string Fingerprint<T>(string kind, T command) =>
         $"{kind}:{Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(command)))}";
 
-    private static JsonElement ReadPolygons(JsonElement collection)
+    internal static JsonElement ReadPolygons(JsonElement collection)
     {
         if (ReadType(collection) != "FeatureCollection" ||
             !collection.TryGetProperty("features", out var features) || features.ValueKind != JsonValueKind.Array)

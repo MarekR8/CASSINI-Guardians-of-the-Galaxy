@@ -2,8 +2,10 @@ using Cassini.Routing;
 using Cassini.Demo;
 
 var builder = WebApplication.CreateBuilder(args);
-var network = DemoNetwork.Load(builder.Configuration["Demo:Scenario"]);
-Network.Configure(network, network is null ? null : CityNetwork.Load(builder.Configuration["Demo:CityDirectory"]));
+var scenario = builder.Configuration["Demo:Scenario"] is { Length: > 0 } configured ? configured : "sample";
+var valencia = scenario == "valencia";
+var network = DemoNetwork.Load(valencia ? "sample" : scenario);
+Network.Configure(network, scenario == "sample" ? null : CityNetwork.Load(builder.Configuration["Demo:CityDirectory"], scenario));
 if (builder.Configuration["urls"] is null)
     builder.WebHost.UseUrls("http://127.0.0.1:5083");
 
@@ -45,27 +47,34 @@ var queries = app.MapGroup("/queries");
 queries.MapGet("/network", () => new {
     Network.Nodes, Network.Segments, Network.Exits, Network.Warsaw?.Bounds,
     Network.Warsaw?.ContextRoads, Network.Warsaw?.Waterways, Network.Warsaw?.Attribution, Network.Warsaw?.OsmTimestamp,
-    city = Network.City is { } city ? new { city.Bounds, city.OsmTimestamp, city.RoadCount } : null,
-    scenario = Network.Warsaw is null ? "sample" : "warsaw"
+    city = Network.City is { } city ? new { city.Bounds, city.OsmTimestamp, city.RoadCount, city.ZoneCounts } : null,
+    scenario
 });
+queries.MapGet("/city-node/{id:long}", (long id) => Network.City?.Node(id) is { } node
+    ? Results.Ok(node) : Results.NotFound());
+queries.MapGet("/city-edge/{id}", (string id) => Network.City?.Road(id) is { } road
+    ? Results.Ok(road) : Results.NotFound());
 queries.MapGet("/validate-route", async (string segments, DateTimeOffset? at, RoutingQueries handlers,
     CancellationToken cancellationToken) => await handlers.ValidateRouteAsync(segments, at, cancellationToken));
 queries.MapGet("/city-route", (string from, string to, string? mode, RoutingQueries handlers, CancellationToken cancellationToken) =>
     handlers.CityRouteAsync(from, to, mode, cancellationToken));
-queries.MapGet("/distribution",
-    (string node, DateTimeOffset? at, string? mode, string? destination, bool? accessible, RoutingQueries handlers,
-        CancellationToken cancellationToken) =>
-        handlers.DistributionAsync(node, at, mode, destination, accessible == true, cancellationToken));
-queries.MapGet("/assistance-route",
-    (string from, string pickup, RoutingQueries handlers, CancellationToken cancellationToken) =>
-        handlers.AssistanceAsync(from, pickup, cancellationToken));
-queries.MapGet("/draws/{commandId}",
-    (string commandId, RoutingQueries handlers, CancellationToken cancellationToken) =>
-        handlers.DrawStatusAsync(commandId, cancellationToken));
+if (!valencia)
+{
+    queries.MapGet("/distribution",
+        (string node, DateTimeOffset? at, string? mode, string? destination, bool? accessible, RoutingQueries handlers,
+            CancellationToken cancellationToken) =>
+            handlers.DistributionAsync(node, at, mode, destination, accessible == true, cancellationToken));
+    queries.MapGet("/assistance-route",
+        (string from, string pickup, RoutingQueries handlers, CancellationToken cancellationToken) =>
+            handlers.AssistanceAsync(from, pickup, cancellationToken));
+    queries.MapGet("/draws/{commandId}",
+        (string commandId, RoutingQueries handlers, CancellationToken cancellationToken) =>
+            handlers.DrawStatusAsync(commandId, cancellationToken));
 
-var commands = app.MapGroup("/commands");
-commands.MapPost("/draw",
-    (DrawCommand command, RoutingCommands handlers, CancellationToken cancellationToken) =>
-        handlers.DrawAsync(command, cancellationToken));
+    var commands = app.MapGroup("/commands");
+    commands.MapPost("/draw",
+        (DrawCommand command, RoutingCommands handlers, CancellationToken cancellationToken) =>
+            handlers.DrawAsync(command, cancellationToken));
+}
 
 app.Run();

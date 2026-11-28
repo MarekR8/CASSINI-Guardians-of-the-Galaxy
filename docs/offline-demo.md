@@ -1,5 +1,7 @@
 # CASSINI Offline
 
+Domyślny widok tego brancha to [Walencja](../data/local/valencia.md). Poniżej opisano wcześniejsze scenariusze demonstracyjne.
+
 Panel koordynatora i węzła ewakuacji działa na jednym komputerze z czterema niezależnymi usługami ASP.NET Core .NET 10 oraz bramą HTTP. Android ma własny scenariusz ćwiczeniowy działający bez bramy. Wszystkie lokalizacje, mieszkańcy, jednostki i czasy marszu użyte przez scenariusz są syntetyczne.
 
 ## Start z Docker Compose

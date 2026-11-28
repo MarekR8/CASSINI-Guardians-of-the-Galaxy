@@ -6,10 +6,14 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
     builder.WebHost.UseUrls("http://127.0.0.1:5082");
 
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 8 * 1024 * 1024);
-var network = DemoNetwork.Load(builder.Configuration["Demo:Scenario"]);
-var city = network is null ? null : CityNetwork.Load(builder.Configuration["Demo:CityDirectory"]);
+var scenario = builder.Configuration["Demo:Scenario"] is { Length: > 0 } configured ? configured : "sample";
+var valencia = scenario == "valencia";
+var directory = builder.Configuration["Demo:CityDirectory"];
+var network = DemoNetwork.Load(valencia ? "sample" : scenario);
+var city = scenario == "sample" ? null : CityNetwork.Load(directory, scenario);
 var population = new MockGhslEstimator(Path.Combine(AppContext.BaseDirectory, "population-estimate.json"));
-builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situation:StateFile"], network, population));
+builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situation:StateFile"], network, population,
+    scenario, valencia ? Path.Combine(directory!, "hazard-seed.json") : null));
 builder.Services.AddSingleton(new ReviewNetwork(network, city));
 builder.Services.AddSingleton<SituationQueries>();
 builder.Services.AddSingleton<SituationCommands>();
@@ -31,6 +35,12 @@ app.Use(async (context, next) =>
 app.MapGet("/health/live", () => Results.Ok(new { status = "ok" }));
 app.MapGet("/health/ready", (SituationQueries queries) => Results.Ok(new { status = "ok", queries.Snapshot().Revision }));
 app.MapGet("/queries/snapshot", (SituationQueries queries) => queries.Snapshot());
+app.MapGet("/queries/closed-roads", (SituationQueries queries) =>
+{
+    var snapshot = queries.Snapshot();
+    return new { snapshot.Revision, roads = snapshot.ClosedSegments.Select(id => city?.Road(id))
+        .OfType<CityRoad>().Select(road => new { road.Id, road.Geometry }) };
+});
 app.MapPost("/commands/closure", (ClosureCommand command, SituationCommands commands) => commands.SetClosure(command));
 app.MapPost("/commands/import-copernicus", (ImportCopernicusCommand command, SituationCommands commands) =>
     commands.ImportCopernicus(command));

@@ -8,7 +8,8 @@ const companionConfig = fetch('/ui/companion')
   .then(response => response.ok ? response.json() : null)
   .catch(() => null);
 const state = {
-  network: null, situation: null, distribution: null, draw: null,
+  network: null, situation: null, distribution: null, draw: null, readAvailable: false,
+  cityImagery: null, closedRoads: [],
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null, reviewSignature: null,
   cityPicking: false, cityPoints: [], cityPath: null,
@@ -16,7 +17,7 @@ const state = {
 };
 const mapViewport = createMapViewport($('map'), {
   zoomIn: $('map-zoom-in'), zoomOut: $('map-zoom-out'), reset: $('map-zoom-reset'),
-  maxZoom: () => state.network?.scenario === 'warsaw' ? 32 : 5,
+  maxZoom: () => (state.network?.city || state.network?.scenario === 'warsaw') ? 32 : 5,
 });
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
@@ -93,7 +94,9 @@ async function run(action) {
   try {
     message = await action();
     await refresh(epoch);
-    notice(message || 'Scenariusz gotowy. Wybierz węzeł i wylosuj trasę.');
+    notice(message || (state.network?.scenario === 'valencia'
+      ? 'Zalanie z października 2024 r. · archiwalna obserwacja Copernicus EMS'
+      : 'Scenariusz gotowy. Wybierz węzeł i wylosuj trasę.'));
   } catch (error) {
     invalidateRead();
     notice('Nie udało się wykonać operacji. ' + error.message, true);
@@ -105,54 +108,79 @@ async function run(action) {
 
 function invalidateRead() {
   state.distribution = null;
+  state.readAvailable = false;
   if (state.draw) state.draw = { id: state.draw.id, state: 'Unknown', route: null };
-  renderDistribution();
+  if (state.network?.scenario === 'valencia') redrawMap();
+  else renderDistribution();
 }
 
 async function refresh(epoch) {
-  const [network, situation, incident, dispatch, scenes, companion] = await Promise.all([
-    state.network ?? api('routing', 'queries/network'),
+  const network = state.network ?? await api('routing', 'queries/network');
+  const valencia = network.scenario === 'valencia';
+  const [situation, incident, dispatch, scenes, companion, cityImagery] = await Promise.all([
     api('situation', 'queries/snapshot'),
-    api('management', 'queries/incident'),
-    api('dispatch', 'queries/assignments'),
+    valencia ? null : api('management', 'queries/incident'),
+    valencia ? null : api('dispatch', 'queries/assignments'),
     satelliteScenes,
     companionConfig,
+    valencia ? state.cityImagery ?? fetch('/maps/city-imagery.json').then(response => {
+      if (!response.ok) throw new Error('Brak lokalnych metadanych scen Walencji.');
+      return response.json();
+    }) : null,
   ]);
   if (state.epoch !== epoch) return;
   const node = $('node').value;
   const previousCityPath = state.cityPath;
-  const [distribution, draw, cityPath] = await Promise.all([
-    api('routing', 'queries/distribution?node=' + encodeURIComponent(node)),
+  const revisionChanged = state.situation?.revision !== situation.revision;
+  const [distribution, draw, cityPath, closureLayer] = await Promise.all([
+    valencia ? null : api('routing', 'queries/distribution?node=' + encodeURIComponent(node)),
     state.draw ? api('routing', 'queries/draws/' + state.draw.id) : null,
-    previousCityPath && (previousCityPath.revision !== situation.revision || !state.distribution)
+    previousCityPath && (previousCityPath.revision !== situation.revision || !state.readAvailable)
       ? requestCityPath() : null,
+    valencia && revisionChanged ? api('situation', 'queries/closed-roads') : null,
   ]);
   if (state.epoch !== epoch) return;
-  if (situation.revision !== distribution.revision || (draw && draw.revision !== distribution.revision) ||
-      (cityPath && cityPath.revision !== distribution.revision))
+  if ([distribution, draw, cityPath, closureLayer].some(view => view && view.revision !== situation.revision))
     throw new Error('Sytuacja zmieniła się podczas odczytu.');
 
+  const restored = !state.readAvailable;
+  state.readAvailable = true;
   state.network = network;
   state.situation = situation;
+  state.cityImagery = cityImagery;
+  if (closureLayer) state.closedRoads = closureLayer.roads;
+  document.body.classList.toggle('valencia', valencia);
+  for (const id of ['exercise-controls', 'exercise-routing', 'exercise-operations', 'scenario-time'])
+    $(id).hidden = valencia;
+  $('valencia-tools').hidden = !valencia;
+  if (valencia) {
+    const { safe = 0, hazard = 0, unknown = 0 } = network.city.zoneCounts;
+    const count = value => value.toLocaleString('pl-PL');
+    text('valencia-zone-counts', count(hazard) + ' w strefie zagrożenia · ' + count(safe) +
+      ' poza wykrytym zalaniem · ' + count(unknown) + ' bez oceny');
+    text('map-route-label', 'Trasa testowa OSM');
+  }
   state.distribution = distribution;
   if (draw) state.draw = { id: state.draw.id, ...draw };
   if (cityPath && state.cityPath === previousCityPath) showCityPath(cityPath);
   const warsaw = network.scenario === 'warsaw';
   const scenarioLink = $('scenario-switch');
   const destination = new URL('/', window.location.origin);
-  scenarioLink.hidden = !companion?.port || String(companion.port) === destination.port;
+  scenarioLink.hidden = valencia || !companion?.port || String(companion.port) === destination.port;
   if (!scenarioLink.hidden) {
     destination.port = companion.port;
     scenarioLink.href = destination.href;
     scenarioLink.textContent = warsaw ? 'Przełącz na Kłodzko' : 'Przełącz na Warszawę';
   }
-  const scene = scenes?.[warsaw ? 'warsaw' : 'sample'];
+  const scene = valencia ? null : scenes?.[network.scenario];
   state.satelliteScene = scene;
-  text('incident', warsaw ? 'DEMO · POWÓDŹ · WARSZAWA' : 'DEMO · POWÓDŹ · ' + incident.incidentId);
+  text('incident', valencia ? 'DEMO · POWÓDŹ · WALENCJA'
+    : warsaw ? 'DEMO · POWÓDŹ · WARSZAWA' : 'DEMO · POWÓDŹ · ' + incident.incidentId);
   text('map-area', network.city
-    ? 'Warszawa · ' + network.city.roadCount.toLocaleString('pl-PL') + ' odcinków OSM'
+    ? (valencia ? 'Aglomeracja Walencji' : 'Warszawa') + ' · ' +
+      network.city.roadCount.toLocaleString('pl-PL') + ' odcinków OSM'
     : warsaw ? 'Warszawa · lokalne ćwiczenie nad Wisłą' : 'Kłodzko · obszar ćwiczeń');
-  $('map-credit').hidden = !warsaw;
+  $('map-credit').hidden = !warsaw && !valencia;
   $('city-tools').hidden = !network.city;
   $('city-routing').hidden = !network.city;
   if (scene) {
@@ -172,14 +200,18 @@ async function refresh(epoch) {
     text('archive-date', ' · obserwacja ' + formatObservation.format(new Date(archive.observedAt)) + ' UTC' +
       (archive.resolutionMeters ? ' · ' + archive.resolutionMeters + ' m' : ''));
   }
-  $('review-panel').hidden = !warsaw;
-  text('clock', time(distribution.at) + ' UTC');
+  $('review-panel').hidden = !warsaw && !valencia;
   text('revision', 'Rewizja ' + situation.revision);
-  renderDistribution();
-  const operations = JSON.stringify([incident, dispatch]);
-  if (operations !== state.operationsSignature) {
-    renderOperations(incident, dispatch);
-    state.operationsSignature = operations;
+  if (valencia) {
+    if (revisionChanged || restored || cityPath || (state.cityPath && state.busy)) redrawMap();
+  } else {
+    text('clock', time(distribution.at) + ' UTC');
+    renderDistribution();
+    const operations = JSON.stringify([incident, dispatch]);
+    if (operations !== state.operationsSignature) {
+      renderOperations(incident, dispatch);
+      state.operationsSignature = operations;
+    }
   }
   const hazards = situation.hazards || [];
   const sources = JSON.stringify(hazards);
@@ -292,6 +324,7 @@ function renderMap(route) {
   const map = $('map');
   if (!state.network) return;
   const warsaw = state.network.scenario === 'warsaw';
+  const valencia = state.network.scenario === 'valencia';
   const scene = state.satelliteScene;
   const city = state.network.city;
   const cityBounds = city?.bounds ?? (warsaw ? scene?.bounds : null);
@@ -330,8 +363,17 @@ function renderMap(route) {
       $('ortho-source').href = scene.detail.sourceUrl;
     }
   }
+  if (valencia) {
+    const selected = $('valencia-image').value;
+    const radar = state.cityImagery.scenes[selected];
+    if (radar) {
+      const image = mapImage(radar.bounds, '/maps/sentinel-' + selected + '.jpg', .82);
+      image.id = 'valencia-radar';
+      map.append(image);
+    }
+  }
   if (city) {
-    const roads = mapImage(city.bounds, '/maps/warsaw.svg?v=' + encodeURIComponent(city.osmTimestamp), scene ? .48 : 1);
+    const roads = mapImage(city.bounds, '/maps/city.svg?v=' + encodeURIComponent(city.osmTimestamp), scene ? .48 : 1);
     roads.classList.add('map-city-roads');
     map.append(roads);
   }
@@ -356,6 +398,8 @@ function renderMap(route) {
         'stroke-width': 1.8 }));
     }
   }
+  if (valencia && $('valencia-nodes').checked)
+    map.append(mapImage(city.bounds, '/maps/city-nodes.svg', .9));
   const archive = scene?.floodArchive;
   $('archive-legend').hidden = !archive;
   if (archive) {
@@ -369,12 +413,14 @@ function renderMap(route) {
   const pending = (state.situation.reviewFeatures || []).filter(feature => feature.status === 'Pending');
   $('review-legend').hidden = !pending.length;
   for (const feature of pending) {
+    const group = svg('g', { id: 'map-review-' + feature.id });
     for (const polygon of polygons(feature.geometry)) {
-      map.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd', fill: '#9c67c2', 'fill-opacity': .38,
+      group.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd', fill: '#9c67c2', 'fill-opacity': .38,
         stroke: '#e0abff', 'stroke-width': 2.4, 'stroke-dasharray': '5 4' }));
     }
+    map.append(group);
   }
-  if (city) {
+  if (city && !valencia) {
     for (const feature of (state.situation.reviewFeatures || []).filter(item =>
       item.status === 'Approved' && item.segmentIds.some(id => id.startsWith('osm-') && closed.has(id)))) {
       for (const polygon of polygons(feature.geometry)) {
@@ -385,7 +431,19 @@ function renderMap(route) {
   }
   map.append(svg('path', { d: 'M 713 62 V 29 M 706 38 L 713 29 L 720 38', stroke: '#a4babf', fill: 'none', 'stroke-width': 2 }));
   map.append(svg('text', { x: 708, y: 82, class: 'map-caption' }, 'N'));
-  const routes = [];
+  const routes = valencia ? state.closedRoads.map(road => ({
+    points: pointsOnMap(road.geometry), fill: 'none', stroke: '#ff9e8f',
+    'stroke-width': 4, 'stroke-dasharray': '8 5'
+  })) : [];
+  if (valencia) {
+    for (const [name, lon, lat] of [
+      ['València', -0.374, 39.48], ['Torrent', -0.466, 39.452], ['Picanya', -0.443, 39.437],
+      ['Paiporta', -0.414, 39.422], ['Catarroja', -0.399, 39.398], ['Albufera', -0.353, 39.322]
+    ]) {
+      const [x, y] = project(lon, lat);
+      map.append(svg('text', { x, y, class: 'map-caption' }, name));
+    }
+  }
   for (const segment of state.network.segments) {
     if (!(segment.walkingSeconds > 0)) continue;
     const geometry = segment.geometry ? pointsOnMap(segment.geometry)
@@ -400,7 +458,7 @@ function renderMap(route) {
     if (inaccessible || active) routes.push(line);
     else map.append(svg('polyline', line));
   }
-  if (state.distribution && state.cityPath?.revision === state.situation.revision && state.cityPath.route?.geometry.length) {
+  if (state.readAvailable && state.cityPath?.revision === state.situation.revision && state.cityPath.route?.geometry.length) {
     routes.push({ points: pointsOnMap(state.cityPath.route.geometry), fill: 'none',
       stroke: '#8df0ce', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
   }
@@ -432,7 +490,7 @@ function renderMap(route) {
     marker.append(svg('circle', { class: 'map-symbol', r: 5, fill: '#fbd47e', stroke: '#12232a', 'stroke-width': 2 }));
     map.append(marker);
   }
-  if (state.cityPath && !state.distribution) {
+  if (state.cityPath && !state.readAvailable) {
     text('city-status', 'Trasa oczekuje na ponowną weryfikację.');
   }
   updateMapDetail();
@@ -447,7 +505,8 @@ function renderReviews(reviews) {
     const details = element('div');
     const confidence = feature.confidence == null ? '' : ' · ' + Math.round(feature.confidence * 100) + '% pewności';
     const status = { Pending: 'Do weryfikacji', Approved: 'Zatwierdzona', Rejected: 'Odrzucona' }[feature.status];
-    const provenance = feature.mode === 'synthetic' ? 'Symulacja' : 'FlyPix AI · ' + (feature.mode === 'live' ? 'API' : 'zapis');
+    const provenance = feature.mode === 'synthetic' ? 'Symulacja'
+      : feature.mode === 'manual' ? 'FlyPix · adnotacja ręczna' : 'FlyPix AI · ' + (feature.mode === 'live' ? 'API' : 'zapis');
     const corridors = feature.segmentIds.filter(id => !id.startsWith('osm-')).map(segmentLabel);
     const roads = feature.segmentIds.length - corridors.length;
     if (roads) corridors.push(roads + ' odc. OSM');
@@ -462,6 +521,22 @@ function renderReviews(reviews) {
       const controls = element('div', null, 'buttons');
       if (feature.segmentIds.length) controls.append(button('Zatwierdź zamknięcie', () => decide('approve')));
       controls.append(button('Odrzuć', () => decide('reject')));
+      if (state.network.scenario === 'valencia') {
+        const focus = element('button', 'Pokaż na mapie');
+        focus.type = 'button';
+        focus.addEventListener('click', () => {
+          const marker = $('map-review-' + feature.id);
+          if (marker) mapViewport.fit(marker.getBBox());
+          $('map').scrollIntoView({ block: 'nearest' });
+        });
+        controls.append(focus);
+      }
+      if (state.network.scenario === 'valencia' && feature.segmentIds.length) {
+        const details = element('details');
+        details.append(element('summary', 'Dopasowane odcinki OSM'),
+          element('p', feature.segmentIds.join(' · ')));
+        item.append(details);
+      }
       item.append(controls);
     }
     list.append(item);
@@ -481,9 +556,19 @@ function requestCityPath() {
 function showCityPath(path) {
   state.cityPath = path;
   const found = path.route;
-  text('city-status', found ? 'Trasa orientacyjna · ' + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
+  const title = state.network?.scenario === 'valencia' ? 'Trasa testowa OSM · ' : 'Trasa orientacyjna · ';
+  text('city-status', found ? title + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
 }
 
+$('valencia-nodes').addEventListener('change', redrawMap);
+$('valencia-image').addEventListener('change', () => {
+  redrawMap();
+  const radar = $('valencia-radar');
+  if (radar && !$('valencia-image').dataset.viewFitted) {
+    mapViewport.fit(radar.getBBox());
+    $('valencia-image').dataset.viewFitted = '1';
+  }
+});
 $('archive-focus').addEventListener('click', () => {
   const layer = $('archive-flood-layer');
   if (layer) mapViewport.fit(layer.getBBox());
@@ -509,7 +594,7 @@ $('city-mode').addEventListener('change', () => {
   redrawMap();
 });
 $('map').addEventListener('click', event => {
-  if (!state.cityPicking || state.busy) return;
+  if (!state.cityPicking || state.busy || !state.readAvailable) return;
   const svgPoint = mapViewport.point(event.clientX, event.clientY);
   const point = state.unproject(svgPoint.x, svgPoint.y);
   const [w, s, e, n] = state.network.city.bounds;
@@ -646,10 +731,10 @@ setInterval(async () => {
   if (state.busy || state.polling) return;
   state.polling = true;
   const epoch = state.epoch;
-  const wasUnavailable = !state.distribution;
+  const wasUnavailable = !state.readAvailable;
   try {
     await refresh(epoch);
-    if (state.epoch === epoch && wasUnavailable && state.distribution)
+    if (state.epoch === epoch && wasUnavailable && state.readAvailable)
       notice('Przywrócono aktualny widok scenariusza.');
   } catch {
     if (state.epoch === epoch) {
