@@ -148,7 +148,7 @@ def wait_ready(url, process, log):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--port", type=int, default=5080, help="Gateway port (uses the next four, or five with --sheltering)")
+    parser.add_argument("--port", type=int, default=5080, help="Gateway port (uses the next five for sample, four for Valencia)")
     parser.add_argument("--data", type=Path, help="Local state/log directory")
     parser.add_argument("--scenario", choices=("valencia", "sample"),
                         help="Defaults to Valencia, or to the sample when running --test")
@@ -157,12 +157,13 @@ def main():
     parser.add_argument("--test", action="store_true", help="Run integration tests in fresh temporary state")
     parser.add_argument("--valencia-inputs-only", action="store_true",
                         help="With --scenario valencia --test, verify layers, graph and closures without the evacuation planner")
-    parser.add_argument("--sheltering", action="store_true", help="Enable the sample assembly point and shelter catalogs")
+    parser.add_argument("--sheltering", action="store_true", help="Legacy sample alias; with --test runs the catalog and reception checks")
     args = parser.parse_args()
-    last_port = 65530 if args.sheltering else 65531
+    args.scenario = args.scenario or ("sample" if args.test or args.sheltering else "valencia")
+    sample_sheltering = args.scenario == "sample"
+    last_port = 65530 if sample_sheltering else 65531
     if not 1024 <= args.port <= last_port:
         parser.error(f"port must be between 1024 and {last_port}")
-    args.scenario = args.scenario or ("sample" if args.test or args.sheltering else "valencia")
     if args.valencia_inputs_only and not (args.test and args.scenario == "valencia"):
         parser.error("--valencia-inputs-only requires --scenario valencia --test")
     if args.sheltering and args.scenario != "sample":
@@ -189,8 +190,11 @@ def main():
             scripts = [test_file, "connectivity_integration.py"] if test_file == "offline_integration.py" else [test_file]
             test_options = ["--inputs-only"] if args.valencia_inputs_only else []
             with start_services(args.port, Path(directory), args.scenario,
-                                city.resolve() if city else None, sheltering=args.sheltering,
+                                city.resolve() if city else None, sheltering=sample_sheltering,
                                 auto_replan=False, evacuation_enabled=False if args.valencia_inputs_only else None) as url:
+                with LOCAL_HTTP.open(url + "/features", timeout=5) as response:
+                    if json.load(response).get("sheltering") != sample_sheltering:
+                        raise RuntimeError("Unexpected Sheltering availability for the selected scenario.")
                 for script in scripts:
                     subprocess.run([os.sys.executable, str(ROOT / "tests" / script), url, *test_options], cwd=ROOT, check=True)
             if args.sheltering:
@@ -210,7 +214,7 @@ def main():
     state_name = "sheltering-demo" if args.sheltering else "offline-demo" if args.scenario == "sample" else "valencia-demo"
     data = args.data or ARTIFACTS / state_name
     with start_services(args.port, data.resolve(), args.scenario, city.resolve() if city else None,
-                        sheltering=args.sheltering) as url:
+                        sheltering=sample_sheltering) as url:
         print("CASSINI Offline: " + url, flush=True)
         print("Ctrl+C zatrzymuje lokalne mikroserwisy.", flush=True)
         try:

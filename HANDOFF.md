@@ -41,6 +41,13 @@ The original working tree was clean; the guide remains on `feature/refactoring-g
 - GitHub connector returned no pull-request workflow run for the merge SHA; baseline remote CI status not established.
 - Initial HTTP tests in restricted execution could not reach the local ready endpoint although the service was listening. Repeat outside that restriction on alternate local ports: all passed (`offline_demo.py --test --no-build`, `offline_demo.py --sheltering --test --no-build`, `destination_routing_integration.py --no-build`). Coverage included alert/draw/closure, Dispatch, connectivity, catalogs and restart, reception and restart, first-leg fallback and blocked exit. No external live data was used.
 
+## Checkpoint 2 — sample launcher includes Sheltering
+
+- The standard `python scripts/offline_demo.py --scenario sample` now starts Sheltering, configures owner URLs and exposes the feature through Gateway. The normal `--test` verifies the feature as well as the original offline regression.
+- Legacy `--sheltering` still selects sample, keeps its original state directory and retains the isolated catalog/reception suite. Default Valencia launching without CLI options is unchanged; sample-only data is not enabled for Valencia. No synthetic destination booking is injected into the production-like sample path.
+- `python scripts/offline_demo.py --test --no-build --port 15080`, `python scripts/offline_demo.py --sheltering --test --no-build --port 15080`, `python tests/grouping_integration.py --no-build --port 15180`, Python compilation and `git diff --check`: all passed. Valencia inputs were not prepared/run in this checkpoint; no Compose or service code changed.
+- Checkpoint 1 pushed as `411bfa07dd8a5474f1cd9aa805a2afb4b907d1d7`; remote SHA matched. PR creation was denied by GitHub integration (`403`); [create PR to develop](https://github.com/MarekR8/CASSINI-Guardians-of-the-Galaxy/compare/develop...feature/refactor-unification?expand=1). The connector only lists PR-triggered workflows and returned none for that commit; CI is not confirmed.
+
 ## Next step
 
-Make the standard local launcher enable Sheltering for the sample scenario without changing existing state directories or enabling synthetic sample sites in Valencia. Keep `--sheltering` as a compatible alias; verify base and legacy paths plus explicit no-data behavior. Then migrate default Compose and add the full same-session journey before declaring integration complete.
+Move the sample Sheltering owner and wiring into base `compose.yaml` while keeping the legacy overlay compatible and preventing the Valencia overlay from exposing Kłodzko fixtures. Validate all Compose configurations and actual image startup if the engine is available. After that, integrate Grouping and real owner evidence into a same-state end-to-end test in standard CI.
