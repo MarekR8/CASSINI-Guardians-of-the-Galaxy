@@ -1,0 +1,35 @@
+/* S8: Keycloak sign-in bar and per-role view (profile `full`). Body classes come from js/auth.js.
+   Hiding is a convenience; the Gateway rejects forbidden commands with 403. */
+.auth-bar:not([hidden]) { display: flex; align-items: center; gap: .5rem; font-size: .875rem; }
+.auth-user { font-weight: 650; }
+.auth-role { color: var(--accent); background: var(--raised); border: 1px solid var(--line);
+  border-radius: .55rem; padding: .2rem .55rem; font-size: .8rem; font-weight: 650; }
+.auth-logout { padding: .35rem .7rem; }
+.auth-status { color: var(--muted); }
+.auth-error { color: var(--danger); }
+
+/* Coordinator-only: road closures, flood alert, detection review, scripted presentation. Node draw: coordinator and resident. */
+body.role-dispatcher #exercise-controls, body.role-responder #exercise-controls,
+body.role-resident #exercise-controls, body.role-none #exercise-controls,
+body.role-dispatcher #alert, body.role-responder #alert, body.role-resident #alert, body.role-none #alert,
+body.role-dispatcher #draw, body.role-responder #draw, body.role-none #draw,
+body.role-dispatcher #reviews button, body.role-responder #reviews button,
+body.role-resident #reviews button, body.role-none #reviews button,
+body.role-dispatcher #presentation-panel, body.role-responder #presentation-panel,
+body.role-resident #presentation-panel, body.role-none #presentation-panel { display: none !important; }
+
+/* Dispatcher: all Dispatch commands, no resident progress (Management). */
+body.role-dispatcher .auth-op-management-progress { display: none !important; }
+
+/* Responder: unit task progress and resident progress; no requests, assignment or replanning. */
+body.role-responder .auth-op-dispatch-request,
+body.role-responder .auth-op-dispatch-plan { display: none !important; }
+
+/* Resident: situation picture, routes and the node draw only. Cases and unit assignments of other residents are
+   not readable (INV-14) and no case can be changed until the token carries a caseId claim (INV-12). */
+body.role-resident section[aria-labelledby="cases-title"],
+body.role-resident section[aria-labelledby="dispatch-title"],
+body.role-resident #metrics-panel { display: none !important; }
+
+/* No usable role: read-only view without any command control. */
+body.role-none #cases .buttons, body.role-none #requests .buttons { display: none !important; }
