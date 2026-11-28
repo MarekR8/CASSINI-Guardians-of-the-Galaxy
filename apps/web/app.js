@@ -10,7 +10,7 @@ const state = {
   cityImagery: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null,
-  dispatchSelections: new Map(), dispatchErrors: new Map(),
+  dispatchSelections: new Map(), dispatchErrors: new Map(), dispatchRankings: new Map(),
   satelliteScene: null, satelliteDetail: false,
 };
 const mapViewport = createMapViewport($('map'), {
@@ -142,6 +142,7 @@ async function refresh(epoch) {
   state.readAvailable = true;
   state.network = network;
   state.situation = situation;
+  if (revisionChanged) state.dispatchRankings.clear();
   state.incident = incident;
   state.dispatch = dispatch;
   state.cityImagery = cityImagery;
@@ -183,7 +184,7 @@ async function refresh(epoch) {
   } else {
     text('clock', time(distribution.at) + ' UTC');
     renderDistribution();
-    const operations = JSON.stringify([incident, dispatch]);
+    const operations = JSON.stringify([incident, dispatch, [...state.dispatchRankings]]);
     if (operations !== state.operationsSignature) {
       renderOperations(incident, dispatch);
       state.operationsSignature = operations;
@@ -547,15 +548,36 @@ function renderOperations(incident, dispatch) {
     if (!assignment && available.length) {
       const select = element('select');
       select.setAttribute('aria-label', 'Jednostka dla ' + item.caseId);
-      for (const unit of available) {
-        const option = element('option', unit.name + ' · ' + unitPositionLabel(unit));
+      const result = state.dispatchRankings.get(item.requestId);
+      const ranking = result?.requestVersion === item.version ? result.candidates : [];
+      const candidates = new Map(ranking.map(candidate => [candidate.unitId, candidate]));
+      const order = new Map(ranking.map((candidate, index) => [candidate.unitId, index]));
+      const ranked = [...available].sort((a, b) => (order.get(a.unitId) ?? order.size) -
+        (order.get(b.unitId) ?? order.size));
+      for (const unit of ranked) {
+        const candidate = candidates.get(unit.unitId);
+        let estimate;
+        if (candidate?.node === unit.node && candidate.status !== 'PositionUnverified') {
+          estimate = candidate.status === 'Eligible' ? 'dojazd ' + minutes(candidate.approachSeconds)
+            : dispatchMessages[candidate.status];
+        }
+        const option = element('option', [unit.name, unitPositionLabel(unit), estimate].filter(Boolean).join(' · '));
         option.value = unit.unitId;
         select.append(option);
       }
       const saved = state.dispatchSelections.get(item.requestId);
       if (available.some(unit => unit.unitId === saved)) select.value = saved;
       select.addEventListener('change', () => state.dispatchSelections.set(item.requestId, select.value));
-      actions.append(select, button('Przydziel', () => {
+      actions.append(button('Porównaj czasy dojazdu', () => dispatchAction(item.requestId, async () => {
+        state.dispatchRankings.delete(item.requestId);
+        const result = await api('dispatch', 'queries/unit-candidates?requestId=' + encodeURIComponent(item.requestId));
+        if (result.situationRevision === state.situation?.revision) {
+          state.dispatchSelections.delete(item.requestId);
+          state.dispatchRankings.set(item.requestId, result);
+        } else {
+          throw Object.assign(new Error(dispatchMessages.SituationChanged), { code: 'SituationChanged' });
+        }
+      })), select, button('Przydziel', () => {
         const unit = available.find(unit => unit.unitId === select.value);
         return withConfirmedUnitPosition(unit, confirmed => change('assign', {
           requestId: item.requestId, unitId: unit.unitId, expectedVersion: item.version, ...confirmed,

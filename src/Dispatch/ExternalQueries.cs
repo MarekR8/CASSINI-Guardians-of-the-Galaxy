@@ -78,7 +78,8 @@ internal sealed class RoutingClient(HttpClient client)
             }
 
             var route = await response.Content.ReadFromJsonAsync<TransportRoute>(cancellation);
-            return route is { Revision: >= 0, Exit.Length: > 0, ApproachSegments: not null, OutboundSegments: not null }
+            return route is { Revision: >= 0, Exit.Length: > 0, ApproachSegments: not null, OutboundSegments: not null,
+                ApproachSeconds: >= 0, OutboundSeconds: >= 0 }
                 ? new(route, true) : new(null, false);
         }
         catch (Exception exception) when (
