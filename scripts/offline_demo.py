@@ -40,7 +40,8 @@ def local_url(port):
 
 @contextmanager
 def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False, *,
-                   auto_replan=None, evacuation_enabled=None, shelter_holds=False):
+                   auto_replan=None, evacuation_enabled=None, shelter_holds=False,
+                   shelter_operators=None):
     data_dir.mkdir(parents=True, exist_ok=True)
     services = [*SERVICES, ("Sheltering", "Cassini.Sheltering", 5)] if sheltering else SERVICES
     env = dict(os.environ)
@@ -80,6 +81,8 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
         env["Sheltering__BaseUrl"] = local_url(port + 5)
         if shelter_holds:
             env["Sheltering__HoldsFile"] = str(ROOT / "data" / "demo" / "sheltering" / "sample-holds.json")
+        # Stage B reception accounts (SH-T05): on with the hold fixture unless set explicitly.
+        if shelter_holds if shelter_operators is None else shelter_operators:
             env["Sheltering__OperatorsFile"] = str(exercise_operators(data_dir))
     children = []
     try:

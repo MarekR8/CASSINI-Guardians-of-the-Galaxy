@@ -147,3 +147,17 @@ body.valencia .exercise-legend { display: none; }
 #reviews details p { overflow-wrap: anywhere; }
 
 body.valencia .legend-observed { background: #ff7663; }
+
+/* SH-T07 sheltering panel */
+#sheltering-panel h3 { margin: 1rem 1.25rem .25rem; font-size: .95rem; }
+.sheltering-token { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: 0 1.25rem; }
+.sheltering-token input { min-width: 12rem; }
+#sheltering-token-state, .sheltering-note { color: var(--muted); font-size: .85rem; }
+.sheltering-note { margin: 0 1.25rem .5rem; }
+.sheltering-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.table-wrap { overflow-x: auto; padding: 0 1.25rem 1rem; }
+#sheltering-assignments { width: 100%; border-collapse: collapse; font-size: .85rem; }
+#sheltering-assignments th, #sheltering-assignments td { text-align: left; padding: .4rem .5rem; border-top: 1px solid var(--line); vertical-align: top; }
+#sheltering-assignments tr[data-status="AwaitingReplacement"] .fact-reservation { color: #ffb7a8; }
+.sheltering-stale #sheltering-status { color: #ffd88a; font-weight: 600; }
+.sheltering-stale .records, .sheltering-stale table { opacity: .7; }

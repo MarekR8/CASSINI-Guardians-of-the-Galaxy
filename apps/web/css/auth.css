@@ -33,3 +33,6 @@ body.role-resident #metrics-panel { display: none !important; }
 
 /* No usable role: read-only view without any command control. */
 body.role-none #cases .buttons, body.role-none #requests .buttons { display: none !important; }
+
+/* SH-T07: residents and unsigned viewers do not see shelter operations. */
+body.role-resident #sheltering-panel, body.role-none #sheltering-panel { display: none !important; }

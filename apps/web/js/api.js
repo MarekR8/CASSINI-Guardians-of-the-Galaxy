@@ -18,6 +18,8 @@ export function cityImagery() {
 // S8: optional Authorization header (Keycloak profile `full`); fn returns a header value or null.
 let authHeader = () => null;
 export function setAuthHeaderProvider(fn) { authHeader = fn; }
+// Current Authorization value (Keycloak) for modules that build their own requests, or null.
+export const authorization = () => authHeader();
 
 // GET /api/{service}/{path} without data, POST with JSON data. A POST result is reported to onCommand.
 // options.headers adds request headers, e.g. X-Cassini-Link: field for a command sent over the field link (task 6).
