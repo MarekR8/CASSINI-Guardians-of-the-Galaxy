@@ -3,14 +3,18 @@ using System.Text.Json;
 namespace Cassini.Dispatch;
 
 internal sealed record AssistanceRequest(string RequestId, string CaseId, string PickupNode, string State, int Version);
-internal sealed record ResponseUnit(string UnitId, string Name, string State, string Node);
+internal sealed record ResponseUnit(string UnitId, string Name, string State, string Node,
+    PositionEvidence? PositionEvidence = null, bool? PositionVerified = null);
 internal sealed record TransportRoute(
     long Revision, string Exit, string[] ApproachSegments, string[] OutboundSegments,
-    int ApproachSeconds, int OutboundSeconds);
+    int ApproachSeconds, int OutboundSeconds, double[][]? ApproachGeometry = null,
+    double[][]? OutboundGeometry = null, RouteProvenance? Provenance = null);
+internal sealed record RouteProvenance(string Source, string Mode, DateTimeOffset ObservedAt);
 
 internal sealed record Assignment(
     string AssignmentId, string RequestId, string CaseId, string UnitId, string State, int Version,
-    TransportRoute Route, string LastKnownNode, bool? RouteCurrent = null)
+    TransportRoute Route, string LastKnownNode, bool? RouteCurrent = null,
+    PositionEvidence? PositionEvidence = null)
 {
     public bool Active => State is not ("Completed" or "Cancelled");
 }

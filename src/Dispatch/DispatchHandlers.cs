@@ -1,21 +1,31 @@
+using System.Text.Json.Serialization;
+
 namespace Cassini.Dispatch;
 
 internal sealed record RequestAssistance(string? CommandId, string? CaseId, string? PickupNode);
-internal sealed record AssignUnit(string? CommandId, string? RequestId, string? UnitId, int? ExpectedVersion);
-internal sealed record ReplanAssignment(string? CommandId, string? AssignmentId, int? ExpectedVersion);
+internal sealed record AssignUnit(string? CommandId, string? RequestId, string? UnitId, int? ExpectedVersion,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ConfirmedStartNode = null);
+internal sealed record ReplanAssignment(string? CommandId, string? AssignmentId, int? ExpectedVersion,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? ConfirmedStartNode = null);
 internal sealed record ReportProgress(string? CommandId, string? AssignmentId, string? Step, int? ExpectedVersion);
 
-internal sealed class DispatchQueries(DispatchStore store, SituationClient situation)
+internal sealed class DispatchQueries(DispatchStore store, SituationClient situation, UnitPositionPolicy positions)
 {
     public async Task<DispatchView> GetAssignments(CancellationToken cancellation)
     {
         var view = store.Read();
-        if (!view.Assignments.Any(assignment => assignment.Active))
-            return view;
-
-        var revision = await situation.GetRevision(cancellation);
+        var revision = view.Assignments.Any(assignment => assignment.Active)
+            ? await situation.GetRevision(cancellation) : null;
         return view with
         {
+            Units = view.Units.Select(unit =>
+            {
+                var active = view.Assignments.FirstOrDefault(item => item.Active && item.UnitId == unit.UnitId);
+                var node = active?.LastKnownNode ?? unit.Node;
+                var evidence = active?.PositionEvidence ?? positions.Read(unit.UnitId, node);
+                return unit with { Node = node, PositionEvidence = evidence,
+                    PositionVerified = evidence.Mode == "manual" || positions.IsVerified(evidence) };
+            }).ToArray(),
             Assignments = view.Assignments.Select(assignment => assignment with
             {
                 RouteCurrent = assignment.Active && revision is not null
@@ -26,7 +36,8 @@ internal sealed class DispatchQueries(DispatchStore store, SituationClient situa
 }
 
 internal sealed class DispatchCommands(
-    DispatchStore store, ManagementClient management, RoutingClient routing, SituationClient situation)
+    DispatchStore store, ManagementClient management, RoutingClient routing, SituationClient situation,
+    UnitPositionPolicy positions)
 {
     public async Task<IResult> RequestAssistance(RequestAssistance command, CancellationToken cancellation)
     {
@@ -84,7 +95,10 @@ internal sealed class DispatchCommands(
         if (invalid is not null)
             return DispatchStore.Error(invalid.Value.Code, invalid.Value.Detail, invalid.Value.Status);
 
-        var lookup = await routing.GetTransportRoute(unit!.Node, request!.PickupNode, cancellation);
+        var evidence = positions.Confirm(unit!.UnitId, unit.Node, command.ConfirmedStartNode);
+        if (evidence is null)
+            return UnverifiedPosition();
+        var lookup = await routing.GetTransportRoute(unit.Node, request!.PickupNode, cancellation);
         if (await GetRouteError(lookup, cancellation) is { } routeError)
             return routeError;
 
@@ -100,7 +114,7 @@ internal sealed class DispatchCommands(
 
             var assignment = new Assignment(
                 $"assignment-{view.Assignments.Length + 1}", request.RequestId, request.CaseId, unit.UnitId,
-                "Assigned", 1, lookup.Route!, unit.Node);
+                "Assigned", 1, lookup.Route!, unit.Node, PositionEvidence: evidence);
             return (view with
             {
                 Requests = Replace(view.Requests, item => item.RequestId == request.RequestId,
@@ -126,6 +140,10 @@ internal sealed class DispatchCommands(
             return DispatchStore.Error("VersionConflict", "Read the current assignment and its version.", 409);
 
         var request = view.Requests.Single(item => item.RequestId == assignment.RequestId);
+        var evidence = positions.Confirm(assignment.UnitId, assignment.LastKnownNode, command.ConfirmedStartNode,
+            assignment.PositionEvidence);
+        if (evidence is null)
+            return UnverifiedPosition();
         var lookup = await routing.GetTransportRoute(assignment.LastKnownNode, request.PickupNode, cancellation);
         if (await GetRouteError(lookup, cancellation) is { } routeError)
             return routeError;
@@ -136,7 +154,7 @@ internal sealed class DispatchCommands(
             if (!current.Active || current.Version != command.ExpectedVersion)
                 return Reject("VersionConflict", "Read the current assignment and its version.", 409);
 
-            var updated = current with { Route = lookup.Route!, Version = current.Version + 1 };
+            var updated = current with { Route = lookup.Route!, Version = current.Version + 1, PositionEvidence = evidence };
             return (latest with { Assignments = Replace(latest.Assignments,
                 item => item.AssignmentId == updated.AssignmentId, updated) }, updated, 200);
         });
@@ -197,7 +215,8 @@ internal sealed class DispatchCommands(
             "Completed" => current.Route.Exit,
             _ => current.LastKnownNode,
         };
-        var updated = current with { State = state, Version = current.Version + 1, LastKnownNode = node };
+        var updated = current with { State = state, Version = current.Version + 1, LastKnownNode = node,
+            PositionEvidence = node == current.LastKnownNode ? current.PositionEvidence : null };
         var changed = view with { Assignments = Replace(view.Assignments,
             item => item.AssignmentId == updated.AssignmentId, updated) };
         if (!updated.Active)
@@ -229,8 +248,13 @@ internal sealed class DispatchCommands(
         return null;
     }
 
+    private static IResult UnverifiedPosition() => DispatchStore.Error("PositionUnverified",
+        "Confirm the current unit start node explicitly before routing.", 422);
+
     private async Task<IResult?> GetRouteError(RouteLookup lookup, CancellationToken cancellation)
     {
+        if (lookup.ErrorCode == "FixtureMissing")
+            return DispatchStore.Error("FixtureMissing", "A required route fixture is missing.", 503);
         if (!lookup.ServiceAvailable)
             return DispatchStore.Error("RoutingUnavailable", "The local Routing service could not evaluate both legs.", 503);
         if (lookup.Route is null)

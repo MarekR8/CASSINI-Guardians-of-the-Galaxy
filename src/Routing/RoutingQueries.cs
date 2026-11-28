@@ -8,10 +8,12 @@ internal sealed record RouteOption(
 internal sealed record Distribution(string Node, long Revision, DateTimeOffset At, RouteOption[] Options);
 internal sealed record AssistanceRoute(
     long Revision, string Exit, string[] ApproachSegments, string[] OutboundSegments,
-    int ApproachSeconds, int OutboundSeconds);
+    int ApproachSeconds, int OutboundSeconds, double[][]? ApproachGeometry = null,
+    double[][]? OutboundGeometry = null, RouteProvenance? Provenance = null);
 internal sealed record DrawStatus(string State, RouteOption? Route, long Revision);
 
-internal sealed class RoutingQueries(SituationGateway situation, DrawJournal journal)
+internal sealed class RoutingQueries(SituationGateway situation, DrawJournal journal,
+    AssistanceRouteProvider? routeProvider = null)
 {
     internal static readonly DateTimeOffset StartTime = new(2026, 11, 27, 19, 20, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset ScheduleCloses = StartTime.AddMinutes(40);
@@ -37,12 +39,17 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
         var outbound = Network.Exits
             .Select(exit => Network.FindPath(pickup, exit, driving: true, closed))
             .OfType<GraphPath>().OrderBy(path => path.Seconds).ThenBy(path => path.Nodes[^1], StringComparer.Ordinal)
-            .FirstOrDefault();
-        if (approach is null || outbound is null)
+            .ToArray();
+        if (approach is null || outbound.Length == 0)
             throw new RoutingException(422, "NoEligibleRoute", "Brak zweryfikowanego dojazdu lub wyjazdu dla pojazdu.");
 
-        return new(snapshot.Revision, outbound.Nodes[^1], approach.Segments, outbound.Segments,
-            approach.Seconds, outbound.Seconds);
+        if (routeProvider is not null)
+            return await routeProvider.FindAsync(from, pickup, outbound.Select(path => path.Nodes[^1]).ToArray(),
+                snapshot, cancellationToken);
+
+        var preferred = outbound[0];
+        return new(snapshot.Revision, preferred.Nodes[^1], approach.Segments, preferred.Segments,
+            approach.Seconds, preferred.Seconds);
     }
 
     internal async Task<DrawStatus> DrawStatusAsync(string commandId, CancellationToken cancellationToken)

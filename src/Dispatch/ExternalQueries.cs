@@ -3,7 +3,8 @@ using System.Text.Json;
 
 namespace Cassini.Dispatch;
 
-internal sealed record RouteLookup(TransportRoute? Route, bool ServiceAvailable);
+internal sealed record RouteLookup(TransportRoute? Route, bool ServiceAvailable, string? ErrorCode = null);
+internal sealed record RoutingProblem(string? Code);
 internal sealed record CasePosition(string Node, string Progress);
 internal sealed record CaseLookup(CasePosition? Case, bool ServiceAvailable);
 internal sealed record SituationRevision(long Revision);
@@ -45,7 +46,10 @@ internal sealed class RoutingClient(HttpClient client)
                 return new(null, true);
 
             if (!response.IsSuccessStatusCode)
-                return new(null, false);
+            {
+                var problem = await response.Content.ReadFromJsonAsync<RoutingProblem>(cancellation);
+                return new(null, false, problem?.Code);
+            }
 
             var route = await response.Content.ReadFromJsonAsync<TransportRoute>(cancellation);
             return route is { Revision: >= 0, Exit.Length: > 0, ApproachSegments: not null, OutboundSegments: not null }

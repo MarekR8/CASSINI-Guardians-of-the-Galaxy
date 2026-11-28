@@ -5,6 +5,9 @@ if (string.IsNullOrEmpty(builder.Configuration["urls"]))
     builder.WebHost.UseUrls("http://127.0.0.1:5084");
 
 builder.Services.AddSingleton(new DispatchStore(builder.Configuration["Demo:DataDirectory"]));
+builder.Services.AddSingleton(new UnitPositionPolicy(
+    builder.Configuration["Integrations:Egnos:FixtureFile"] ?? Path.Combine(AppContext.BaseDirectory, "unit-positions.json"),
+    builder.Configuration.GetValue("Integrations:Egnos:MaxHpl", 25d)));
 builder.Services.AddSingleton<DispatchQueries>();
 builder.Services.AddSingleton<DispatchCommands>();
 builder.Services.AddHttpClient<ManagementClient>(client =>
@@ -15,7 +18,7 @@ builder.Services.AddHttpClient<ManagementClient>(client =>
 builder.Services.AddHttpClient<RoutingClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Routing:BaseUrl"] ?? "http://127.0.0.1:5083");
-    client.Timeout = TimeSpan.FromSeconds(3);
+    client.Timeout = TimeSpan.FromSeconds(5);
 });
 builder.Services.AddHttpClient<SituationClient>(client =>
 {

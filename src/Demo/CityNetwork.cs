@@ -56,6 +56,7 @@ internal sealed class CityNetwork
     }
 
     internal bool Contains(string id) => roads.ContainsKey(id);
+    internal CityRoad? Road(string id) => roads.GetValueOrDefault(id);
 
     internal IEnumerable<CityRoad> IntersectingBounds(double west, double south, double east, double north)
     {

@@ -5,6 +5,7 @@ COPY src/ src/
 COPY apps/web/ apps/web/
 COPY data/demo/network/graph.json data/demo/network/graph.json
 COPY data/demo/population/estimate.json data/demo/population/estimate.json
+COPY data/demo/ors/ data/demo/ors/
 RUN dotnet publish "$PROJECT" -c Release -o /output -p:NuGetAudit=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
