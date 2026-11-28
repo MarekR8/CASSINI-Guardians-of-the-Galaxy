@@ -44,7 +44,10 @@ internal sealed class PostgresManagementPersistence : IManagementPersistence
         try
         {
             using var context = new ManagementDbContext(options);
-            return Load(context);
+            using var transaction = context.Database.BeginTransaction(System.Data.IsolationLevel.RepeatableRead);
+            var state = Load(context);
+            transaction.Commit();
+            return state;
         }
         catch (Exception exception) when (exception is NpgsqlException or InvalidOperationException)
         {

@@ -35,6 +35,8 @@ builder.Services.AddHttpClient<GroupingClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Management:BaseUrl"] ?? "http://127.0.0.1:5081");
     client.Timeout = TimeSpan.FromSeconds(3);
+    if (builder.Configuration["Grouping:ReadToken"] is { Length: > 0 } token)
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 }).ConfigurePrimaryHttpMessageHandler(LocalHandler);
 
 var app = builder.Build();

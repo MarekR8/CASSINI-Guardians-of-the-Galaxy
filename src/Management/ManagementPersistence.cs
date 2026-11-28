@@ -57,7 +57,11 @@ internal sealed class FileManagementPersistence : IManagementPersistence
                 if (path is not null)
                 {
                     var temporaryPath = path + ".tmp";
-                    File.WriteAllBytes(temporaryPath, JsonSerializer.SerializeToUtf8Bytes(next, ManagementStore.Json));
+                    using (var stream = File.Create(temporaryPath))
+                    {
+                        JsonSerializer.Serialize(stream, next, ManagementStore.Json);
+                        stream.Flush(flushToDisk: true);
+                    }
                     File.Move(temporaryPath, path, overwrite: true);
                 }
             }

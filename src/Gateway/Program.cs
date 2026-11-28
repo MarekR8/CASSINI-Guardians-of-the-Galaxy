@@ -103,6 +103,11 @@ async Task Forward(string service, string group, string operation, string? id, H
         uri += $"/{id}";
     uri += context.Request.QueryString.ToUriComponent();
     using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), uri);
+    var grouping = service == "management" && operation is ("evacuation-groups" or "travel-party-proposals" or
+        "approved-travel-plans" or "register-evacuation-group" or "update-group-composition" or
+        "record-care-handover" or "approve-travel-plan" or "flag-travel-plan-for-review");
+    if (grouping && context.Request.Headers.TryGetValue("Authorization", out var credentials))
+        request.Headers.TryAddWithoutValidation("Authorization", credentials.ToArray());
     if (group == "commands")
     {
         if (!context.Request.HasJsonContentType())
@@ -120,6 +125,8 @@ async Task Forward(string service, string group, string operation, string? id, H
         using var response = await clients.CreateClient("services").SendAsync(
             request, HttpCompletionOption.ResponseContentRead, context.RequestAborted);
         context.Response.StatusCode = (int)response.StatusCode;
+        if (grouping && response.Headers.TryGetValues("WWW-Authenticate", out var challenges))
+            context.Response.Headers.WWWAuthenticate = challenges.ToArray();
         context.Response.ContentType = response.Content.Headers.ContentType?.ToString();
         await response.Content.CopyToAsync(context.Response.Body, context.RequestAborted);
     }

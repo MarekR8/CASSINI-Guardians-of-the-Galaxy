@@ -8,5 +8,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="../Cassini.Management.csproj" />
+    <None Include="../../../data/demo/sheltering/sample-grouping.json;../../../contracts/http/grouping/household-split.json;../../../contracts/http/grouping/care-handover.json"
+          Link="grouping-fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

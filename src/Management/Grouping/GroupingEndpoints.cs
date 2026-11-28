@@ -1,18 +1,23 @@
 namespace Cassini.Management.Grouping;
 
+internal interface IGroupingCommand
+{
+    string? IncidentId { get; }
+}
+
 internal sealed record RegisterEvacuationGroup(
     string? CommandId, string? IncidentId, string? GroupId, string[]? CaseIds,
-    GroupRelationship[]? Relationships, string? EvidenceRef);
+    GroupRelationship[]? Relationships, string? EvidenceRef) : IGroupingCommand;
 internal sealed record UpdateGroupComposition(
     string? CommandId, string? IncidentId, string? GroupId, int? ExpectedGroupRevision,
-    string[]? CaseIds, GroupRelationship[]? Relationships, string? EvidenceRef);
+    string[]? CaseIds, GroupRelationship[]? Relationships, string? EvidenceRef) : IGroupingCommand;
 internal sealed record RecordCareHandover(
-    string? CommandId, string? IncidentId, string? GroupId, int? ExpectedGroupRevision, HandoverEvidence? Handover);
+    string? CommandId, string? IncidentId, string? GroupId, int? ExpectedGroupRevision, HandoverEvidence? Handover) : IGroupingCommand;
 internal sealed record ApproveTravelPlan(
     string? CommandId, string? IncidentId, string? GroupId, int? ExpectedGroupRevision, int? ExpectedPlanRevision,
-    string? LegId, string? EvidenceId);
+    string? LegId, string? EvidenceId) : IGroupingCommand;
 internal sealed record FlagTravelPlanForReview(
-    string? CommandId, string? IncidentId, string? GroupId, int? PlanRevision, string? Reason, string? EvidenceRef);
+    string? CommandId, string? IncidentId, string? GroupId, int? PlanRevision, string? Reason, string? EvidenceRef) : IGroupingCommand;
 
 internal static class GroupingEndpoints
 {
@@ -20,15 +25,17 @@ internal static class GroupingEndpoints
     {
         var store = app.Services.GetRequiredService<ManagementStore>();
         var queries = new GroupingQueries(store, evidence);
-        var commands = new GroupingCommands(store, evidence);
-        app.MapGet("/queries/evacuation-groups/{groupId}", queries.GetGroup);
-        app.MapGet("/queries/travel-party-proposals/{groupId}", queries.GetProposal);
-        app.MapGet("/queries/approved-travel-plans/{groupId}", queries.GetPlan);
-        app.MapPost("/commands/register-evacuation-group", commands.Register);
-        app.MapPost("/commands/update-group-composition", commands.UpdateComposition);
-        app.MapPost("/commands/record-care-handover", commands.RecordHandover);
-        app.MapPost("/commands/approve-travel-plan", commands.Approve);
-        app.MapPost("/commands/flag-travel-plan-for-review", commands.Flag);
+        var commands = new GroupingCommands(store, evidence, app.Services.GetRequiredService<TimeProvider>());
+        var scope = new GroupingAccess(app.Configuration["Grouping:OperatorsFile"]);
+        var routes = app.MapGroup("").AddEndpointFilter(scope.CheckAsync);
+        routes.MapGet("/queries/evacuation-groups/{groupId}", queries.GetGroup);
+        routes.MapGet("/queries/travel-party-proposals/{groupId}", queries.GetProposal);
+        routes.MapGet("/queries/approved-travel-plans/{groupId}", queries.GetPlan);
+        routes.MapPost("/commands/register-evacuation-group", commands.Register);
+        routes.MapPost("/commands/update-group-composition", commands.UpdateComposition);
+        routes.MapPost("/commands/record-care-handover", commands.RecordHandover);
+        routes.MapPost("/commands/approve-travel-plan", commands.Approve);
+        routes.MapPost("/commands/flag-travel-plan-for-review", commands.Flag);
     }
 }
 
@@ -51,7 +58,9 @@ internal sealed class GroupingQueries(ManagementStore store, GroupingEvidence ev
         return Results.Ok(new
         {
             group.IncidentId, group.GroupId, group.GroupRevision, cases, group.Relationships,
-            group.CompositionEvidenceRef, group.Handovers
+            group.CompositionEvidenceRef,
+            handovers = group.Handovers.Select(item => new { item.CaseId, item.FromCaregiverCaseId,
+                item.ToCaregiverCaseId, item.EffectiveAt, item.EvidenceRef })
         });
     }
 
@@ -85,8 +94,8 @@ internal sealed class GroupingQueries(ManagementStore store, GroupingEvidence ev
     }
 
     internal static EvacuationGroup? FindGroup(ManagementState snapshot, string? incidentId, string? groupId) =>
-        snapshot.Incident.IncidentId == incidentId && groupId is not null
-            ? snapshot.Groups?.GetValueOrDefault(groupId) : null;
+        snapshot.Incident.IncidentId == incidentId && groupId is not null &&
+        snapshot.Groups?.GetValueOrDefault(groupId) is { } group && group.IncidentId == incidentId ? group : null;
 
     internal static RouteEvidenceSet? FindEvidence(
         GroupingEvidence evidence, EvacuationGroup group, string? legId, string? evidenceId) =>

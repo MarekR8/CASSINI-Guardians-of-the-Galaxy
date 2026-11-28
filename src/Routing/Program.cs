@@ -70,7 +70,8 @@ if (destinationsEnabled)
     builder.Services.AddSingleton(new DestinationSources(
         new Uri((builder.Configuration["Situation:BaseUrl"] ?? "http://127.0.0.1:5082").TrimEnd('/') + "/"),
         new Uri(builder.Configuration["Sheltering:BaseUrl"]!.TrimEnd('/') + "/"),
-        new Uri((builder.Configuration["Management:BaseUrl"] ?? "http://127.0.0.1:5081").TrimEnd('/') + "/")));
+        new Uri((builder.Configuration["Management:BaseUrl"] ?? "http://127.0.0.1:5081").TrimEnd('/') + "/"),
+        builder.Configuration["Grouping:ReadToken"]));
     builder.Services.AddSingleton(TimeProvider.System);
     builder.Services.AddSingleton(DestinationEvidenceFixtures.Load(builder.Configuration["Routing:DestinationEvidenceFile"]));
     builder.Services.AddTransient<DestinationRouteQueries>();
