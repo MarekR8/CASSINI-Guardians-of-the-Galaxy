@@ -7,7 +7,9 @@ import gzip
 import json
 import math
 from pathlib import Path
+import shutil
 import tempfile
+from uuid import uuid4
 
 import rasterio as rio
 from rasterio.warp import Resampling, calculate_default_transform, reproject
@@ -72,7 +74,7 @@ def describe_edge(edge, tags, metres):
     assumed_lanes = lanes or max(1, directions)
     per_lane = ACCESS.get(road.removesuffix("_link"), 350)
     foot_capacity = 300 if road in {"steps", "track"} else 600 if road in {"path", "footway"} else 900
-    edge.update(lengthMetres=round(metres, 1), lanes=lanes,
+    edge.update(lengthMetres=round(metres, 1) or metres, lanes=lanes,
                 vehiclesPerHour=round(per_lane * assumed_lanes) if directions else None,
                 pedestriansPerHour=foot_capacity if any(edge["walk"]) else None)
 
@@ -147,6 +149,16 @@ def write_json(path, obj):
     path.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
 
 
+def publish_asset(source, directory):
+    # A file moved out of a private Windows temp directory retains its original ACL.
+    temporary = directory / f".{source.name}.{uuid4().hex}.tmp"
+    try:
+        shutil.copyfile(source, temporary)
+        temporary.replace(directory / source.name)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def run(output, evidence, inputs, refresh):
     output.mkdir(parents=True, exist_ok=True)
     flood, coverage = flood_layers(evidence / "emsr773-aoi01")
@@ -181,7 +193,7 @@ def run(output, evidence, inputs, refresh):
         write_json(stage / "city-imagery.json", {"scenes": scenes, "hazardAcquisitions": OBSERVATIONS})
         for file in stage.iterdir():
             if not file.name.endswith(".aux.xml"):
-                file.replace(output / file.name)
+                publish_asset(file, output)
     print(f"Valencia: {len(network['roads']):,} OSM edges; {len(network['nodes']):,} nodes {dict(counts)}; "
           f"{len(flood):,} EMS polygons; OSM snapshot {timestamp}")
 

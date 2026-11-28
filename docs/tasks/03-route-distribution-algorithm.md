@@ -35,6 +35,8 @@ To prove or investigate: MSA convergence on the demo graph, the effect of $\thet
 
 ## Dependencies
 
+The Valencia radar-area W1 package includes OSM node and edge IDs, observed flood zones, directional costs, nominal capacities and a Situation closure revision. See the [export and input contract](../../data/local/valencia-task03.md).
+
 - You wait for: **W1** (graph from person 2). Until then, work on the current graph from `Network.cs` and rewrite it into `graph.json`.
 - Waiting on you: person 4 (ranking unit candidates, W4), person 7 (`expectedLoad` field on the dashboard).
 

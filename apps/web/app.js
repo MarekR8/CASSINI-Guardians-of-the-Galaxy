@@ -204,6 +204,10 @@ async function refresh(epoch) {
   text('revision', 'Rewizja ' + situation.revision);
   if (valencia) {
     if (revisionChanged || restored || cityPath || (state.cityPath && state.busy)) redrawMap();
+    if (restored && !state.valenciaViewInitialized) {
+      fitValenciaRadar();
+      state.valenciaViewInitialized = true;
+    }
   } else {
     text('clock', time(distribution.at) + ' UTC');
     renderDistribution();
@@ -393,8 +397,9 @@ function renderMap(route) {
     const observed = Boolean(hazard.productId);
     for (const polygon of polygons(hazard.geometry)) {
       map.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd',
-        fill: observed ? '#2372b0' : '#285b6d', 'fill-opacity': observed ? .45 : .6,
-        stroke: observed ? '#79c4ff' : '#5c9fb1', 'stroke-dasharray': observed ? 'none' : '5 4',
+        fill: observed ? (valencia ? '#bb392f' : '#2372b0') : '#285b6d',
+        'fill-opacity': observed ? (valencia ? .36 : .45) : .6,
+        stroke: observed ? (valencia ? '#ff7663' : '#79c4ff') : '#5c9fb1', 'stroke-dasharray': observed ? 'none' : '5 4',
         'stroke-width': 1.8 }));
     }
   }
@@ -435,13 +440,17 @@ function renderMap(route) {
     points: pointsOnMap(road.geometry), fill: 'none', stroke: '#ff9e8f',
     'stroke-width': 4, 'stroke-dasharray': '8 5'
   })) : [];
-  if (valencia) {
+  if (valencia && !$('valencia-image').value) {
     for (const [name, lon, lat] of [
       ['València', -0.374, 39.48], ['Torrent', -0.466, 39.452], ['Picanya', -0.443, 39.437],
       ['Paiporta', -0.414, 39.422], ['Catarroja', -0.399, 39.398], ['Albufera', -0.353, 39.322]
     ]) {
       const [x, y] = project(lon, lat);
-      map.append(svg('text', { x, y, class: 'map-caption' }, name));
+      const anchor = svg('g', { transform: 'translate(' + x + ' ' + y + ')' });
+      const caption = svg('g', { class: 'map-symbol' });
+      caption.append(svg('text', { class: 'map-place-caption' }, name));
+      anchor.append(caption);
+      map.append(anchor);
     }
   }
   for (const segment of state.network.segments) {
@@ -561,13 +570,15 @@ function showCityPath(path) {
 }
 
 $('valencia-nodes').addEventListener('change', redrawMap);
+function fitValenciaRadar() {
+  const radar = $('valencia-radar');
+  if (radar) mapViewport.fit(radar.getBBox());
+  else mapViewport.reset();
+}
+
 $('valencia-image').addEventListener('change', () => {
   redrawMap();
-  const radar = $('valencia-radar');
-  if (radar && !$('valencia-image').dataset.viewFitted) {
-    mapViewport.fit(radar.getBBox());
-    $('valencia-image').dataset.viewFitted = '1';
-  }
+  fitValenciaRadar();
 });
 $('archive-focus').addEventListener('click', () => {
   const layer = $('archive-flood-layer');
