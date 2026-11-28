@@ -22,3 +22,13 @@ Do uruchomienia potrzebny jest .NET 10 SDK i Python 3. [Dane, FlyPix w przegląd
 Zobacz [instrukcję demo i transportu obrazów](docs/offline-demo.md), [aplikację Android](apps/offline-android/README.md), [pola na dane zespołu](data/local/README.md) i [instrukcje dla agentów](AGENTS.md).
 
 Starszy [plan pełnej architektury](docs/mvp-implementation-guide.md) opisuje następną warstwę wdrożenia, w tym logowanie, bazy relacyjne i dystrybucję zdarzeń.
+
+## Aplikacja mieszkańca
+
+Uruchom `python scripts/offline_demo.py --scenario sample` lub wybierz `--scenario warsaw` i otwórz
+[aplikację mieszkańca](http://127.0.0.1:5080/resident/). Panel koordynatora jest dostępny pod adresem głównym.
+W panelu dodaj alert ćwiczeniowy, aby mieszkaniec zobaczył komunikat. Widok mieszkańca pozwala wybrać
+punkt startu, pobrać i sprawdzać trasę, zgłosić miejsce odbioru oraz przekazać oświadczenie o opuszczeniu strefy.
+Przeglądarka używa zgody na lokalizację, aby zasugerować punkt grafu. Do usług trafia wybrany węzeł
+lub oświadczenie mieszkańca. Gateway demonstratora działa na localhost. Publiczne udostępnienie wymaga
+HTTPS, uwierzytelnienia mieszkańca i interfejsu ograniczonego do jego własnej sprawy.

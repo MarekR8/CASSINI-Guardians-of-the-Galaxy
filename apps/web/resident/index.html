@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ewakuacja · CASSINI</title>
+  <link rel="stylesheet" href="/resident/style.css">
+  <script type="module" src="/resident/app.js"></script>
+</head>
+<body>
+  <header><div class="shell top"><div class="brand"><span class="brand-mark" aria-hidden="true">↗</span><div>CASSINI<small>Informacje dla mieszkańców</small></div></div><span class="demo">Ćwiczenie</span></div></header>
+  <main class="shell">
+    <section class="intro"><h1>Ewakuacja</h1><label for="profile">Profil ćwiczeniowy<select id="profile"><option value="case-14">Mieszkaniec pieszy</option><option value="case-15">Mieszkaniec potrzebujący transportu</option><option value="case-16">Drugi profil z transportem</option></select></label></section>
+    <p id="notice" class="notice" role="status" hidden></p>
+    <section class="alert" aria-labelledby="alert-title"><span class="alert-mark" aria-hidden="true">!</span><div><h2 id="alert-title">Sprawdzamy komunikaty</h2><p id="alert-text"></p></div></section>
+    <div class="grid">
+      <section class="card route"><h2>Twoja trasa</h2><p id="route-status" role="status">Ładowanie mapy…</p>
+        <canvas id="map" width="960" height="510" role="img" aria-label="Mapa schematyczna ćwiczenia"></canvas>
+        <div class="legend"><span><i></i> Punkt startu</span><span><i></i> Przydzielona trasa</span><span><i></i> Wyjście</span></div>
+        <div class="route-actions"><button id="draw" disabled>Wyznacz trasę</button></div>
+      </section>
+      <div class="side">
+        <section class="card"><h2>Twoje położenie</h2><label for="node">Punkt w ćwiczeniu<select id="node" disabled></select></label><button id="locate" class="secondary" disabled>Użyj mojej lokalizacji</button><p id="position" class="muted" role="status"></p></section>
+        <section class="card"><h2>Pomoc w ewakuacji</h2><p id="help-status" role="status">Punkt odbioru możesz wybrać powyżej.</p><button id="help" class="secondary" disabled>Zgłoś potrzebę pomocy</button></section>
+        <section class="card"><h2>Przebieg ewakuacji</h2><p id="progress-status" role="status">Sprawdzamy status zgłoszenia…</p><button id="progress" class="secondary" disabled>Zgłoś postęp</button></section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
