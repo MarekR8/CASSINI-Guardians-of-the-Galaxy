@@ -14,7 +14,7 @@ Panel domyślnie pokazuje aglomerację Walencji, w tym Picanyę, Paiportę, Cata
    python scripts/offline_demo.py
    ```
 
-Panel działa pod [127.0.0.1:5080](http://127.0.0.1:5080). Wybierz datę w **Radar Sentinel‑1**, żeby zobaczyć ten sam fragment przed zdarzeniem i po nim. Włącz **Pokaż strefy węzłów**, żeby zobaczyć klasyfikację. Pomarańczowy oznacza węzeł w obszarze zalania lub jego śladu, zielony węzeł poza oboma obszarami w zasięgu obserwacji, a szary brak oceny. Niebieski obszar pokazuje archiwalny zasięg EMS. **Trasa testowa OSM** służy do sprawdzenia połączeń i reakcji na zatwierdzone zamknięcia.
+Panel działa pod [127.0.0.1:5080](http://127.0.0.1:5080). Wybierz datę w **Radar Sentinel‑1**, żeby zobaczyć ten sam fragment przed zdarzeniem i po nim. Włącz **Pokaż strefy węzłów**, żeby zobaczyć klasyfikację. Pomarańczowy oznacza węzeł w obszarze zalania lub jego śladu, zielony węzeł poza oboma obszarami w zasięgu obserwacji, a szary brak oceny. Czerwony obszar pokazuje archiwalny zasięg EMS. Panel otwiera się na całym obrazie radarowym z 31 października; opcja **Mapa OSM** wraca do zasięgu aglomeracji. **Trasa testowa OSM** służy do sprawdzenia połączeń i reakcji na zatwierdzone zamknięcia.
 
 Dla Dockera, po przygotowaniu danych i pobraniu obrazów bazowych, użyj `docker compose -p cassini-valencia -f compose.yaml -f compose.valencia.yaml up --build`. Przy kolejnym uruchomieniu bez internetu użyj `up --no-build --pull never`. Pliki lokalne pozostają w ignorowanym przez Git katalogu `artifacts/`.
 
@@ -33,6 +33,8 @@ Dla Dockera, po przygotowaniu danych i pobraniu obrazów bazowych, użyj `docker
    W panelu **Weryfikacja detekcji** rozwiń **Dopasowane odcinki OSM**. **Zatwierdź zamknięcie** zamyka wszystkie odcinki dopasowane do tej jednej adnotacji. Odrzucenie pozostawia odcinki otwarte. Zatwierdzone geometrie są wyświetlane na czerwono, a Routing pobiera bieżącą rewizję zamknięć z Situation.
 
 ## Kontrakt dla taska 03
+
+[Gotowa paczka dla obszaru radaru i instrukcja jej odświeżania](valencia-task03.md).
 
 `artifacts/valencia-city/city-network.json.gz` zawiera jedną wersję grafu wraz z `osmTimestamp`, `bounds` i `scenario`. Węzeł to wspólny węzeł OSM na skrzyżowaniu lub koniec odcinka. Drogi krzyżujące się na rysunku łączą się wtedy, gdy współdzielą węzeł OSM. Każda krawędź zachowuje przebieg między węzłami, typ `highway` i kierunkowe czasy dla pieszych oraz samochodów.
 

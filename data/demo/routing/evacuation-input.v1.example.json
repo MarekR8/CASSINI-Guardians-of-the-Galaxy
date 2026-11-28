@@ -1,0 +1,41 @@
+{
+  "inputVersion": "cassini.evacuation-input.v1",
+  "scenario": "synthetic-routing-fixture",
+  "bounds": [0, 0, 0.01, 0.01],
+  "osmTimestamp": "2024-10-19T00:00:00Z",
+  "situationRevision": 2,
+  "hazardObservation": {
+    "productId": "exercise-flood",
+    "sourceUrl": null,
+    "source": "synthetic",
+    "acquisitionsUtc": ["2024-10-31T00:00:00Z"],
+    "coverage": {"type": "Polygon", "coordinates": [[[0, 0], [0.01, 0], [0.01, 0.01], [0, 0.01], [0, 0]]]},
+    "geoJson": {
+      "type": "FeatureCollection",
+      "features": [
+        {"type": "Feature", "properties": {}, "geometry": {
+          "type": "Polygon",
+          "coordinates": [[[0, 0], [0.002, 0], [0.002, 0.01], [0, 0.01], [0, 0]]]
+        }}
+      ]
+    }
+  },
+  "closureEvidence": [{"roadId": "exercise-bridge", "source": "exercise-verified",
+    "decidedAt": "2024-10-31T00:05:00Z", "observedAt": "2024-10-31T00:00:00Z"}],
+  "boundaryNodeIds": [],
+  "nodes": [
+    {"id": 101, "longitude": 0.001, "latitude": 0.004, "zone": "hazard"},
+    {"id": 102, "longitude": 0.003, "latitude": 0.004, "zone": "safe"},
+    {"id": 103, "longitude": 0.004, "latitude": 0.007, "zone": "safe"}
+  ],
+  "roads": [
+    {"id": "exercise-bridge", "from": 101, "to": 102, "class": "residential", "lengthMetres": 222,
+      "geometry": [[0.001, 0.004], [0.003, 0.004]], "walk": [180, 180], "drive": [35, null],
+      "pedestriansPerHour": 900, "vehiclesPerHour": 450, "zone": "hazard", "closed": true,
+      "intersectsObservedFlood": true},
+    {"id": "exercise-detour", "from": 101, "to": 103, "class": "footway", "lengthMetres": 471,
+      "geometry": [[0.001, 0.004], [0.004, 0.007]], "walk": [377, 377], "drive": [null, null],
+      "pedestriansPerHour": 600, "vehiclesPerHour": null, "zone": "hazard", "closed": false,
+      "intersectsObservedFlood": true}
+  ]
+}

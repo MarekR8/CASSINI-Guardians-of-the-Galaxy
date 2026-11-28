@@ -117,5 +117,5 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset, maxZoom }) {
   });
 
   resetView();
-  return { point, fit };
+  return { point, fit, reset: resetView };
 }

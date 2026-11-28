@@ -60,6 +60,7 @@ h1 { font-size: clamp(1.8rem, 4vw, 3.15rem); letter-spacing: -.035em; line-heigh
 .map-navigation button:disabled { opacity: 1; color: var(--muted); }
 #map text { font: 600 17px "Segoe UI", system-ui, sans-serif; fill: #f0f7f7; paint-order: stroke; stroke: #12232a; stroke-width: 4px; stroke-linejoin: round; }
 #map .minor-label { font-size: 15px; fill: #b9d0d3; }
+#map .map-place-caption { font-size: 8px; fill: #c3d5db; stroke-width: 1.6px; }
 #map .map-caption { font-size: 14px; fill: #a4babf; letter-spacing: .09em; }
 .legend { display: flex; flex-wrap: wrap; gap: .5rem 1rem; padding: .85rem 1.25rem; color: var(--muted); font-size: .875rem; }
 .legend span { display: flex; align-items: center; gap: .4rem; }
@@ -127,3 +128,5 @@ body.valencia .exercise-legend { display: none; }
 #valencia-tools select { width: auto; margin: 0; }
 #valencia-tools input { display: inline; width: auto; }
 #reviews details p { overflow-wrap: anywhere; }
+
+body.valencia .legend-observed { background: #ff7663; }
