@@ -195,6 +195,14 @@ sample = {
                                             [16.64, 50.44], [16.64, 50.43]]],
     }}],
 }
+network = get("routing", "network")
+nodes = {node["id"]: node for node in network["nodes"]}
+bridge = next(segment for segment in network["segments"] if segment["id"] == "bridge-2")
+west, south = sample["features"][0]["geometry"]["coordinates"][0][0]
+east, north = sample["features"][0]["geometry"]["coordinates"][0][2]
+for key in ("pickup", bridge["from"], bridge["to"], "exit-east"):
+    assert west < nodes[key]["longitude"] < east and south < nodes[key]["latitude"] < north
+assert nodes["exit-north"]["latitude"] > north
 after_import = post("situation", "import-copernicus", {
     "commandId": "import-test", "expectedRevision": 2, "productId": "TEST-PRODUCT",
     "observedAt": "2026-11-27T18:00:00Z", "geoJson": sample,
@@ -204,6 +212,21 @@ assert imported["source"] == "copernicus-ems-operator-import" and imported["prod
 assert imported["provenance"]["mode"] == "recorded"
 assert imported["provenance"]["observedAt"] == imported["observedAt"]
 assert after_import["populationEstimate"] is None
+estimate = {"value": 42, "method": "synthetic integration fixture", "source": "exercise", "year": 2025}
+sentinel = post("situation", "import-copernicus", {
+    "commandId": "import-sentinel-test", "expectedRevision": after_import["revision"],
+    "source": "sentinel-1", "productId": "TEST-SENTINEL-1-MASK",
+    "observedAt": "2026-11-27T18:05:00Z", "geoJson": sample, "populationEstimate": estimate,
+})
+layer = sentinel["hazards"][-1]
+assert layer["id"] == "sentinel-1:TEST-SENTINEL-1-MASK"
+assert layer["provenance"] == {
+    "source": "copernicus-sentinel-1-operator-import", "mode": "recorded",
+    "observedAt": layer["observedAt"], "productId": "TEST-SENTINEL-1-MASK",
+}
+assert layer["geometry"]["geometries"] == [sample["features"][0]["geometry"]]
+assert layer["populationEstimate"] == sentinel["populationEstimate"] == estimate
+assert get("situation", "snapshot") == sentinel
 assert get("routing", "distribution?node=pickup")["options"] == []
 
 print("Offline integration passed: gateway, alert retry, weighted routes, withdrawal, dispatch booking and pickup, blocked exits, local import.")

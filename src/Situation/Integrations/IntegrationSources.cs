@@ -14,6 +14,8 @@ internal sealed record IntegrationArea(string Id, double[] Bounds, string Activa
 
 internal sealed record CopernicusPreview(string Mode, string ActivationCode, int AoiNumber, string ProductType,
     string ProductId, DateTimeOffset ObservedAt, double[] Bounds, JsonElement GeoJson);
+internal sealed record HazardPreview(string Mode, string Source, string ProductId, DateTimeOffset ObservedAt,
+    double[] Bounds, JsonElement GeoJson, PopulationEstimate? PopulationEstimate = null);
 
 internal sealed record FlyPixPreview(string Mode, string LayerId, string ImageProductId, string ModelId,
     DateTimeOffset ObservedAt, double[] Bounds, JsonElement GeoJson);
@@ -21,6 +23,8 @@ internal sealed record FlyPixPreview(string Mode, string LayerId, string ImagePr
 internal interface ICopernicusSource
 {
     Task<CopernicusPreview> GetDelineation(IntegrationArea area, CancellationToken cancellationToken);
+    Task<HazardPreview> GetWaterMask(IntegrationArea area, CancellationToken cancellationToken);
+    Task<HazardPreview> GetLowElevationArea(IntegrationArea area, CancellationToken cancellationToken);
 }
 
 internal interface IFlyPixSource
@@ -44,6 +48,17 @@ internal sealed class MockCopernicusSource : ICopernicusSource
         Task.FromResult(new CopernicusPreview("mock", area.ActivationCode, area.AoiNumber, "delineation",
             $"mock-{area.ActivationCode}-AOI{area.AoiNumber:00}-DEL", area.ObservedAt, area.Bounds,
             MockGeometry.Rectangle(area, .24, .25, .68, .66, new { kind = "flood_extent" })));
+
+    public Task<HazardPreview> GetWaterMask(IntegrationArea area, CancellationToken cancellationToken) =>
+        Task.FromResult(new HazardPreview("mock", "copernicus-sentinel-1", $"mock-{area.Id}-water-mask",
+            area.ObservedAt, area.Bounds,
+            MockGeometry.Rectangle(area, .34, .29, .61, .54, new { kind = "water_mask" }),
+            new PopulationEstimate(42, "exercise fixture", "synthetic GHSL example", 2025)));
+
+    public Task<HazardPreview> GetLowElevationArea(IntegrationArea area, CancellationToken cancellationToken) =>
+        Task.FromResult(new HazardPreview("mock", "copernicus-dem", $"mock-{area.Id}-low-elevation",
+            area.ObservedAt, area.Bounds,
+            MockGeometry.Rectangle(area, .29, .20, .70, .48, new { kind = "potential_low_elevation" })));
 }
 
 internal sealed class MockFlyPixSource : IFlyPixSource
