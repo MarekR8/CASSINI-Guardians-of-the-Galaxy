@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Cassini.Management;
+using Cassini.Messaging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -7,7 +9,8 @@ var clock = new FixedClock(DateTimeOffset.Parse("2026-11-27T19:40:00Z"));
 var directory = Path.Combine(Path.GetTempPath(), $"cassini-management-{Guid.NewGuid():N}");
 try
 {
-    var store = new ManagementStore(new FileManagementPersistence(directory));
+    var persistence = new FileManagementPersistence(directory);
+    var store = new ManagementStore(persistence);
     var commands = new IncidentCommands(store, clock);
     var population = new StubPopulation(new PopulationEstimate(4872, "GHS-POP sum", "Copernicus GHSL", 2025, 0));
     var queries = new IncidentQueries(store, population);
@@ -83,7 +86,52 @@ try
     });
     Expect(ewss.Broadcast(alert with { CommandId = "ewss-open", Zone = open }), 400, "InvalidEwssAlert");
 
-    Console.WriteLine("Management tests passed: W2 evidence, pickup vs exit, counters, retries, EWSS mock.");
+    // Outbox: milestones and alerts commit their events together with the change; positions do not publish.
+    var outboxTypes = store.Read().Outbox.Select(message => message.Type).ToArray();
+    Check(outboxTypes.Count(type => type == EventTypes.CaseProgressChanged) == 3 &&
+          !outboxTypes.Contains(EventTypes.HazardAlertRecorded), "Each accepted milestone adds one event.");
+    Check(store.Read().Outbox.Last(message => message.SubjectId == "case-14")
+        .ReadPayload<CaseProgressChangedPayload>() is { Progress: ProgressStates.ExitConfirmed, EvidenceMode: "measured" },
+        "The exit event carries the milestone and evidence mode.");
+    Accept<HazardAlert>(commands.RecordAlert(new("alert-1", null)));
+    Accept<EvacuationCase>(commands.RecordProgress(new("pos-16", "case-16", "position", 1, "pickup", null)));
+    Check(store.Read().Outbox.Count(message => message.Type == EventTypes.HazardAlertRecorded) == 1 &&
+          store.Read().Outbox.All(message => message.SubjectId != "case-16"), "A position update publishes nothing.");
+
+    var bus = new InMemoryEventBus();
+    var received = new List<IntegrationEvent>();
+    await using (await bus.SubscribeAsync("test.management", ["management.#"], (message, _) =>
+                 {
+                     lock (received) received.Add(message);
+                     return Task.CompletedTask;
+                 }, default))
+    {
+        var publisher = new OutboxPublisher(new ManagementOutbox(persistence), bus, new OutboxSignal(),
+            NullLogger<OutboxPublisher>.Instance);
+        var pending = store.Read().Outbox.Length;
+        Check(await publisher.PublishPendingAsync(default) == pending && store.Read().Outbox.Length == 0,
+            "Published events leave the outbox.");
+        for (var attempt = 0; attempt < 50 && received.Count < pending; attempt++)
+            await Task.Delay(20);
+        Check(received.Count == pending, "Every outbox event reaches the bus.");
+    }
+
+    // AssignmentChanged.v1: deduplicated by eventId, ordered by subjectVersion, pickup never confirms the exit.
+    var consumer = new AssignmentChangedConsumer(store);
+    IntegrationEvent Assignment(string id, long version, string unitState) => IntegrationEvent.Create(
+        EventTypes.AssignmentChanged, "dispatch", "assignment-1", version, clock.GetUtcNow(),
+        new AssignmentChangedPayload("request-case-16-1", "assignment-1", "case-16", "unit-3", unitState, clock.GetUtcNow()))
+        with { EventId = id };
+    await consumer.HandleAsync(Assignment("evt-2", 2, "PickupConfirmed"), default);
+    await consumer.HandleAsync(Assignment("evt-1", 1, "Assigned"), default);
+    await consumer.HandleAsync(Assignment("evt-2", 2, "PickupConfirmed"), default);
+    var assisted = store.Read().Incident.Cases.Single(item => item.CaseId == "case-16");
+    Check(assisted is { Assistance.State: "PickupConfirmed", Assistance.SubjectVersion: 2, Progress: ProgressStates.Open },
+        "A late older event cannot overwrite a newer one and pickup leaves the exit unconfirmed.");
+    Check(store.Read().Inbox.Count(entry => entry.EndsWith(":evt-2")) == 1, "The processed event is recorded once.");
+    Check((await queries.GetIncident(default)).Counters.ConfirmedOutside == 2, "Assistance does not change counters.");
+
+    Console.WriteLine("Management tests passed: W2 evidence, pickup vs exit, counters, retries, EWSS mock, outbox, inbox.");
 }
 finally
 {

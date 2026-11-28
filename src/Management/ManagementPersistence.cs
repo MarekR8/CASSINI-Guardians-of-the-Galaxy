@@ -6,8 +6,12 @@ internal interface IManagementPersistence
 {
     ManagementState Read();
 
-    /// <summary>Runs <paramref name="apply"/> under the store's write lock and persists a non-null next state.</summary>
-    IResult Update(Func<ManagementState, (ManagementState? Next, IResult Result)> apply);
+    /// <summary>
+    /// Runs <paramref name="apply"/> under the store's write lock and persists a non-null next state in one commit.
+    /// <paramref name="committed"/> runs after a successful commit.
+    /// </summary>
+    IResult Update(Func<ManagementState, (ManagementState? Next, IResult Result)> apply,
+        Action<ManagementState>? committed = null);
 }
 
 internal sealed class ManagementPersistenceException(Exception inner)
@@ -40,7 +44,8 @@ internal sealed class FileManagementPersistence : IManagementPersistence
             return state;
     }
 
-    public IResult Update(Func<ManagementState, (ManagementState? Next, IResult Result)> apply)
+    public IResult Update(Func<ManagementState, (ManagementState? Next, IResult Result)> apply,
+        Action<ManagementState>? committed = null)
     {
         lock (gate)
         {
@@ -62,6 +67,7 @@ internal sealed class FileManagementPersistence : IManagementPersistence
             }
 
             state = next;
+            committed?.Invoke(next);
             return result;
         }
     }

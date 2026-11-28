@@ -15,7 +15,8 @@ internal sealed class IncidentCommands(ManagementStore store, TimeProvider clock
         var incident = state.Incident;
         var alert = new HazardAlert(
             $"alert-{incident.Alerts.Length + 1}", command.ObservedAt ?? clock.GetUtcNow(), "synthetic");
-        return Outcome.Accept(state with { Incident = incident with { Alerts = [.. incident.Alerts, alert] } }, alert);
+        var next = state with { Incident = incident with { Alerts = [.. incident.Alerts, alert] } };
+        return Outcome.Accept(next.Publish(ManagementEvents.AlertRecorded(incident, alert, clock.GetUtcNow())), alert);
     });
 
     public IResult RecordProgress(RecordProgress command) => store.Execute(command.CommandId, command, state =>
@@ -46,9 +47,11 @@ internal sealed class IncidentCommands(ManagementStore store, TimeProvider clock
             fix = read;
         }
 
-        return command.Step switch
+        if (command.Step == "position")
+            return RecordPosition(state, index, item, command);
+
+        var outcome = command.Step switch
         {
-            "position" => RecordPosition(state, index, item, command),
             "pickup" => Transition(item, ProgressStates.PickedUp,
                 ProgressStates.Open, ProgressStates.Acknowledged, ProgressStates.Moving) is { } picked
                 ? Accept(state, index, picked with { Pickup = fix }) : InvalidTransition(item),
@@ -60,6 +63,13 @@ internal sealed class IncidentCommands(ManagementStore store, TimeProvider clock
             _ => Transition(item, ProgressStates.Moving, ProgressStates.Acknowledged) is { } moving
                 ? Accept(state, index, moving) : InvalidTransition(item),
         };
+        if (outcome.Changed is not { } changed)
+            return outcome;
+
+        var updated = (EvacuationCase)outcome.Payload;
+        var now = clock.GetUtcNow();
+        return outcome with { Changed = changed.Publish(ManagementEvents.ProgressChanged(
+            changed.Incident, updated, command.CommandId!, fix?.ObservedAt ?? command.ObservedAt ?? now, now)) };
     });
 
     private Outcome RecordPosition(ManagementState state, int index, EvacuationCase item, RecordProgress command)

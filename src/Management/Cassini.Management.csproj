@@ -5,7 +5,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
+  <!-- -p:EnableRabbitMq=true adds the RabbitMQ bus (Integrations:Bus:Mode=live); the default build stays package-free. -->
+  <PropertyGroup Condition="'$(EnableRabbitMq)' == 'true'">
+    <DefineConstants>$(DefineConstants);MESSAGING_RABBITMQ</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableRabbitMq)' == 'true'">
+    <ProjectReference Include="../Shared/Messaging/RabbitMq/Cassini.Messaging.RabbitMq.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Cassini.Management.Tests" />
+    <ProjectReference Include="../Shared/Messaging/Cassini.Messaging.csproj" />
   </ItemGroup>
 </Project>

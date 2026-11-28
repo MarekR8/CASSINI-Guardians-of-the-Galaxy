@@ -1,0 +1,27 @@
+{
+  "eventId": "5b1d0c9e-2f0e-4a8e-9a57-3e0a6f1c2b10",
+  "type": "SituationChanged.v1",
+  "producer": "situation",
+  "subjectId": "situation",
+  "subjectVersion": 1,
+  "occurredAt": "2026-11-27T19:31:05Z",
+  "correlationId": "incident-42",
+  "causationId": "close-bridge",
+  "payload": {
+    "revision": 1,
+    "changedSegmentIds": [
+      "bridge-2"
+    ],
+    "constraintType": "closed",
+    "effectiveWindow": {
+      "start": "2026-11-27T19:30:00Z",
+      "end": null
+    },
+    "evidenceStatus": "confirmed",
+    "provenance": {
+      "source": "operator",
+      "mode": "mock",
+      "observedAt": "2026-11-27T19:29:00Z"
+    }
+  }
+}

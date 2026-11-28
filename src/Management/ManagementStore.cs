@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Cassini.Messaging;
 
 namespace Cassini.Management;
 
@@ -9,7 +10,8 @@ internal sealed record EvacuationCase(
     string CaseId, string Name, string Node, string Mobility, string Progress, int Version,
     DateTimeOffset? PositionObservedAt = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PositionFix? Pickup = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PositionFix? Exit = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] PositionFix? Exit = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] AssistanceStatus? Assistance = null)
 {
     /// <summary>Only an exit confirmation that carries a position fix counts as confirmed outside the zone.</summary>
     [JsonIgnore]
@@ -28,10 +30,26 @@ internal static class ProgressStates
 internal sealed record IncidentView(string IncidentId, HazardAlert[] Alerts, EvacuationCase[] Cases);
 internal sealed record Receipt(string Command, JsonElement Result);
 
+/// <summary>
+/// Everything Management commits at once. <c>Outbox</c> holds events not yet confirmed by the bus;
+/// <c>Inbox</c> holds the last processed <c>consumer:eventId</c> receipts.
+/// </summary>
 internal sealed record ManagementState(
-    IncidentView Incident, Dictionary<string, Receipt> Receipts, EwssBroadcast[]? Broadcasts = null)
+    IncidentView Incident, Dictionary<string, Receipt> Receipts, EwssBroadcast[]? Broadcasts = null,
+    IntegrationEvent[]? Outbox = null, string[]? Inbox = null)
 {
+    internal const int MaxInbox = 2000;
+
     public EwssBroadcast[] Broadcasts { get; init; } = Broadcasts ?? [];
+    public IntegrationEvent[] Outbox { get; init; } = Outbox ?? [];
+    public string[] Inbox { get; init; } = Inbox ?? [];
+
+    internal ManagementState Publish(IntegrationEvent message) => this with { Outbox = [.. Outbox, message] };
+
+    internal bool Processed(string consumer, string eventId) => Inbox.Contains(consumer + ":" + eventId);
+
+    internal ManagementState MarkProcessed(string consumer, string eventId) =>
+        this with { Inbox = [.. Inbox.Skip(Math.Max(Inbox.Length + 1 - MaxInbox, 0)), consumer + ":" + eventId] };
 
     internal static ManagementState Initial() => new(
         new IncidentView("incident-42", [],
@@ -49,7 +67,7 @@ internal readonly record struct Outcome(ManagementState? Changed, object Payload
     internal static Outcome Reject(string code, string detail, int status) => new(null, new { code, detail }, status);
 }
 
-internal sealed class ManagementStore(IManagementPersistence persistence)
+internal sealed class ManagementStore(IManagementPersistence persistence, OutboxSignal? outbox = null)
 {
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -80,12 +98,22 @@ internal sealed class ManagementStore(IManagementPersistence persistence)
                 var result = JsonSerializer.SerializeToElement(outcome.Payload, Json);
                 var receipts = new Dictionary<string, Receipt>(outcome.Changed.Receipts) { [id] = new(identity, result) };
                 return (outcome.Changed with { Receipts = receipts }, Results.Ok(result));
-            });
+            }, NotifyOutbox);
         }
         catch (ManagementPersistenceException)
         {
             return Error("StateUnavailable", "Management could not write its local state.", 503);
         }
+    }
+
+    /// <summary>Applies a state change without a command receipt, used by event consumers.</summary>
+    internal void Apply(Func<ManagementState, ManagementState?> apply) =>
+        persistence.Update(state => (apply(state), Results.Ok()), NotifyOutbox);
+
+    private void NotifyOutbox(ManagementState committed)
+    {
+        if (committed.Outbox.Length > 0)
+            outbox?.Notify();
     }
 
     internal static IResult Error(string code, string detail, int status) =>
