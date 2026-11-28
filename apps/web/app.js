@@ -9,7 +9,7 @@ const companionConfig = fetch('/ui/companion')
   .catch(() => null);
 const state = {
   network: null, situation: null, incident: null, dispatch: null, distribution: null, draw: null, readAvailable: false,
-  cityImagery: null, closedRoads: [],
+  cityImagery: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null, reviewSignature: null,
   dispatchSelections: new Map(), dispatchErrors: new Map(),
@@ -141,15 +141,14 @@ async function refresh(epoch) {
   const node = $('node').value;
   const previousCityPath = state.cityPath;
   const revisionChanged = state.situation?.revision !== situation.revision;
-  const [distribution, draw, cityPath, closureLayer] = await Promise.all([
+  const [distribution, draw, cityPath] = await Promise.all([
     valencia ? null : api('routing', 'queries/distribution?node=' + encodeURIComponent(node)),
     state.draw ? api('routing', 'queries/draws/' + state.draw.id) : null,
     previousCityPath && (previousCityPath.revision !== situation.revision || !state.readAvailable)
       ? requestCityPath() : null,
-    valencia && revisionChanged ? api('situation', 'queries/closed-roads') : null,
   ]);
   if (state.epoch !== epoch) return;
-  if ([distribution, draw, cityPath, closureLayer].some(view => view && view.revision !== situation.revision))
+  if ([distribution, draw, cityPath].some(view => view && view.revision !== situation.revision))
     throw new Error('Sytuacja zmieniła się podczas odczytu.');
 
   const restored = !state.readAvailable;
@@ -159,18 +158,11 @@ async function refresh(epoch) {
   state.incident = incident;
   state.dispatch = dispatch;
   state.cityImagery = cityImagery;
-  if (closureLayer) state.closedRoads = closureLayer.roads;
   document.body.classList.toggle('valencia', valencia);
   for (const id of ['exercise-controls', 'exercise-routing', 'exercise-operations', 'scenario-time'])
     $(id).hidden = valencia;
   $('valencia-tools').hidden = !valencia;
-  if (valencia) {
-    const { safe = 0, hazard = 0, unknown = 0 } = network.city.zoneCounts;
-    const count = value => value.toLocaleString('pl-PL');
-    text('valencia-zone-counts', count(hazard) + ' w strefie zagrożenia · ' + count(safe) +
-      ' poza wykrytym zalaniem · ' + count(unknown) + ' bez oceny');
-    text('map-route-label', 'Trasa testowa OSM');
-  }
+  if (valencia) $('map').setAttribute('aria-label', 'Mapa zalania i dróg w obszarze zdjęć Sentinel-1.');
   state.distribution = distribution;
   if (draw) state.draw = { id: state.draw.id, ...draw };
   if (cityPath && state.cityPath === previousCityPath) showCityPath(cityPath);
@@ -187,13 +179,12 @@ async function refresh(epoch) {
   state.satelliteScene = scene;
   text('incident', valencia ? 'DEMO · POWÓDŹ · WALENCJA'
     : warsaw ? 'DEMO · POWÓDŹ · WARSZAWA' : 'DEMO · POWÓDŹ · ' + incident.incidentId);
-  text('map-area', network.city
-    ? (valencia ? 'Aglomeracja Walencji' : 'Warszawa') + ' · ' +
-      network.city.roadCount.toLocaleString('pl-PL') + ' odcinków OSM'
+  text('map-area', valencia ? 'Walencja · obszar Sentinel-1'
+    : network.city ? 'Warszawa · ' + network.city.roadCount.toLocaleString('pl-PL') + ' odcinków OSM'
     : warsaw ? 'Warszawa · lokalne ćwiczenie nad Wisłą' : 'Kłodzko · obszar ćwiczeń');
   $('map-credit').hidden = !warsaw && !valencia;
-  $('city-tools').hidden = !network.city;
-  $('city-routing').hidden = !network.city;
+  $('city-tools').hidden = valencia || !network.city;
+  $('city-routing').hidden = valencia || !network.city;
   if (scene) {
     $('satellite-source').href = scene.sourceUrl;
     text('satellite-source', 'Contains modified Copernicus Sentinel data ' + scene.observedAt.slice(0, 4));
@@ -211,14 +202,10 @@ async function refresh(epoch) {
     text('archive-date', ' · obserwacja ' + formatObservation.format(new Date(archive.observedAt)) + ' UTC' +
       (archive.resolutionMeters ? ' · ' + archive.resolutionMeters + ' m' : ''));
   }
-  $('review-panel').hidden = !warsaw && !valencia;
+  $('review-panel').hidden = !warsaw;
   text('revision', 'Rewizja ' + situation.revision);
   if (valencia) {
-    if (revisionChanged || restored || cityPath || (state.cityPath && state.busy)) redrawMap();
-    if (restored && !state.valenciaViewInitialized) {
-      fitValenciaRadar();
-      state.valenciaViewInitialized = true;
-    }
+    if (revisionChanged || restored) redrawMap();
   } else {
     text('clock', time(distribution.at) + ' UTC');
     renderDistribution();
@@ -243,7 +230,7 @@ async function refresh(epoch) {
       'Szacunek ludności w ' + zone + ' · ' + new Intl.NumberFormat('pl-PL').format(estimate.value) +
       ' osób · ' + estimate.source + ' ' + estimate.year);
   }
-  const reviews = situation.reviewFeatures || [];
+  const reviews = warsaw ? situation.reviewFeatures || [] : [];
   const reviewSignature = JSON.stringify(reviews);
   if (reviewSignature !== state.reviewSignature) {
     renderReviews(reviews);
@@ -344,7 +331,8 @@ function renderMap(route) {
   const valencia = state.network.scenario === 'valencia';
   const scene = state.satelliteScene;
   const city = state.network.city;
-  const cityBounds = city?.bounds ?? (warsaw ? scene?.bounds : null);
+  const cityBounds = valencia ? state.cityImagery.scenes.event.bounds
+    : city?.bounds ?? (warsaw ? scene?.bounds : null);
   const bounds = cityBounds ?? scene?.viewBounds ?? state.network.bounds;
   map.classList.toggle('map-city', Boolean(cityBounds));
   const [west, south, east, north] = bounds || [16.646, 50.431, 16.660, 50.442];
@@ -361,14 +349,23 @@ function renderMap(route) {
     const [x2, y2] = project(right, bottom);
     return svg('image', { href, x, y, width: x2 - x, height: y2 - y, preserveAspectRatio: 'none', opacity });
   };
-  const points = new Map(state.network.nodes.map(node => [node.id, project(node.longitude, node.latitude)]));
-  const closed = new Set(state.situation.closedSegments);
-  const selected = new Set(route?.segments || []);
   const defs = svg('defs', {});
   const grid = svg('pattern', { id: 'grid', width: 34, height: 34, patternUnits: 'userSpaceOnUse' });
   grid.append(svg('path', { d: 'M 34 0 H 0 V 34', fill: 'none', stroke: '#294049', 'stroke-width': 1 }));
   defs.append(grid);
-  map.replaceChildren(defs, svg('rect', { width: 760, height: 420, fill: 'url(#grid)' }));
+  const canvas = valencia ? svg('g', { 'clip-path': 'url(#valencia-extent)' }) : map;
+  map.replaceChildren(defs);
+  if (valencia) {
+    const [x, y] = project(west, north);
+    const [right, bottom] = project(east, south);
+    const extent = { x, y, width: right - x, height: bottom - y };
+    const clip = svg('clipPath', { id: 'valencia-extent' });
+    clip.append(svg('rect', extent));
+    defs.append(clip);
+    map.append(canvas);
+    mapViewport.setExtent(extent);
+  }
+  canvas.append(svg('rect', { width: 760, height: 420, fill: 'url(#grid)' }));
   if (scene) {
     const image = mapImage(scene.bounds, '/maps/' + scene.image, .83);
     image.id = 'satellite-background';
@@ -386,13 +383,13 @@ function renderMap(route) {
     if (radar) {
       const image = mapImage(radar.bounds, '/maps/sentinel-' + selected + '.jpg', .82);
       image.id = 'valencia-radar';
-      map.append(image);
+      canvas.append(image);
     }
   }
   if (city) {
     const roads = mapImage(city.bounds, '/maps/city.svg?v=' + encodeURIComponent(city.osmTimestamp), scene ? .48 : 1);
     roads.classList.add('map-city-roads');
-    map.append(roads);
+    canvas.append(roads);
   }
   if (!cityBounds || warsaw) {
     for (const line of (scene ? [] : state.network.waterways || [])) {
@@ -404,20 +401,27 @@ function renderMap(route) {
         stroke: scene ? '#9aacac' : '#38525a', 'stroke-opacity': scene ? .55 : 1, 'stroke-width': 1.15 }));
     }
   }
-  const hazards = state.situation.hazards || [];
+  const layers = state.situation.hazards || [];
+  const hazards = valencia ? layers.filter(hazard => hazard.source === 'copernicus-ems-archive') : layers;
   $('observed-legend').hidden = !hazards.some(h => h.productId);
   for (const hazard of hazards) {
     const observed = Boolean(hazard.productId);
     for (const polygon of polygons(hazard.geometry)) {
-      map.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd',
+      canvas.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd',
         fill: observed ? (valencia ? '#bb392f' : '#2372b0') : '#285b6d',
         'fill-opacity': observed ? (valencia ? .36 : .45) : .6,
         stroke: observed ? (valencia ? '#ff7663' : '#79c4ff') : '#5c9fb1', 'stroke-dasharray': observed ? 'none' : '5 4',
         'stroke-width': 1.8 }));
     }
   }
-  if (valencia && $('valencia-nodes').checked)
-    map.append(mapImage(city.bounds, '/maps/city-nodes.svg', .9));
+  if (valencia) {
+    updateMapDetail();
+    return;
+  }
+
+  const points = new Map(state.network.nodes.map(node => [node.id, project(node.longitude, node.latitude)]));
+  const closed = new Set(state.situation.closedSegments);
+  const selected = new Set(route?.segments || []);
   const archive = scene?.floodArchive;
   $('archive-legend').hidden = !archive;
   if (archive) {
@@ -438,7 +442,7 @@ function renderMap(route) {
     }
     map.append(group);
   }
-  if (city && !valencia) {
+  if (city) {
     for (const feature of (state.situation.reviewFeatures || []).filter(item =>
       item.status === 'Approved' && item.segmentIds.some(id => id.startsWith('osm-') && closed.has(id)))) {
       for (const polygon of polygons(feature.geometry)) {
@@ -449,23 +453,7 @@ function renderMap(route) {
   }
   map.append(svg('path', { d: 'M 713 62 V 29 M 706 38 L 713 29 L 720 38', stroke: '#a4babf', fill: 'none', 'stroke-width': 2 }));
   map.append(svg('text', { x: 708, y: 82, class: 'map-caption' }, 'N'));
-  const routes = valencia ? state.closedRoads.map(road => ({
-    points: pointsOnMap(road.geometry), fill: 'none', stroke: '#ff9e8f',
-    'stroke-width': 4, 'stroke-dasharray': '8 5'
-  })) : [];
-  if (valencia && !$('valencia-image').value) {
-    for (const [name, lon, lat] of [
-      ['València', -0.374, 39.48], ['Torrent', -0.466, 39.452], ['Picanya', -0.443, 39.437],
-      ['Paiporta', -0.414, 39.422], ['Catarroja', -0.399, 39.398], ['Albufera', -0.353, 39.322]
-    ]) {
-      const [x, y] = project(lon, lat);
-      const anchor = svg('g', { transform: 'translate(' + x + ' ' + y + ')' });
-      const caption = svg('g', { class: 'map-symbol' });
-      caption.append(svg('text', { class: 'map-place-caption' }, name));
-      anchor.append(caption);
-      map.append(anchor);
-    }
-  }
+  const routes = [];
   for (const segment of state.network.segments) {
     if (!(segment.walkingSeconds > 0)) continue;
     const geometry = segment.geometry ? pointsOnMap(segment.geometry)
@@ -554,22 +542,6 @@ function renderReviews(reviews) {
       const controls = element('div', null, 'buttons');
       if (feature.segmentIds.length) controls.append(button('Zatwierdź zamknięcie', () => decide('approve')));
       controls.append(button('Odrzuć', () => decide('reject')));
-      if (state.network.scenario === 'valencia') {
-        const focus = element('button', 'Pokaż na mapie');
-        focus.type = 'button';
-        focus.addEventListener('click', () => {
-          const marker = $('map-review-' + feature.id);
-          if (marker) mapViewport.fit(marker.getBBox());
-          $('map').scrollIntoView({ block: 'nearest' });
-        });
-        controls.append(focus);
-      }
-      if (state.network.scenario === 'valencia' && feature.segmentIds.length) {
-        const details = element('details');
-        details.append(element('summary', 'Dopasowane odcinki OSM'),
-          element('p', feature.segmentIds.join(' · ')));
-        item.append(details);
-      }
       item.append(controls);
     }
     list.append(item);
@@ -589,21 +561,10 @@ function requestCityPath() {
 function showCityPath(path) {
   state.cityPath = path;
   const found = path.route;
-  const title = state.network?.scenario === 'valencia' ? 'Trasa testowa OSM · ' : 'Trasa orientacyjna · ';
-  text('city-status', found ? title + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
+  text('city-status', found ? 'Trasa orientacyjna · ' + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
 }
 
-$('valencia-nodes').addEventListener('change', redrawMap);
-function fitValenciaRadar() {
-  const radar = $('valencia-radar');
-  if (radar) mapViewport.fit(radar.getBBox());
-  else mapViewport.reset();
-}
-
-$('valencia-image').addEventListener('change', () => {
-  redrawMap();
-  fitValenciaRadar();
-});
+$('valencia-image').addEventListener('change', redrawMap);
 $('archive-focus').addEventListener('click', () => {
   const layer = $('archive-flood-layer');
   if (layer) mapViewport.fit(layer.getBBox());
