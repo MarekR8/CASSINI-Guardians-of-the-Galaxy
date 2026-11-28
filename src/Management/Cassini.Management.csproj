@@ -12,6 +12,17 @@
   <ItemGroup Condition="'$(EnableRabbitMq)' == 'true'">
     <ProjectReference Include="../Shared/Messaging/RabbitMq/Cassini.Messaging.RabbitMq.csproj" />
   </ItemGroup>
+  <!-- -p:EnableManagementPostgres=true stores Management in PostgreSQL (management_db) through EF Core migrations. -->
+  <PropertyGroup Condition="'$(EnableManagementPostgres)' == 'true'">
+    <DefineConstants>$(DefineConstants);MANAGEMENT_POSTGRES</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableManagementPostgres)' == 'true'">
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(EnableManagementPostgres)' != 'true'">
+    <Compile Remove="Postgres/**" />
+  </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Cassini.Management.Tests" />
     <ProjectReference Include="../Shared/Messaging/Cassini.Messaging.csproj" />

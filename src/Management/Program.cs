@@ -14,8 +14,7 @@ if (ewssMode != "mock")
         "Integrations:Ewss:Mode supports only 'mock': EWSS has no public broadcast interface.");
 
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<IManagementPersistence>(
-    new FileManagementPersistence(builder.Configuration["Demo:DataDirectory"]));
+builder.Services.AddSingleton(CreatePersistence(builder.Configuration));
 builder.Services.AddSingleton<OutboxSignal>();
 builder.Services.AddSingleton(services => new ManagementStore(
     services.GetRequiredService<IManagementPersistence>(), services.GetRequiredService<OutboxSignal>()));
@@ -49,6 +48,19 @@ commands.MapPost("/progress", (RecordProgress command, IncidentCommands handler)
 commands.MapPost("/ewss-alert", (BroadcastEwssAlert command, EwssCommands handler) => handler.Broadcast(command));
 
 app.Run();
+
+static IManagementPersistence CreatePersistence(IConfiguration configuration)
+{
+    var connectionString = configuration.GetConnectionString("Management");
+    if (string.IsNullOrWhiteSpace(connectionString))
+        return new FileManagementPersistence(configuration["Demo:DataDirectory"]);
+#if MANAGEMENT_POSTGRES
+    return new Cassini.Management.Postgres.PostgresManagementPersistence(connectionString);
+#else
+    throw new InvalidOperationException(
+        "ConnectionStrings:Management requires a build with -p:EnableManagementPostgres=true.");
+#endif
+}
 
 static void AddEventBus(WebApplicationBuilder builder)
 {
