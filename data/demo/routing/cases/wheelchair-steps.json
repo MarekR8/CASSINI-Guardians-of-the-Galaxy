@@ -276,7 +276,7 @@
    "capacityPriceStepMinutes": 30,
    "capacityTolerance": 0.005,
    "maxPriceIterations": 2000,
-   "capacityNote2": "Shelter places are a constraint, enforced by a shadow price per shelter in minutes: price = max(0, price + step x (assigned / places left - 1)). Prices follow the MSA iterations, then are tuned on the final routes until no shelter is over its places by more than capacityTolerance. The next wave sees the places actually given.",
+   "capacityNote2": "Shelter places are a constraint, enforced by a shadow price per shelter in minutes: price = max(0, price + step x (assigned / places left - 1)). Prices follow the MSA iterations, then are tuned on the final routes until no shelter is over its places by more than capacityTolerance. The next wave sees the places actually given. If pricing stalls (no 1 % lower excess in 200 iterations), every group sent to a full shelter is cut proportionally: it keeps its route out of the flood and the cut share is ShelterCapacityExhausted, never overflow.",
    "waves": 4,
    "waveStaggerMinutes": 0,
    "wavesNote": "Waves are priority classes: each is assigned on the road and shelter capacity left by the more urgent ones. With a median free-flow reserve of about 9 minutes, delaying departures costs more than it relieves (Valencia: 64 % on time with 0 min stagger, 45 % with 5 min, 12 % with 10 min).",

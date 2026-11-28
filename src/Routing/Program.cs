@@ -31,6 +31,27 @@ if (evacuationEnabled)
         ? directory : Path.Combine(AppContext.BaseDirectory, "evacuation");
     var shelterFile = builder.Configuration["Routing:EvacuationShelters"] is { Length: > 0 } file ? file : null;
     builder.Services.AddSingleton(_ => EvacuationInputs.ReadDirectory(evacuationDirectory, shelterFile));
+    // T_safe per exit (task 03 Stage B). Mock reads the bundled forecast file; live calls the Open-Meteo Flood API.
+    var forecastFile = builder.Configuration["Routing:Forecast:File"] is { Length: > 0 } forecastPath
+        ? forecastPath : Path.Combine(evacuationDirectory, "valencia", "glofas-forecast.mock.json");
+    switch (builder.Configuration["Routing:Forecast:Mode"] ?? "mock")
+    {
+        case "mock":
+            builder.Services.AddSingleton<IHazardForecast>(_ => new MockGlofasForecast(forecastFile));
+            break;
+        case "live":
+            builder.Services.AddHttpClient("glofas", client => client.Timeout = TimeSpan.FromSeconds(10));
+            builder.Services.AddSingleton<IHazardForecast>(services => new LiveGlofasForecast(
+                services.GetRequiredService<IHttpClientFactory>().CreateClient("glofas"), forecastFile, TimeProvider.System,
+                TimeSpan.FromHours(builder.Configuration.GetValue("Routing:Forecast:MaxAgeHours", 6.0)),
+                services.GetRequiredService<ILogger<LiveGlofasForecast>>()));
+            break;
+        case "off":
+            builder.Services.AddSingleton<IHazardForecast>(_ => new NoHazardForecast(TimeProvider.System));
+            break;
+        default:
+            throw new InvalidOperationException("Routing:Forecast:Mode must be mock, live or off.");
+    }
     builder.Services.AddSingleton<EvacuationPlanner>();
     builder.Services.AddHostedService<EvacuationPlanRefresher>();
     builder.Services.AddTransient<EvacuationRouting>();

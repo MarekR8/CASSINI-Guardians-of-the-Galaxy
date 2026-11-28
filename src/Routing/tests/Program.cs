@@ -4,6 +4,7 @@ using Cassini.Routing;
 
 EvacuationFixtureTests.Run();
 EvacuationInputTests.Run();
+HazardForecastTests.Run();
 
 var handler = new SituationStub();
 using var http = new HttpClient(handler) { BaseAddress = new Uri("http://situation.test/") };

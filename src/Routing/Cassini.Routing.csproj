@@ -17,7 +17,7 @@
     <Content Include="../../data/demo/routing/valencia-task03.zip;../../data/demo/routing/params.json"
              Link="evacuation/%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="../../data/demo/routing/valencia/population.json;../../data/demo/routing/valencia/deadlines.json;../../data/demo/routing/valencia/shelters.synthetic.json"
+    <Content Include="../../data/demo/routing/valencia/population.json;../../data/demo/routing/valencia/deadlines.json;../../data/demo/routing/valencia/shelters.synthetic.json;../../data/demo/routing/valencia/glofas-forecast.mock.json"
              Link="evacuation/valencia/%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

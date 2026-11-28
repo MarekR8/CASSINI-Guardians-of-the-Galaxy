@@ -36,6 +36,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 5.16110002050129,
       "shares": {
        "s10": 0.8804858551983151,
@@ -48,6 +49,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 7.246318504354724,
       "shares": {
        "s10": 0.9456863434115548,
@@ -60,6 +62,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 8.409886892647824,
       "shares": {
        "s10": 0.9655545093681932,
@@ -74,6 +77,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 4.3821379596575,
       "shares": {
        "s10": 0.017955338074497548,
@@ -86,6 +90,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 6.203002521437606,
       "shares": {
        "s10": 0.0032876364757079024,
@@ -98,6 +103,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 7.227873456550352,
       "shares": {
        "s10": 0.0012710050049574647,
@@ -174,6 +180,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 6.3490102987532975,
       "shares": {
        "s10": 0.0024893105406546758,
@@ -186,6 +193,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 9.048714568050286,
       "shares": {
        "s10": 0.00018940870466312813,
@@ -198,6 +206,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 10.55587359726611,
       "shares": {
        "s10": 4.5398640836374934e-05,
@@ -212,6 +221,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 4.363971625323498,
       "shares": {
        "s10": 0.0025496103886953935,
@@ -224,6 +234,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 6.197989580768649,
       "shares": {
        "s10": 0.00019123890659747652,
@@ -236,6 +247,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 7.222536218500679,
       "shares": {
        "s10": 4.539864083637509e-05,
@@ -312,6 +324,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      },
@@ -321,6 +334,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      },
@@ -330,6 +344,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      }
@@ -341,6 +356,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      },
@@ -350,6 +366,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      },
@@ -359,6 +376,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      }
@@ -434,6 +452,7 @@
       "startMinute": 0,
       "deadlineMinutes": 4,
       "status": "DeadlineInfeasible",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 5.16110002050129,
       "shares": {
        "s10": 0.8804858551983151,
@@ -446,6 +465,7 @@
       "startMinute": 0,
       "deadlineMinutes": 4,
       "status": "DeadlineInfeasible",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 7.246318504354724,
       "shares": {
        "s10": 0.9456863434115548,
@@ -458,6 +478,7 @@
       "startMinute": 0,
       "deadlineMinutes": 4,
       "status": "DeadlineInfeasible",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 8.409886892647824,
       "shares": {
        "s10": 0.9655545093681932,
@@ -472,6 +493,7 @@
       "startMinute": 0,
       "deadlineMinutes": 5,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 4.334281713100054,
       "shares": {
        "s10": 0.0,
@@ -484,6 +506,7 @@
       "startMinute": 0,
       "deadlineMinutes": 5,
       "status": "DeadlineInfeasible",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 6.203002521437606,
       "shares": {
        "s10": 0.0032876364757079024,
@@ -496,6 +519,7 @@
       "startMinute": 0,
       "deadlineMinutes": 5,
       "status": "DeadlineInfeasible",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 7.227873456550352,
       "shares": {
        "s10": 0.0012710050049574647,
@@ -572,6 +596,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 28.968318657346416,
       "shares": {
        "s10": 0.0001830930669210149,
@@ -584,6 +609,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 13.092749144441989,
       "shares": {
        "s10": 0.11219261937807133,
@@ -596,6 +622,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 15.23251529410437,
       "shares": {
        "s10": 0.08394684248657128,
@@ -610,6 +637,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 21.244826953360942,
       "shares": {
        "s10": 0.0001830930669210149,
@@ -622,6 +650,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 9.526008005425247,
       "shares": {
        "s10": 0.02211283688127726,
@@ -634,6 +663,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 11.085430059438748,
       "shares": {
        "s10": 0.012159961272343336,
@@ -710,6 +740,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 2.510945434074074,
       "shares": {
        "s10": 0.26893644019488555,
@@ -722,6 +753,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 3.571450514285715,
       "shares": {
        "s10": 0.1933213580452823,
@@ -734,6 +766,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 8.333333341137022,
       "shares": {
        "s10": 0.0,
@@ -855,6 +888,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 17.31154448625387,
       "shares": {
        "s10": 0.301188596158867,
@@ -867,6 +901,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 13.972054876115191,
       "shares": {
        "s10": 0.1597826099093389,
@@ -879,6 +914,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 16.263615071149015,
       "shares": {
        "s10": 0.1285116487113396,
@@ -893,6 +929,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 12.664877819587206,
       "shares": {
        "s10": 0.301188596158867,
@@ -905,6 +942,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 11.050672055552125,
       "shares": {
        "s10": 0.1597826099093389,
@@ -917,6 +955,7 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 12.855335113825438,
       "shares": {
        "s10": 0.12851164871133985,
@@ -1058,6 +1097,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 1.0002979446730682,
       "shares": {
        "s10": 1.0
@@ -1069,6 +1109,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 1.4285722646809063,
       "shares": {
        "s10": 1.0
@@ -1080,6 +1121,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 1.666667642127725,
       "shares": {
        "s10": 1.0
@@ -1149,6 +1191,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 3.3343264822435605,
       "shares": {
        "s10": 1.0
@@ -1160,6 +1203,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 4.761907548936356,
       "shares": {
        "s10": 1.0
@@ -1171,6 +1215,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 5.555558807092416,
       "shares": {
        "s10": 1.0
@@ -1213,6 +1258,419 @@
     }
    ]
   },
+  "exit-unsafe-before-arrival": {
+   "status": {
+    "Ok": 950.0
+   },
+   "statusAll": {
+    "Ok": 950.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 396.3156906379266,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 553.6843093620733,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 5.159714371349694,
+      "shares": {
+       "s10": 0.880701534750948,
+       "s20": 0.11929846524905192
+      }
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 9.047680485389424,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 10.555627232954327,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 4.335716530331922,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 6.190534160733337,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.222289854188895,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 200,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 450,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 2.6e-05
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 300,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    }
+   ]
+  },
+  "forecast-no-exit": {
+   "status": {
+    "NoEligibleExit": 950.0
+   },
+   "statusAll": {
+    "NoEligibleExit": 950.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 2,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 450,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 120,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 380,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    }
+   ]
+  },
+  "capacity-rationed": {
+   "status": {
+    "Ok": 300.0,
+    "ShelterCapacityExhausted": 649.9999999999999
+   },
+   "statusAll": {
+    "Ok": 300.0,
+    "ShelterCapacityExhausted": 649.9999999999999
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 300,
+     "expectedLoad": 300.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 0.32950191570881227,
+      "leaveFloodMinutes": 6.339096242762994,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 9.047632240927532,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 10.55557094774879,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "ShelterCapacityExhausted",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 0.32950191570881227,
+      "leaveFloodMinutes": 6.196943723735495,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.222233568983357,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 128,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 522,
+     "iterations": 2,
+     "priceIterations": 201,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 300,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    }
+   ]
+  },
   "no-reentry": {
    "status": {
     "Ok": 475.0
@@ -1240,6 +1698,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 3.3343264822435605,
       "shares": {
        "s10": 1.0
@@ -1251,6 +1710,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 4.761907548936356,
       "shares": {
        "s10": 1.0
@@ -1262,6 +1722,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 5.555558807092416,
       "shares": {
        "s10": 1.0
