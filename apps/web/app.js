@@ -9,6 +9,7 @@ import { initIntegrations } from './js/panels/integrations.js';
 import { initOperations } from './js/panels/operations.js';
 import { initReviews } from './js/panels/reviews.js';
 import { initScenario } from './js/panels/scenario.js';
+import { initSheltering } from './js/panels/sheltering.js';
 import { initSites } from './js/panels/sites.js';
 import { run, setHooks, startPolling, state } from './js/state.js';
 
@@ -29,6 +30,7 @@ initOperations();
 initReviews();
 initScenario();
 initSites();
+initSheltering();
 initIntegrations();
 
 // Extension point (S2 layers, S3 metrics, S4 presentation). Loaded after the core panels subscribe.

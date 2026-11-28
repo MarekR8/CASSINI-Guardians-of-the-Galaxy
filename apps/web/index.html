@@ -148,6 +148,34 @@
         <ul class="records"></ul>
       </div>
     </details>
+    <section class="card" id="sheltering-panel" aria-labelledby="sheltering-title" hidden>
+      <div class="card-heading">
+        <div><h2 id="sheltering-title">Schronienia i przydziały</h2><p id="sheltering-status" role="status" aria-live="polite">Ładowanie…</p></div>
+        <span class="badge" id="sheltering-revision">—</span>
+      </div>
+      <form class="sheltering-token" id="sheltering-token">
+        <label for="sheltering-token-input">Token operatora ćwiczenia</label>
+        <input id="sheltering-token-input" type="password" autocomplete="off" spellcheck="false">
+        <button type="submit">Użyj</button>
+        <button type="button" id="sheltering-token-clear">Wyczyść</button>
+        <span id="sheltering-token-state">Bez tokenu</span>
+      </form>
+      <div class="sheltering-grid">
+        <section><h3>Obiekty i dostępność</h3><ul class="records" id="sheltering-sites"></ul></section>
+        <section><h3>Przyjęcia</h3><ul class="records" id="sheltering-reception"></ul></section>
+      </div>
+      <section><h3>Decyzje grup podróżnych</h3><ul class="records" id="sheltering-groups"></ul></section>
+      <section>
+        <h3>Przydziały i fakty</h3>
+        <p class="sheltering-note">Każda kolumna pochodzi od innego właściciela. Rezerwacja nie jest opublikowaną trasą, a wyjście ze strefy nie jest przyjęciem.</p>
+        <div class="table-wrap">
+          <table id="sheltering-assignments">
+            <thead><tr><th scope="col">Osoba</th><th scope="col">Odcinek</th><th scope="col">Wyjście ze strefy</th><th scope="col">Check-in w punkcie</th><th scope="col">Rezerwacja</th><th scope="col">Opublikowana trasa</th><th scope="col">Przyjęcie</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
     <details class="card data">
       <summary>Źródła danych</summary>
       <div class="data-body">
