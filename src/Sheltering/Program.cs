@@ -1,7 +1,12 @@
 using Cassini.Demo.SiteCatalog;
+using Cassini.Messaging;
+#if MESSAGING_RABBITMQ
+using Cassini.Messaging.RabbitMq;
+#endif
 using Cassini.Sheltering.Allocation;
 using Cassini.Sheltering.Catalog;
 using Cassini.Sheltering.Infrastructure;
+using Cassini.Sheltering.Publication;
 using Cassini.Sheltering.Reception;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +32,23 @@ else
 #endif
 }
 builder.Services.AddSingleton<AllocationStore>();
+builder.Services.AddSingleton<IOutboxStore>(services => services.GetRequiredService<AllocationStore>());
+builder.Services.AddScoped<InstructionWorkflow>();
+// SH-T06 Stage B: with Integrations:Bus:Mode=live both outboxes go to RabbitMQ and the instruction board consumes events.
+#if MESSAGING_RABBITMQ
+var liveBus = builder.Services.AddLiveEventBus(builder.Configuration, uri => new RabbitMqEventBus(
+    new RabbitMqOptions(uri, "sheltering") { RequireRoutingFor = new HashSet<string> { EventTypes.ShelterAssignmentChanged } }));
+#else
+var liveBus = builder.Services.AddLiveEventBus(builder.Configuration, null);
+#endif
+if (liveBus)
+{
+    builder.Services.AddSingleton<IInstructionAuthority>(services => new OwnerInstructionAuthority(
+        services.GetRequiredService<AllocationStore>(), services.GetRequiredService<RoutingClient>));
+    builder.Services.AddSingleton<InstructionBoard>();
+    builder.Services.AddSingleton<IEventConsumer>(services => services.GetRequiredService<InstructionBoard>());
+    builder.Services.AddHostedService<EventSubscription>();
+}
 builder.Services.AddSingleton(new OperatorDirectory(builder.Configuration["Sheltering:OperatorsFile"]));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<AllocationCommands>();
@@ -107,6 +129,15 @@ app.MapPost("/commands/invalidate-shelter-assignment", (InvalidateShelterAssignm
     AllocationCommands handler, CancellationToken cancellation) => handler.Invalidate(command, cancellation));
 app.MapPost("/commands/release-shelter-reservation", (ReleaseShelterReservationCommand command,
     AllocationCommands handler, CancellationToken cancellation) => handler.Release(command, cancellation));
+// SH-T06 publication: a committed booking is published through Routing as a separate, retryable step.
+app.MapGet("/queries/shelter-instruction", (string? incidentId, string? caseId, string? legId, InstructionWorkflow handler,
+    CancellationToken cancellation) => handler.Get(incidentId, caseId, legId, cancellation));
+app.MapPost("/commands/reconcile-shelter-instruction", (ReconcileShelterInstructionCommand command,
+    InstructionWorkflow handler, CancellationToken cancellation) => handler.Reconcile(command, cancellation));
+if (liveBus)
+    app.MapGet("/queries/shelter-instruction-board", (string? incidentId, InstructionBoard board, AllocationStore store,
+        CancellationToken cancellation) => board.Read(incidentId, store.Read().State.Assignments.Values
+            .Where(item => item.IncidentId == incidentId).Select(item => item.Ref.Key), cancellation));
 
 app.Run();
 

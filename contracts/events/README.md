@@ -15,8 +15,22 @@ Every event uses the envelope in [`src/Shared/Messaging/IntegrationEvent.cs`](..
 | [`CareHandoverRecorded.v1`](CareHandoverRecorded.v1.json) | `grouping.care-handover-recorded.v1` | Management Grouping (SH-T02) | Authorized planners | Published with an opaque handover reference |
 | [`TravelPlanApproved.v1`](TravelPlanApproved.v1.json) | `grouping.travel-plan-approved.v1` | Management Grouping (SH-T02) | Sheltering, coordinator | Published when an approved plan revision is committed |
 | [`TravelPlanReviewRequired.v1`](TravelPlanReviewRequired.v1.json) | `grouping.travel-plan-review-required.v1` | Management Grouping (SH-T02) | Sheltering, coordinator | Published on the first transition to review for the affected revision |
-| [`ShelterAdmissionConfirmed.v1`](ShelterAdmissionConfirmed.v1.json) | `sheltering.shelter-admission-confirmed.v1` | Sheltering (SH-T05) | Management, coordinator view | Written to the Sheltering outbox with the admission; SH-T06 publishes it |
-| [`ShelterDepartureConfirmed.v1`](ShelterDepartureConfirmed.v1.json) | `sheltering.shelter-departure-confirmed.v1` | Sheltering (SH-T05) | Management, coordinator view | Written to the Sheltering outbox with the departure; SH-T06 publishes it |
+| [`ShelterAdmissionConfirmed.v1`](ShelterAdmissionConfirmed.v1.json) | `sheltering.shelter-admission-confirmed.v1` | **Sheltering (SH-T05)** | Management, coordinator view | Published from the reception outbox (SH-T06 Stage B) |
+| [`ShelterDepartureConfirmed.v1`](ShelterDepartureConfirmed.v1.json) | `sheltering.shelter-departure-confirmed.v1` | **Sheltering (SH-T05)** | Management, coordinator view | Published from the reception outbox (SH-T06 Stage B) |
+| [`ShelterAssignmentChanged.v1`](ShelterAssignmentChanged.v1.json) | `sheltering.shelter-assignment-changed.v1` | **Sheltering (SH-T04)** | **Sheltering instruction board (implemented)**, coordinator view | Published from the allocation outbox; `subjectVersion` is the assignment version |
+| [`ShelterAvailabilityChanged.v1`](ShelterAvailabilityChanged.v1.json) | `sheltering.shelter-availability-changed.v1` | **Sheltering (SH-T04)** | Operator availability projection | Published from the allocation outbox |
+
+`RoutePublished.v1` and `RouteWithdrawn.v1` are also published by **Routing (SH-T06)** for `shelter-assignment` subjects. The payload carries the `subject`, the `routeVersion`, and the `assignment` with its `reservationId`, or the withdrawn `reservationId`. `subjectVersion` is the instruction's `aggregateVersion`. When a transfer supersedes a route, one commit emits `RouteWithdrawn.v1` with `reasonCode: "Superseded"` and `RoutePublished.v1`, both at the same `subjectVersion`.
+
+### SH-W5 instruction events (SH-T06)
+
+[`replay/sh-w5-instructions.replay.json`](replay/sh-w5-instructions.replay.json) replays one leg through booking, publication, a closure, a replacement and a transfer. It also includes duplicate, old, reordered and missing events, and group, site and admission facts. Each step gives the expected state. `dotnet run --project src/Sheltering/tests/Cassini.Sheltering.Tests.csproj` verifies it without a broker.
+
+The board applies these rules:
+- A known `eventId` changes nothing.
+- An older `subjectVersion` is ignored.
+- Distinct events at the same version are applied by `routeVersion`. A publication applies only above the current and last withdrawn route versions. A withdrawal clears only the route version it names.
+- A gap in versions is filled by reading the owner instead of guessing.
 
 ## Rules for producers
 

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Cassini.Demo.SiteCatalog;
+using Cassini.Messaging;
 using Cassini.Sheltering.Catalog;
 using Cassini.Sheltering.Infrastructure;
 
@@ -157,7 +158,7 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
                 }
 
                 admissions.Add(admission);
-                events.Add(Event("ShelterAdmissionConfirmed.v1", shelter.ShelterId, version, now, admission, command.ReportId!, observedAt));
+                events.Add(Event(EventTypes.ShelterAdmissionConfirmed, shelter.ShelterId, version, now, admission, command.ReportId!, observedAt));
             }
 
             var result = new ReceptionResult(command.ReportId!, "admission", shelter.ShelterId, revision, version,
@@ -229,7 +230,7 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
                 };
                 admissions[row] = admission with { Departure = new ShelterDeparture(command.ReportId!, observedAt, now, caller?.OperatorId) };
                 entries.Add(new(caseId, legId, admission.AdmissionId, "Departed", admission.ReservationId, admission.Resources));
-                events.Add(Event("ShelterDepartureConfirmed.v1", shelter.ShelterId, version, now, admission, command.ReportId!, observedAt));
+                events.Add(Event(EventTypes.ShelterDepartureConfirmed, shelter.ShelterId, version, now, admission, command.ReportId!, observedAt));
             }
 
             if (!commitments.IsValid)

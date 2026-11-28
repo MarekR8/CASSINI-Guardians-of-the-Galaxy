@@ -42,6 +42,8 @@ public static class EventTypes
     public const string CareHandoverRecorded = "CareHandoverRecorded.v1";
     public const string TravelPlanApproved = "TravelPlanApproved.v1";
     public const string TravelPlanReviewRequired = "TravelPlanReviewRequired.v1";
+    public const string ShelterAdmissionConfirmed = "ShelterAdmissionConfirmed.v1";
+    public const string ShelterDepartureConfirmed = "ShelterDepartureConfirmed.v1";
 
     private static readonly Dictionary<string, string> Keys = new()
     {
@@ -58,6 +60,8 @@ public static class EventTypes
         [CareHandoverRecorded] = "grouping.care-handover-recorded.v1",
         [TravelPlanApproved] = "grouping.travel-plan-approved.v1",
         [TravelPlanReviewRequired] = "grouping.travel-plan-review-required.v1",
+        [ShelterAdmissionConfirmed] = "sheltering.shelter-admission-confirmed.v1",
+        [ShelterDepartureConfirmed] = "sheltering.shelter-departure-confirmed.v1",
     };
 
     public static IReadOnlyCollection<string> All => Keys.Keys;

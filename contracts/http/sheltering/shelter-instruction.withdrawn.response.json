@@ -1,0 +1,34 @@
+{
+  "state": "Withdrawn",
+  "reason": "ShelterClosed",
+  "assignment": {
+    "incidentId": "incident-42",
+    "caseId": "case-31",
+    "legId": "leg-shelter",
+    "version": 6,
+    "status": "AwaitingReplacement",
+    "needs": {
+      "places": 1,
+      "accessiblePlaces": 0
+    },
+    "groupPlanRef": null,
+    "reservation": null,
+    "withdrawn": {
+      "assignmentVersion": 5,
+      "reservationId": "move-a-case-31",
+      "shelterId": "shelter-a",
+      "reason": "ShelterClosed",
+      "evidenceRef": "synthetic-closure-report"
+    },
+    "reason": "SiteClosed"
+  },
+  "instruction": {
+    "aggregateVersion": 3,
+    "current": null,
+    "lastWithdrawal": {
+      "routeVersion": 2,
+      "reasonCode": "ShelterClosed",
+      "reservationId": "move-a-case-31"
+    }
+  }
+}

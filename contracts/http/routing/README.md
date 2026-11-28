@@ -17,6 +17,30 @@ Use `transportId` to verify a matching exercise transport window and accessibili
 
 `400` indicates invalid input or a request time before the exercise clock. `409 TravelSubjectChanged` requires a refreshed subject revision. `422` includes unresolved case needs, origins or required care. `503` signals unavailable evidence or inconsistent owner revisions. A named candidate can also return `200 Ineligible` with a business reason such as `StaleSituationEvidence`, `RouteAccessibilityUnverified`, `ClearanceDeadlineMissed` or `RecordedRouteIneligible`. When safe first-leg routing is unresolved, the response includes `NoEligibleFirstLeg` and no route.
 
+## Shelter instruction publication (SH-T06)
+
+Routing owns the guidance issued for a shelter assignment. The subject is `kind=shelter-assignment` with `id=incidentId/caseId/legId`. The instruction aggregate has two versions:
+- `aggregateVersion` is the concurrency token. A subject that was never published reads as version `0`.
+- Each `current.routeVersion` is new and is never reused.
+
+| Method and path | Behaviour |
+| --- | --- |
+| `GET /queries/route-instruction?kind&id` | The instruction: `aggregateVersion`, `current` (route version, evidence ID, destination, assignment reference, Situation revision, arrival window, validity) and `lastWithdrawal`. See the [example](route-instruction.example.json). |
+| `POST /commands/publish-route` | Takes `commandId`, `correlationId`, `subject`, `expectedVersion`, `assignment` and `route`. The `assignment` carries `incidentId`, `caseId`, `legId`, `assignmentVersion`, `reservationId` and `shelterId`. The `route` carries the proposal's `evidenceId` and `query`. Routing repeats `destination-route` with `expectedEvidenceId` and commits only an `Eligible` result. A current route for another hold is superseded in the same commit. |
+| `POST /commands/withdraw-route` | Takes `commandId`, `subject`, `expectedVersion`, the current `routeVersion`, `reasonCode` and an optional `evidenceRef`. |
+| `GET /queries/route-outbox?after` | Committed `RoutePublished.v1` and `RouteWithdrawn.v1` events with their `published` flag. |
+
+Every write stores a receipt. The same `commandId` returns the original instruction; changed inputs return `409 CommandConflict`. A failure commits nothing.
+
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `VersionConflict` | 409 | The expected aggregate version is stale. Read the instruction again. |
+| `StaleRouteVersion` | 409 | The withdrawal names a route version that is no longer current. A late withdrawal of version 1 cannot retire version 2. |
+| `RouteIneligible` | 422 | The proposal no longer qualifies, for example after a closure or a change to the evidence. |
+| `DestinationCatalogUnavailable` and other `503` codes | 503 | Eligibility cannot be validated. Nothing is published. |
+
+With `-p:EnableRabbitMq=true` and `Integrations:Bus:Mode=live`, the outbox is published to `evacuation.events`. An entry is marked published only after the broker confirms it.
+
 ## Replay the sample
 
 Run the six services and exercise both endpoints using local data:

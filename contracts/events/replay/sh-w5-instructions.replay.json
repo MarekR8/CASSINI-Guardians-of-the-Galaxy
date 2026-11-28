@@ -1,0 +1,654 @@
+{
+  "description": "SH-W5 instruction replay for SH-A07 (synthetic). Apply the events in order to the Sheltering instruction board; each step lists the expected state and current route version. The authority section is what the owners return when the board detects a gap.",
+  "subject": "incident-42/case-31/leg-shelter",
+  "authority": {
+    "assignment": {
+      "version": 7,
+      "status": "Closed",
+      "reservationId": null
+    },
+    "route": {
+      "aggregateVersion": 6,
+      "current": null,
+      "lastWithdrawal": {
+        "routeVersion": 3,
+        "reasonCode": "Cancelled",
+        "reservationId": "move-a-case-31"
+      }
+    }
+  },
+  "steps": [
+    {
+      "note": "Assignment opened: nothing to publish",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000001",
+        "type": "ShelterAssignmentChanged.v1",
+        "producer": "sheltering",
+        "subjectId": "incident-42/case-31/leg-shelter",
+        "subjectVersion": 1,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-01",
+        "payload": {
+          "incidentId": "incident-42",
+          "caseId": "case-31",
+          "legId": "leg-shelter",
+          "assignmentVersion": 1,
+          "status": "Pending",
+          "shelterId": null,
+          "reservationId": null,
+          "arrivalWindow": null,
+          "withdrawnShelterId": null,
+          "withdrawnReservationId": null,
+          "withdrawnAssignmentVersion": null,
+          "reason": null
+        }
+      },
+      "expect": {
+        "state": "NoInstruction",
+        "routeVersion": null
+      }
+    },
+    {
+      "note": "Booking committed: a hold is not an issued route",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000002",
+        "type": "ShelterAssignmentChanged.v1",
+        "producer": "sheltering",
+        "subjectId": "incident-42/case-31/leg-shelter",
+        "subjectVersion": 2,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-02",
+        "payload": {
+          "incidentId": "incident-42",
+          "caseId": "case-31",
+          "legId": "leg-shelter",
+          "assignmentVersion": 2,
+          "status": "Reserved",
+          "shelterId": "shelter-a",
+          "reservationId": "book-a-case-31",
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "withdrawnShelterId": null,
+          "withdrawnReservationId": null,
+          "withdrawnAssignmentVersion": null,
+          "reason": null
+        }
+      },
+      "expect": {
+        "state": "PendingPublication",
+        "routeVersion": null
+      }
+    },
+    {
+      "note": "Site fact does not change the instruction",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000003",
+        "type": "ShelterAvailabilityChanged.v1",
+        "producer": "sheltering",
+        "subjectId": "shelter-a",
+        "subjectVersion": 2,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-03",
+        "payload": {
+          "shelterId": "shelter-a",
+          "shelterVersion": 2,
+          "allocationRevision": 2,
+          "held": {
+            "places": 3,
+            "accessiblePlaces": 1
+          },
+          "reason": "Reserved"
+        }
+      },
+      "expect": {
+        "state": "PendingPublication",
+        "routeVersion": null
+      }
+    },
+    {
+      "note": "Routing published route 1 for the hold",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000004",
+        "type": "RoutePublished.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 1,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-04",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 1,
+          "destination": {
+            "kind": "shelter",
+            "id": "shelter-a"
+          },
+          "assignment": {
+            "incidentId": "incident-42",
+            "caseId": "case-31",
+            "legId": "leg-shelter",
+            "assignmentVersion": 2,
+            "reservationId": "book-a-case-31",
+            "shelterId": "shelter-a"
+          },
+          "evidenceId": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+          "situationRevision": 1,
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "validFrom": "2026-11-27T19:20:00Z",
+          "validUntil": "2026-11-27T20:00:00Z",
+          "routePath": "/queries/route-instruction?kind=shelter-assignment&id=incident-42/case-31/leg-shelter"
+        }
+      },
+      "expect": {
+        "state": "Current",
+        "routeVersion": 1
+      }
+    },
+    {
+      "note": "Broker redelivery of the same event",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000004",
+        "type": "RoutePublished.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 1,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-04",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 1,
+          "destination": {
+            "kind": "shelter",
+            "id": "shelter-a"
+          },
+          "assignment": {
+            "incidentId": "incident-42",
+            "caseId": "case-31",
+            "legId": "leg-shelter",
+            "assignmentVersion": 2,
+            "reservationId": "book-a-case-31",
+            "shelterId": "shelter-a"
+          },
+          "evidenceId": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+          "situationRevision": 1,
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "validFrom": "2026-11-27T19:20:00Z",
+          "validUntil": "2026-11-27T20:00:00Z",
+          "routePath": "/queries/route-instruction?kind=shelter-assignment&id=incident-42/case-31/leg-shelter"
+        }
+      },
+      "expect": {
+        "state": "Current",
+        "routeVersion": 1
+      }
+    },
+    {
+      "note": "Shelter closed: the hold is withdrawn, guidance still out",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000005",
+        "type": "ShelterAssignmentChanged.v1",
+        "producer": "sheltering",
+        "subjectId": "incident-42/case-31/leg-shelter",
+        "subjectVersion": 3,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-05",
+        "payload": {
+          "incidentId": "incident-42",
+          "caseId": "case-31",
+          "legId": "leg-shelter",
+          "assignmentVersion": 3,
+          "status": "AwaitingReplacement",
+          "shelterId": null,
+          "reservationId": null,
+          "arrivalWindow": null,
+          "withdrawnShelterId": "shelter-a",
+          "withdrawnReservationId": "book-a-case-31",
+          "withdrawnAssignmentVersion": 2,
+          "reason": "ShelterClosed"
+        }
+      },
+      "expect": {
+        "state": "WithdrawalPending",
+        "routeVersion": 1
+      }
+    },
+    {
+      "note": "Routing withdrew route 1",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000006",
+        "type": "RouteWithdrawn.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 2,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-06",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 1,
+          "reasonCode": "ShelterClosed",
+          "evidenceRef": "synthetic-closure-report",
+          "reservationId": "book-a-case-31"
+        }
+      },
+      "expect": {
+        "state": "Withdrawn",
+        "routeVersion": null
+      }
+    },
+    {
+      "note": "Replay of the old publication does not restore it",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000007",
+        "type": "RoutePublished.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 1,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-07",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 1,
+          "destination": {
+            "kind": "shelter",
+            "id": "shelter-a"
+          },
+          "assignment": {
+            "incidentId": "incident-42",
+            "caseId": "case-31",
+            "legId": "leg-shelter",
+            "assignmentVersion": 2,
+            "reservationId": "book-a-case-31",
+            "shelterId": "shelter-a"
+          },
+          "evidenceId": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+          "situationRevision": 1,
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "validFrom": "2026-11-27T19:20:00Z",
+          "validUntil": "2026-11-27T20:00:00Z",
+          "routePath": "/queries/route-instruction?kind=shelter-assignment&id=incident-42/case-31/leg-shelter"
+        }
+      },
+      "expect": {
+        "state": "Withdrawn",
+        "routeVersion": null
+      }
+    },
+    {
+      "note": "Replacement booked at shelter-b",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000008",
+        "type": "ShelterAssignmentChanged.v1",
+        "producer": "sheltering",
+        "subjectId": "incident-42/case-31/leg-shelter",
+        "subjectVersion": 4,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-08",
+        "payload": {
+          "incidentId": "incident-42",
+          "caseId": "case-31",
+          "legId": "leg-shelter",
+          "assignmentVersion": 4,
+          "status": "Reserved",
+          "shelterId": "shelter-b",
+          "reservationId": "book-b-case-31",
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "withdrawnShelterId": null,
+          "withdrawnReservationId": null,
+          "withdrawnAssignmentVersion": null,
+          "reason": null
+        }
+      },
+      "expect": {
+        "state": "PendingPublication",
+        "routeVersion": null
+      }
+    },
+    {
+      "note": "Replacement published with a newer version",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000009",
+        "type": "RoutePublished.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 3,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-09",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 2,
+          "destination": {
+            "kind": "shelter",
+            "id": "shelter-b"
+          },
+          "assignment": {
+            "incidentId": "incident-42",
+            "caseId": "case-31",
+            "legId": "leg-shelter",
+            "assignmentVersion": 4,
+            "reservationId": "book-b-case-31",
+            "shelterId": "shelter-b"
+          },
+          "evidenceId": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+          "situationRevision": 1,
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "validFrom": "2026-11-27T19:20:00Z",
+          "validUntil": "2026-11-27T20:00:00Z",
+          "routePath": "/queries/route-instruction?kind=shelter-assignment&id=incident-42/case-31/leg-shelter"
+        }
+      },
+      "expect": {
+        "state": "Current",
+        "routeVersion": 2
+      }
+    },
+    {
+      "note": "Group fact does not change the instruction",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000010",
+        "type": "TravelPlanApproved.v1",
+        "producer": "grouping",
+        "subjectId": "group-household",
+        "subjectVersion": 2,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-10",
+        "payload": {
+          "incidentId": "incident-42",
+          "groupId": "group-household",
+          "planRevision": 2,
+          "groupRevision": 3,
+          "caseIds": [
+            "case-14",
+            "case-15",
+            "case-16"
+          ]
+        }
+      },
+      "expect": {
+        "state": "Current",
+        "routeVersion": 2
+      }
+    },
+    {
+      "note": "Transfer booked back at shelter-a",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000011",
+        "type": "ShelterAssignmentChanged.v1",
+        "producer": "sheltering",
+        "subjectId": "incident-42/case-31/leg-shelter",
+        "subjectVersion": 5,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-11",
+        "payload": {
+          "incidentId": "incident-42",
+          "caseId": "case-31",
+          "legId": "leg-shelter",
+          "assignmentVersion": 5,
+          "status": "Reserved",
+          "shelterId": "shelter-a",
+          "reservationId": "move-a-case-31",
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "withdrawnShelterId": "shelter-b",
+          "withdrawnReservationId": "book-b-case-31",
+          "withdrawnAssignmentVersion": 4,
+          "reason": "CoordinatorTransfer"
+        }
+      },
+      "expect": {
+        "state": "PendingPublication",
+        "routeVersion": 2
+      }
+    },
+    {
+      "note": "Publication of route 3 arrives before its sibling withdrawal",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000013",
+        "type": "RoutePublished.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 4,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-13",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 3,
+          "destination": {
+            "kind": "shelter",
+            "id": "shelter-a"
+          },
+          "assignment": {
+            "incidentId": "incident-42",
+            "caseId": "case-31",
+            "legId": "leg-shelter",
+            "assignmentVersion": 5,
+            "reservationId": "move-a-case-31",
+            "shelterId": "shelter-a"
+          },
+          "evidenceId": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+          "situationRevision": 1,
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "validFrom": "2026-11-27T19:20:00Z",
+          "validUntil": "2026-11-27T20:00:00Z",
+          "routePath": "/queries/route-instruction?kind=shelter-assignment&id=incident-42/case-31/leg-shelter"
+        }
+      },
+      "expect": {
+        "state": "Current",
+        "routeVersion": 3
+      }
+    },
+    {
+      "note": "Withdrawal of route 2 at the same revision cannot retire route 3",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000012",
+        "type": "RouteWithdrawn.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 4,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-12",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 2,
+          "reasonCode": "Superseded",
+          "evidenceRef": null,
+          "reservationId": "book-b-case-31"
+        }
+      },
+      "expect": {
+        "state": "Current",
+        "routeVersion": 3
+      }
+    },
+    {
+      "note": "Admission fact for another case does not change this instruction",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000014",
+        "type": "ShelterAdmissionConfirmed.v1",
+        "producer": "sheltering",
+        "subjectId": "shelter-b",
+        "subjectVersion": 6,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-14",
+        "payload": {
+          "shelterId": "shelter-b",
+          "incidentId": "incident-42",
+          "admissionId": "admission-report-admit-16-case-16",
+          "caseId": "case-16",
+          "legId": "leg-shelter",
+          "reservationId": "party-b-case-16",
+          "walkIn": false,
+          "places": 1,
+          "accessiblePlaces": 1,
+          "reportId": "report-admit-16",
+          "observedAt": "2026-11-27T19:30:00Z",
+          "transferFromShelterId": null
+        }
+      },
+      "expect": {
+        "state": "Current",
+        "routeVersion": 3
+      }
+    },
+    {
+      "note": "Assignment version 6 is missing: version 7 is read from Sheltering",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000016",
+        "type": "ShelterAssignmentChanged.v1",
+        "producer": "sheltering",
+        "subjectId": "incident-42/case-31/leg-shelter",
+        "subjectVersion": 7,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-16",
+        "payload": {
+          "incidentId": "incident-42",
+          "caseId": "case-31",
+          "legId": "leg-shelter",
+          "assignmentVersion": 7,
+          "status": "Closed",
+          "shelterId": null,
+          "reservationId": null,
+          "arrivalWindow": null,
+          "withdrawnShelterId": "shelter-a",
+          "withdrawnReservationId": "move-a-case-31",
+          "withdrawnAssignmentVersion": 6,
+          "reason": "Cancelled"
+        }
+      },
+      "expect": {
+        "state": "WithdrawalPending",
+        "routeVersion": 3
+      }
+    },
+    {
+      "note": "Instruction version 5 is missing: version 6 is read from Routing",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000017",
+        "type": "RouteWithdrawn.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 6,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-17",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 3,
+          "reasonCode": "Cancelled",
+          "evidenceRef": null,
+          "reservationId": "move-a-case-31"
+        }
+      },
+      "expect": {
+        "state": "Withdrawn",
+        "routeVersion": null
+      }
+    },
+    {
+      "note": "Duplicate of the old replay",
+      "event": {
+        "eventId": "00000000-0000-4000-8000-000000000007",
+        "type": "RoutePublished.v1",
+        "producer": "routing",
+        "subjectId": "shelter-assignment/incident-42/case-31/leg-shelter",
+        "subjectVersion": 1,
+        "occurredAt": "2026-11-27T19:20:00Z",
+        "correlationId": "corr-sh-t06",
+        "causationId": "cmd-07",
+        "payload": {
+          "subject": {
+            "kind": "shelter-assignment",
+            "id": "incident-42/case-31/leg-shelter"
+          },
+          "routeVersion": 1,
+          "destination": {
+            "kind": "shelter",
+            "id": "shelter-a"
+          },
+          "assignment": {
+            "incidentId": "incident-42",
+            "caseId": "case-31",
+            "legId": "leg-shelter",
+            "assignmentVersion": 2,
+            "reservationId": "book-a-case-31",
+            "shelterId": "shelter-a"
+          },
+          "evidenceId": "5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+          "situationRevision": 1,
+          "arrivalWindow": {
+            "earliest": "2026-11-27T19:31:00Z",
+            "latestExclusive": "2026-11-27T19:31:01Z"
+          },
+          "validFrom": "2026-11-27T19:20:00Z",
+          "validUntil": "2026-11-27T20:00:00Z",
+          "routePath": "/queries/route-instruction?kind=shelter-assignment&id=incident-42/case-31/leg-shelter"
+        }
+      },
+      "expect": {
+        "state": "Withdrawn",
+        "routeVersion": null
+      }
+    }
+  ]
+}
