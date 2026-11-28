@@ -16,6 +16,8 @@ services:
     command: ["Cassini.Management.dll"]
     environment:
       Demo__DataDirectory: /state
+      Situation__BaseUrl: http://situation:8080
+    depends_on: [situation]
     volumes: [management:/state]
 
   situation:

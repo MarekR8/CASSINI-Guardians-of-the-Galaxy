@@ -7,6 +7,7 @@
     <Project Path="src/Gateway/Gateway.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="src/Management/tests/Cassini.Management.Tests.csproj" />
     <Project Path="src/Routing/tests/Cassini.Routing.Tests.csproj" />
   </Folder>
 </Solution>
