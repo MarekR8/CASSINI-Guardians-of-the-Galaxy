@@ -59,7 +59,7 @@ static class GatewayAuth
     public static void UseGatewayAuth(this WebApplication app, GatewayAuthSettings settings)
     {
         app.MapGet("/auth-config.json", () => settings.Enabled
-            ? new { enabled = true, url = settings.Url, realm = settings.Realm, clientId = settings.ClientId }
+            ? new { enabled = true, url = settings.Url, realm = (string?)settings.Realm, clientId = (string?)settings.ClientId }
             : new { enabled = false, url = (string?)null, realm = (string?)null, clientId = (string?)null });
         if (!settings.Enabled)
             return;
@@ -90,6 +90,8 @@ static class GatewayAuth
     }
 
     // Writes go only to /api/{service}/commands/{operation}; anything else that is not a read is coordinator-only.
+    // The link simulator's link-profile and Management's ewss-alert match no role rule, so only the coordinator
+    // sends them. Field-relayed commands (X-Cassini-Link: field) use the same path and are checked before the relay.
     static bool CanCommand(ClaimsPrincipal user, string path)
     {
         if (user.IsInRole(Coordinator))

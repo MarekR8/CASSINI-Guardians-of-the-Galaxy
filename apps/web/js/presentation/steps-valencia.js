@@ -1,11 +1,12 @@
 // Presentation steps for Valencia, the demo city. Routing serves the city route and the task 03 evacuation model
-// (evacuation-plan, distribution, draw). Dispatch and Management have no Valencia data, so those steps stay blocked.
+// (evacuation-plan, distribution, draw). Dispatch and Management have no Valencia cases, so those steps stay blocked;
+// the link profile switch and the EWSS mock broadcast (zone from the EMSR773 bounds) do run.
 // The shelters of the evacuation model are synthetic (data/demo/routing/valencia/shelters.synthetic.json).
 import { $ } from '../dom.js';
 import { geometryBounds } from '../map.js';
 import { notify, requestCityPath, routeGeometry, state, viewModel } from '../state.js';
 import {
-  blocked, ewssStep, hazardLines, lineBounds, linkStep, mergeBounds, populationLine, resetStep, revision,
+  blocked, ewssStep, hazardBounds, hazardLines, lineBounds, linkStep, mergeBounds, populationLine, resetStep, revision,
 } from './common.js';
 
 const FIXTURE = '/data/presentation/valencia-review.synthetic.json';
@@ -150,7 +151,7 @@ export function valenciaSteps() {
     },
     blocked('alert', 'Zgłoszenie powodzi od mieszkańca',
       'Zgłoszenie zalania zapisane w Management.',
-      'Oczekuje na task 6 — brak obsługi Walencji w usłudze Management (zgłoszenia i sprawy mieszkańców).'),
+      'Oczekuje na właściciela Management — zgłoszenia i sprawy mieszkańców są tylko w ćwiczeniu sample (task 6 nie dodał Walencji).'),
     {
       id: 'city-route',
       title: 'Trasa piesza w mieście (OSM)',
@@ -271,10 +272,20 @@ export function valenciaSteps() {
         };
       },
     },
+    // No field command here: Management and Dispatch have no Valencia cases, so only the profile switch is shown.
     linkStep(),
-    ewssStep(),
+    ewssStep({
+      area: 'obszar obserwacji EMSR773',
+      text: 'Ćwiczenie: powódź (EMSR773). Opuść strefę zalania trasą z aplikacji.',
+      async zone(ctx) {
+        const hazard = hazardBounds(await ctx.read('situation', 'snapshot'));
+        if (hazard) return { bounds: hazard, source: 'granice warstwy zagrożenia EMSR773 (Copernicus EMS)' };
+        const scene = viewModel().cityImagery?.scenes.event?.bounds;
+        return scene ? { bounds: scene, source: 'granice sceny Sentinel-1 po zdarzeniu' } : null;
+      },
+    }),
     blocked('exit', 'Potwierdzenie wyjścia ze strefy → licznik',
       'Telefon z Galileo potwierdza wyjście ze strefy; licznik „potwierdzono poza strefą”.',
-      'Oczekuje na task 6 — brak obsługi Walencji w usłudze Management (sprawy mieszkańców); telefon z Galileo: task 5.'),
+      'Oczekuje na właściciela Management — brak spraw mieszkańców Walencji (task 6 dodał tylko ćwiczenie sample); telefon z Galileo: task 5.'),
   ];
 }

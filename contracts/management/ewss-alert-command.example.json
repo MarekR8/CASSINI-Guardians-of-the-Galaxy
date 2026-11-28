@@ -1,0 +1,9 @@
+{
+  "commandId": "ewss-flood-zone-1",
+  "level": "severe",
+  "text": "Powódź. Opuść strefę trasą z aplikacji.",
+  "zone": {
+    "type": "Polygon",
+    "coordinates": [[[16.640, 50.430], [16.660, 50.430], [16.660, 50.440], [16.640, 50.440], [16.640, 50.430]]]
+  }
+}

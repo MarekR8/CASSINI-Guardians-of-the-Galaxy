@@ -108,6 +108,8 @@ select, input { display: block; min-width: 0; max-width: 100%; width: 100%; padd
 .records p { color: var(--muted); font-size: .875rem; }
 .records .buttons { margin: .4rem 0 0; }
 .records .dispatch-problem { color: #ffb7a8; }
+.records .case-exit { font-size: .8rem; }
+.records .case-exit-simulated { color: #ffd88a; }
 .records details { margin-top: .5rem; }
 .records summary { cursor: pointer; }
 .data { margin-top: 1rem; }

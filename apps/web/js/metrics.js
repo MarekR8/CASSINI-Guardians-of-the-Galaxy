@@ -1,6 +1,7 @@
 // S3: metrics panel (#metrics-panel). Values come either from service timestamps ("z danych serwisu")
 // or from moments this browser observed through onCommand/subscribe ("pomiar sesji"). Nothing is estimated.
 import { $, element } from './dom.js';
+import { confirmedOutside } from './format.js';
 import { onCommand, state, subscribe } from './state.js';
 
 const SERVER = 'z danych serwisu';
@@ -198,19 +199,34 @@ function serverWithdrawal(vm) {
   return null;
 }
 
+// Metric 4 (INV-12): only explicit exit confirmations count. With task 6 Management reports the counters itself
+// (confirmedOutside needs a position fix; simulated fixes are counted apart), otherwise the panel counts the cases.
 function withoutExit(vm) {
   const title = 'Osoby bez potwierdzonego wyjścia';
   if (vm.scenario === 'valencia')
     return unavailable(4, title, 'Walencja nie ma spraw mieszkańców w serwisie Management.');
   if (!vm.incident) return unavailable(4, title, 'Brak odczytu spraw z Management.');
   const cases = vm.incident.cases;
-  const open = cases.filter(item => item.progress !== 'ExitConfirmed');
+  const counters = vm.incident.counters;
+  const open = cases.filter(item => !confirmedOutside(item));
   const finishedTransport = new Set((vm.dispatch?.assignments ?? [])
     .filter(item => ['PickupConfirmed', 'Completed'].includes(item.state)).map(item => item.caseId));
   const onlyTransport = open.filter(item => finishedTransport.has(item.caseId)).length;
-  return tile(4, title, { value: count(open.length) + ' z ' + count(cases.length), source: SERVER, emphasis: open.length > 0,
-    detail: 'Liczone są tylko jawne potwierdzenia wyjścia (INV-12).'
-      + (onlyTransport ? ' Odbiór lub zakończenie zadania bez potwierdzenia wyjścia: ' + onlyTransport + '.' : '') });
+  const transportLine = onlyTransport ? ' Odbiór lub zakończenie zadania bez potwierdzenia wyjścia: ' + onlyTransport + '.' : '';
+  if (!counters)
+    return tile(4, title, { value: count(open.length) + ' z ' + count(cases.length), source: SERVER,
+      emphasis: open.length > 0, detail: 'Liczone są tylko jawne potwierdzenia wyjścia (INV-12).' + transportLine });
+  const total = counters.confirmedOutside + counters.unconfirmed;
+  const simulatedShare = counters.confirmedOutsideSimulated;
+  const estimate = counters.inZoneEstimate && counters.estimatedWithoutConfirmedExit != null
+    ? ' Szacunek ' + counters.inZoneEstimate.source + ' w strefie bez potwierdzonego wyjścia: ' +
+      count(counters.estimatedWithoutConfirmedExit) + ' os. (szacunek, nie liczba osób).'
+    : counters.inZoneStatus === 'unavailable' ? ' Szacunek ludności w strefie niedostępny (Situation).' : '';
+  return tile(4, title, { value: count(counters.unconfirmed) + ' z ' + count(total), source: SERVER,
+    emphasis: counters.unconfirmed > 0, badge: simulatedShare ? 'SYMULACJA' : null,
+    detail: 'Potwierdzone poza strefą (wyjście z pozycją): ' + counters.confirmedOutside +
+      (simulatedShare ? ', w tym pozycja SYMULACJA: ' + simulatedShare + ' z ' + counters.confirmedOutside : '') + '.' +
+      ' Liczone są tylko jawne potwierdzenia wyjścia (INV-12).' + transportLine + estimate });
 }
 
 function valenciaTiles(vm) {
@@ -277,6 +293,7 @@ function renderTile(item) {
   node.append(element('h3', item.title), element('strong', item.value, 'metric-value'));
   if (item.source) node.append(element('span', item.source, 'metric-source metric-source-'
     + (item.source === SERVER ? 'server' : item.source === SESSION ? 'session' : 'mixed')));
+  if (item.badge) node.append(element('span', item.badge, 'metric-badge'));
   if (item.detail) node.append(element('p', item.detail));
   return node;
 }

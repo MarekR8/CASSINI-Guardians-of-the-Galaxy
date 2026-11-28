@@ -1,7 +1,7 @@
 // Presentation steps for the synthetic `sample` exercise (Kłodzko). Mirrors tests/offline_integration.py
 // and is used by the end-to-end test in CI.
 import { $ } from '../dom.js';
-import { label, statuses } from '../format.js';
+import { confirmedOutside, exitLine, label, statuses } from '../format.js';
 import { state, viewModel } from '../state.js';
 import {
   ewssStep, hazardBounds, hazardLines, linkStep, mergeBounds, pointBounds, populationLine, resetStep, revision,
@@ -201,8 +201,19 @@ export function sampleSteps() {
       },
     },
     // A field flood report sent while the link is down: queued by the Gateway, delivered after the switch.
-    linkStep({ name: 'field-alert', service: 'management', operation: 'alert', build: async () => ({}) }),
-    ewssStep(),
+    linkStep({ name: 'field-alert', service: 'management', operation: 'alert', build: async () => ({}),
+      count: async ctx => ({ label: 'Zgłoszenia w Management', value: (await ctx.read('management', 'incident')).alerts.length }) }),
+    ewssStep({
+      area: 'obszar ćwiczenia sample',
+      text: 'Ćwiczenie: powódź. Opuść strefę trasą z aplikacji.',
+      async zone(ctx) {
+        const snapshot = await ctx.read('situation', 'snapshot');
+        const hazard = hazardBounds(snapshot);
+        if (hazard) return { bounds: hazard, source: 'granice warstwy zalania ćwiczenia (SYMULACJA)' };
+        const nodes = viewModel().network?.nodes ?? [];
+        return { bounds: nodeBounds(nodes.map(node => node.id)), source: 'granice grafu ćwiczenia' };
+      },
+    }),
     {
       id: 'exit',
       title: 'Potwierdzenie wyjścia ze strefy → licznik',
@@ -210,19 +221,30 @@ export function sampleSteps() {
         'Pozycja z Galileo/OSNMA na telefonie to task 5; tutaj zapis ćwiczenia (dane syntetyczne).',
       async run(ctx) {
         const order = [['Open', 'acknowledgement'], ['Acknowledged', 'moving'], ['Moving', 'exit-confirmed']];
+        // Management requires position evidence for an exit; the panel reports the exit node as a labelled simulation.
+        const exitFix = () => {
+          const network = viewModel().network;
+          const node = network?.nodes.find(candidate => candidate.id === network.exits?.[0]);
+          return node ? { observedAt: new Date().toISOString(), latitude: node.latitude, longitude: node.longitude,
+            accuracy: 15, evidence: { galileoUsed: false, osnma: 'none', egnos: 'unknown' }, mode: 'simulated' } : {};
+        };
         let kase = await ctx.read('management', 'cases/case-14');
         const position = order.findIndex(([status]) => status === kase.progress);
         for (const [index, [, step]] of order.entries()) {
           if ((position < 0 || index < position) && !ctx.has(step)) continue;
           kase = await ctx.command(step, 'management', 'progress', async () => ({
             caseId: 'case-14', step, expectedVersion: (await ctx.read('management', 'cases/case-14')).version,
+            ...(step === 'exit-confirmed' ? exitFix() : {}),
           }));
         }
         const incident = await ctx.read('management', 'incident');
-        const confirmed = incident.cases.filter(item => item.progress === 'ExitConfirmed').length;
+        const counters = incident.counters;
+        const confirmed = counters?.confirmedOutside ?? incident.cases.filter(confirmedOutside).length;
         return {
           message: 'Potwierdzone wyjścia ze strefy: ' + confirmed + ' z ' + incident.cases.length + '.',
-          details: ['case-14: ' + (statuses[kase.progress] ?? kase.progress)],
+          details: ['case-14: ' + (statuses[kase.progress] ?? kase.progress), exitLine(kase),
+            counters ? 'Liczniki Management: poza strefą ' + counters.confirmedOutside + ' (pozycja SYMULACJA: ' +
+              counters.confirmedOutsideSimulated + ') · bez potwierdzenia ' + counters.unconfirmed : null].filter(Boolean),
           focus: () => nodeBounds([kase.node]),
         };
       },

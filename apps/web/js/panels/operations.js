@@ -1,7 +1,7 @@
 // Cases, assistance requests and field units.
 import { api, commandId } from '../api.js';
 import { $, element, text } from '../dom.js';
-import { label, minutes, statuses } from '../format.js';
+import { exitLine, label, minutes, statuses } from '../format.js';
 import { state, subscribe } from '../state.js';
 import { button } from './button.js';
 
@@ -11,12 +11,31 @@ const dispatchErrors = new Map();
 const dispatchRankings = new Map();
 let operationsSignature = null;
 
+// The panel stands in for the resident's device: it reports the exit node position, labelled as a simulation.
+export function exerciseExitFix(item) {
+  const drawn = state.subject?.caseId === item.caseId && state.draw?.state === 'Active' ? state.draw.route?.exit : null;
+  const node = state.network?.nodes.find(candidate => candidate.id === (drawn || state.network.exits?.[0]));
+  return node ? {
+    observedAt: new Date().toISOString(), latitude: node.latitude, longitude: node.longitude, accuracy: 15,
+    evidence: { galileoUsed: false, osnma: 'none', egnos: 'unknown' }, mode: 'simulated',
+  } : null;
+}
+
 function renderOperations(incident, dispatch) {
-  text('alert-count', 'Liczba zgłoszeń: ' + incident.alerts.length);
+  const counters = incident.counters;
+  const estimate = counters?.inZoneEstimate
+    ? ' · w strefie (szacunek GHSL): ' + counters.inZoneEstimate.value.toLocaleString('pl-PL') : '';
+  text('alert-count', 'Liczba zgłoszeń: ' + incident.alerts.length + (counters
+    ? ' · potwierdzone poza strefą: ' + counters.confirmedOutside +
+      (counters.confirmedOutsideSimulated ? ' (w tym SYMULACJA: ' + counters.confirmedOutsideSimulated + ')' : '') +
+      ' · bez potwierdzenia: ' + counters.unconfirmed + estimate
+    : ''));
   $('cases').replaceChildren(...incident.cases.map(item => {
     const row = element('li');
     const info = element('div');
     info.append(element('b', item.name || item.caseId), element('p', (statuses[item.progress] || item.progress) + ' · ' + label(item.node)));
+    const exitInfo = exitLine(item);
+    if (exitInfo) info.append(element('p', exitInfo, 'case-exit' + (item.exit.mode === 'measured' ? '' : ' case-exit-simulated')));
     row.append(info);
     const actions = element('div', null, 'buttons');
     if (item.mobility === 'Walking' && item.progress !== 'ExitConfirmed') {
@@ -37,10 +56,15 @@ function renderOperations(incident, dispatch) {
         commandId: commandId(), caseId: item.caseId, pickupNode: item.node,
       }).then(() => 'Zapisano potrzebę pomocy.')));
     }
-    const step = { Open: ['acknowledgement', 'Potwierdź odbiór'], Acknowledged: ['moving', 'Zgłoś przejście'], Moving: ['exit-confirmed', 'Potwierdź wyjście'] }[item.progress];
-    if (step) actions.append(button(step[1], () => api('management', 'commands/progress', {
+    const step = {
+      Open: ['acknowledgement', 'Potwierdź odbiór'], Acknowledged: ['moving', 'Zgłoś przejście'],
+      Moving: ['exit-confirmed', 'Potwierdź wyjście'], PickedUp: ['exit-confirmed', 'Potwierdź wyjście'],
+    }[item.progress];
+    const exit = step?.[0] === 'exit-confirmed';
+    if (step && (!exit || exerciseExitFix(item))) actions.append(button(step[1], () => api('management', 'commands/progress', {
       commandId: commandId(), caseId: item.caseId, step: step[0], expectedVersion: item.version,
-    }).then(() => 'Zapisano status mieszkańca.')));
+      ...(exit ? exerciseExitFix(item) : {}),
+    }).then(() => exit ? 'Zapisano wyjście z pozycją ćwiczebną (SYMULACJA).' : 'Zapisano status mieszkańca.')));
     if (actions.childElementCount) row.append(actions);
     return row;
   }));

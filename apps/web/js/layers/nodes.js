@@ -1,7 +1,7 @@
 // Network nodes and exits, plus residents without a confirmed exit aggregated per node.
 // INV-14: no individual resident position or name is drawn, only a count at the node.
 import { $ } from '../dom.js';
-import { label } from '../format.js';
+import { confirmedOutside, label } from '../format.js';
 import { badgeMarker, defineLayer, L, latLng, nodePositions, PANES, sink, staleServices } from './common.js';
 
 const vector = { interactive: false, lineCap: 'butt', lineJoin: 'miter' };
@@ -9,7 +9,7 @@ const vector = { interactive: false, lineCap: 'butt', lineJoin: 'miter' };
 const waiting = vm => {
   const counts = new Map();
   for (const item of vm.incident?.cases ?? []) {
-    if (item.progress === 'ExitConfirmed') continue;
+    if (confirmedOutside(item)) continue;
     counts.set(item.node, (counts.get(item.node) ?? 0) + 1);
   }
   return counts;
@@ -35,6 +35,14 @@ function update(vm, { layer }) {
   }
 }
 
+// Server counters (task 6): exits confirmed with a position fix; simulated fixes are counted apart.
+function outsideLine(incident) {
+  const counters = incident?.counters;
+  if (!counters) return null;
+  return 'Potwierdzone poza strefą: ' + counters.confirmedOutside +
+    (counters.confirmedOutsideSimulated ? ' (pozycja SYMULACJA: ' + counters.confirmedOutsideSimulated + ')' : '');
+}
+
 function legend(vm) {
   const network = vm.network;
   if (!network.nodes.length) return null;
@@ -50,7 +58,7 @@ function legend(vm) {
       provenance: 'Graf ćwiczeniowy · Routing' },
     vm.incident && { id: 'cases', label: 'Osoby bez potwierdzonego wyjścia · ' + total, swatch: 'legend-cases',
       className: 'exercise-legend', mode: 'synthetic', stale: staleServices(vm, ['management']).length > 0,
-      provenance: 'Management · liczba na węzeł, bez pozycji osób' },
+      provenance: ['Management · liczba na węzeł, bez pozycji osób', outsideLine(vm.incident)] },
   ];
 }
 

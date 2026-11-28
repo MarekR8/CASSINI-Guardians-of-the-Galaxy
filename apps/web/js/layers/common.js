@@ -95,7 +95,7 @@ export function unchangedValencia(vm, info) {
 
 const modeNames = { mock: 'symulacja', synthetic: 'symulacja', recorded: 'zapis', live: 'na żywo', manual: 'ręcznie' };
 export const modeName = mode => modeNames[mode] ?? mode;
-export const simulated = mode => mode === 'mock' || mode === 'synthetic';
+export const simulated = mode => mode === 'mock' || mode === 'synthetic' || mode === 'simulated';
 
 // Test or exercise layers are labelled apart from data imported by the operator (recorded, live or manual).
 export function origin(mode) {

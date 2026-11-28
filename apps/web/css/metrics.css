@@ -15,6 +15,8 @@
 .metric-source-server { color: #9fd3ff; border-color: #3d6a8a; }
 .metric-source-session { color: #ffd78a; border-color: #7a6431; }
 .metric-source-mixed { color: #d2c2ff; border-color: #5b4d86; }
+.metric-badge { align-self: flex-start; border-radius: .35rem; border: 1px solid #ffd88a; color: #ffd88a;
+  font-size: .74rem; font-weight: 700; padding: .08rem .45rem; white-space: nowrap; }
 .metric-pending .metric-value { color: var(--muted); }
 .metric-emphasis .metric-value { color: var(--danger); }
 .metric-unavailable { border-style: dashed; background: transparent; }

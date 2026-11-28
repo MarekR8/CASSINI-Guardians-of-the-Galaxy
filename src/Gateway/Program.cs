@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using Cassini.Gateway.Link;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -25,6 +26,12 @@ builder.Services.AddHttpClient("services", client => client.Timeout = TimeSpan.F
         UseCookies = false,
     });
 var auth = builder.AddGatewayAuth();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IUpstreamCommands>(services =>
+    new UpstreamCommands(services.GetRequiredService<IHttpClientFactory>(), upstreams));
+builder.Services.AddSingleton(services => new LinkSimulator(services.GetRequiredService<IUpstreamCommands>(),
+    services.GetRequiredService<TimeProvider>(), builder.Configuration["Demo:DataDirectory"]));
+builder.Services.AddHostedService<LinkForwarder>();
 
 var app = builder.Build();
 app.Use(async (context, next) =>
@@ -74,9 +81,13 @@ app.MapGet("/features", () => Results.Ok(new { sheltering = upstreams.ContainsKe
 app.MapGet("/api/{service}/queries/{operation}/{id?}", (
     string service, string operation, string? id, HttpContext context, IHttpClientFactory clients) =>
     Forward(service, "queries", operation, id, context, clients));
+app.MapLinkSimulator();
 app.MapPost("/api/{service}/commands/{operation}", (
-    string service, string operation, HttpContext context, IHttpClientFactory clients) =>
-    Forward(service, "commands", operation, null, context, clients));
+    string service, string operation, HttpContext context, IHttpClientFactory clients, LinkSimulator link) =>
+    LinkEndpoints.IsFieldRequest(context) && upstreams.ContainsKey(service) && IsSegment(operation) &&
+    context.Request.HasJsonContentType()
+        ? LinkEndpoints.RelayFieldCommand(context, link, service, operation)
+        : Forward(service, "commands", operation, null, context, clients));
 app.Run();
 
 async Task Forward(string service, string group, string operation, string? id, HttpContext context,

@@ -1,30 +1,29 @@
 // End-to-end run of the synthetic `sample` exercise (Kłodzko) through presentation mode.
 // CI has no Valencia artifacts, so this is the scenario the pipeline checks. Needs a fresh stack
 // (docker compose down -v && docker compose up -d --wait), because the services have no reset command.
-import { expect, linkAvailable, next, openDashboard, openPresentation, query, statuses, test } from '../fixtures/offline.js';
+import { expect, next, openDashboard, openPresentation, query, statuses, test } from '../fixtures/offline.js';
 
 test.skip(process.env.E2E_SCENARIO === 'valencia', 'Stack runs the Valencia scenario.');
 
 const EXPECTED = {
   reset: 'done', alert: 'done', draw: 'done', assist: 'done', closure: 'done', replan: 'done',
-  'unit-progress': 'done', link: 'blocked', ewss: 'blocked', exit: 'done', 'no-exit': 'done',
+  'unit-progress': 'done', link: 'done', ewss: 'done', exit: 'done', 'no-exit': 'done',
 };
 // Steps replayed with the same commandIds right after they ran; the read model must not change.
-const REPLAY = ['alert', 'assist', 'closure'];
+const REPLAY = ['alert', 'assist', 'closure', 'link', 'ewss'];
 
 async function counts(request) {
-  const [incident, dispatch, snapshot] = await Promise.all([query(request, 'management', 'incident'),
-    query(request, 'dispatch', 'assignments'), query(request, 'situation', 'snapshot')]);
+  const [incident, dispatch, snapshot, ewss, link] = await Promise.all([query(request, 'management', 'incident'),
+    query(request, 'dispatch', 'assignments'), query(request, 'situation', 'snapshot'),
+    query(request, 'management', 'ewss-alerts'), query(request, 'link', 'link-status')]);
   return { alerts: incident.alerts.length, requests: dispatch.requests.length, assignments: dispatch.assignments.length,
-    revision: snapshot.revision, closed: snapshot.closedSegments.length };
+    revision: snapshot.revision, closed: snapshot.closedSegments.length, ewss: ewss.alerts.length,
+    linkPending: link.pending, linkEntries: link.entries.length };
 }
 
 test('sample exercise: map, legend, presentation, route states, metrics and idempotent replay', async ({ page, request }) => {
   const initial = await query(request, 'situation', 'snapshot');
   expect(initial.revision, 'fresh stack required: docker compose down -v, then up -d --wait').toBe(0);
-  // With task 6 merged the link step runs and its field alert is delivered after the switch to IRIS².
-  const link = await linkAvailable(request);
-  EXPECTED.link = link ? 'done' : 'blocked';
   await openDashboard(page);
 
   // Map (Leaflet) renders the exercise network as vector paths.
@@ -72,10 +71,33 @@ test('sample exercise: map, legend, presentation, route states, metrics and idem
       await expect(chips.filter({ hasText: 'Brak trasy' })).toHaveCount(0);
     }
     if (id === 'replan') await expect(chips.filter({ hasText: 'Trasa aktywna' })).toBeVisible();
-    if (id === 'link' && link)
-      await expect(page.locator('.presentation-result')).toContainText('IRIS²');
-    if ((id === 'link' && !link) || id === 'ewss')
-      await expect(page.locator(`[data-step-id="${id}"] .presentation-reason`)).toContainText('Oczekuje na task 6');
+    if (id === 'link') {
+      // Task 6 link simulator: the field alert waits while the link is down (202, no delivery) and is delivered
+      // once over IRIS²; the retry with the same commandId reuses the queue entry.
+      const result = page.locator('.presentation-result');
+      await expect(message).toContainText('IRIS²');
+      await expect(result).toContainText('HTTP 202 Queued');
+      await expect(result).toContainText('ten sam wpis kolejki');
+      await expect(result).toContainText('dostarczona do usługi');
+      await expect(result).toContainText('jedna dostawa, bez duplikatu');
+      const status = await query(request, 'link', 'link-status');
+      expect(status.profile.name).toBe('iris2');
+      expect(status.pending).toBe(0);
+      const field = status.entries.filter(entry => entry.service === 'management' && entry.operation === 'alert');
+      expect(field.map(entry => [entry.state, entry.deliveredOver])).toEqual([['Delivered', 'iris2']]);
+    }
+    if (id === 'ewss') {
+      // EWSS mock in Management: stored and labelled as a simulated broadcast, never as delivered.
+      await expect(message).toContainText('SYMULACJA');
+      await expect(message).toContainText('brak potwierdzenia odbioru');
+      const { alerts } = await query(request, 'management', 'ewss-alerts');
+      expect(alerts.map(item => [item.delivery, item.provenance.mode, item.level])).toEqual([['simulated', 'mock', 'severe']]);
+      expect(alerts[0].zone.type).toBe('Polygon');
+    }
+    if (id === 'exit') {
+      await expect(page.locator('.presentation-result')).toContainText('pozycja SYMULACJA');
+      await expect(page.locator('#cases')).toContainText('Wyjście: pozycja SYMULACJA');
+    }
     if (id === 'no-exit') {
       // State 3: no exit from the node, shown separately from the withdrawn route.
       await expect(message).toContainText('Brak wyjścia');
@@ -108,7 +130,7 @@ test('sample exercise: map, legend, presentation, route states, metrics and idem
   await expect(page.locator('#presentation-next')).toBeDisabled();
   await expect(page.locator('.presentation-current')).toContainText('Koniec scenariusza');
   expect(await statuses(page)).toEqual(EXPECTED);
-  expect(await counts(request)).toMatchObject({ alerts: link ? 2 : 1, requests: 2, assignments: 1, closed: 2 });
+  expect(await counts(request)).toMatchObject({ alerts: 2, requests: 2, assignments: 1, closed: 2, ewss: 1, linkPending: 0 });
 
   // Metrics 1–4. Metric 2 has no value in this flow: Dispatch seeds request-15 before the page opens,
   // so the panel states why instead of estimating.
@@ -122,5 +144,11 @@ test('sample exercise: map, legend, presentation, route states, metrics and idem
   await expect(values.nth(2)).toHaveText(/\d.*s$/);
   await expect(tiles.nth(3)).toContainText('bez potwierdzonego wyjścia');
   await expect(values.nth(3)).toHaveText('2 z 3');
+  // Server counters (task 6): the one confirmed exit carries a simulated position fix.
+  await expect(tiles.nth(3).locator('.metric-source')).toHaveText('z danych serwisu');
+  await expect(tiles.nth(3).locator('.metric-badge')).toHaveText('SYMULACJA');
+  await expect(tiles.nth(3)).toContainText('w tym pozycja SYMULACJA: 1 z 1');
+  const { counters } = await query(request, 'management', 'incident');
+  expect(counters).toMatchObject({ confirmedOutside: 1, confirmedOutsideSimulated: 1, unconfirmed: 2 });
   for (const tile of await tiles.all()) await expect(tile.locator('.metric-source')).not.toBeEmpty();
 });

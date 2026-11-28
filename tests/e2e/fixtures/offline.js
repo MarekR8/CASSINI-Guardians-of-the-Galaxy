@@ -1,19 +1,15 @@
 // Shared fixture: every test runs offline and clean.
 // - Requests to any host other than localhost/127.0.0.1 are aborted and recorded; the list must stay empty.
-// - Console errors, page errors and CSP violations fail the test, except the expected 404 of the
-//   link simulator probe (GET /api/link/queries/link-status) while task 6 is not merged.
+// - Console errors, page errors, CSP violations and failed requests (HTTP >= 400) fail the test.
 import { test as base, expect } from '@playwright/test';
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
-const EXPECTED = [/\/api\/link\/queries\/link-status/];
 
 export const test = base.extend({
   guard: [async ({ context }, use) => {
     const external = [];
     const problems = [];
-    const expected = [];
-    const note = (text, url = '') => (EXPECTED.some(pattern => pattern.test(url) || pattern.test(text)) ? expected : problems)
-      .push(text + (url ? ' @ ' + url : ''));
+    const note = (text, url = '') => problems.push(text + (url ? ' @ ' + url : ''));
 
     await context.route(url => !LOCAL_HOSTS.has(url.hostname) && !['data:', 'blob:'].includes(url.protocol), route => {
       external.push(route.request().method() + ' ' + route.request().url());
@@ -38,7 +34,7 @@ export const test = base.extend({
       return dialog.dismiss();
     });
 
-    await use({ external, problems, expected });
+    await use({ external, problems });
 
     expect(external, 'requests to non-local hosts').toEqual([]);
     expect(problems, 'console errors, page errors, CSP violations or failed requests').toEqual([]);
@@ -52,11 +48,6 @@ export async function query(request, service, path) {
   const response = await request.get('/api/' + service + '/queries/' + path);
   expect(response.ok(), 'GET ' + service + '/' + path).toBeTruthy();
   return response.json();
-}
-
-// True when the task 6 link simulator answers; the link step then runs instead of staying blocked.
-export async function linkAvailable(request) {
-  return (await request.get('/api/link/queries/link-status')).ok();
 }
 
 // Opens the dashboard and waits until the presentation panel has read the scenario.

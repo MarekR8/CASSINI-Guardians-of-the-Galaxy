@@ -145,14 +145,12 @@ def main():
         with tempfile.TemporaryDirectory(prefix="integration-", dir=ARTIFACTS) as directory:
             test_file = ("sheltering_integration.py" if args.sheltering else
                          "valencia_integration.py" if args.scenario == "valencia" else "offline_integration.py")
+            scripts = [test_file, "connectivity_integration.py"] if test_file == "offline_integration.py" else [test_file]
             with start_services(args.port, Path(directory), args.scenario,
                                 city.resolve() if city else None, sheltering=args.sheltering,
                                 auto_replan=False) as url:
-                subprocess.run(
-                    [os.sys.executable, str(ROOT / "tests" / test_file), url],
-                    cwd=ROOT,
-                    check=True,
-                )
+                for script in scripts:
+                    subprocess.run([os.sys.executable, str(ROOT / "tests" / script), url], cwd=ROOT, check=True)
             if args.sheltering:
                 with start_services(args.port, Path(directory), sheltering=True) as url:
                     subprocess.run(
