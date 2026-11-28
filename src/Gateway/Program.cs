@@ -105,6 +105,9 @@ async Task Forward(string service, string group, string operation, string? id, H
         uri += $"/{id}";
     uri += context.Request.QueryString.ToUriComponent();
     using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), uri);
+    // Owner services authorise the caller themselves (Sheltering reception in Stage B); the Gateway only forwards.
+    if (context.Request.Headers.Authorization.ToString() is { Length: > 0 } authorization)
+        request.Headers.TryAddWithoutValidation("Authorization", authorization);
     if (group == "commands")
     {
         if (!context.Request.HasJsonContentType())

@@ -1,32 +1,77 @@
 {
   "fixtureVersion": "cassini.sample-holds.v1",
   "scenario": "sample",
-  "note": "Synthetic SH-W4 stand-in until SH-T04 issues reservations. Each hold adds to the seeded held commitments. Opt-in with Sheltering:HoldsFile.",
+  "note": "Synthetic SH-W4 stand-in until SH-T04 issues reservations. Each hold adds to the seeded held commitments. Opt-in with Sheltering:HoldsFile. The leg-transfer hold of case-14 is an onward transfer opened while case-14 stays at shelter-a.",
   "holds": [
     {
       "shelterId": "shelter-a",
       "hold": {
-        "reservationId": "reservation-household-14", "incidentId": "incident-42", "caseId": "case-14", "legId": "leg-shelter",
-        "resources": { "places": 1, "accessiblePlaces": 0 },
-        "arrivalWindow": { "opensAt": "2026-11-27T19:25:00Z", "closesAt": "2026-11-27T19:45:00Z" },
+        "reservationId": "reservation-household-14",
+        "incidentId": "incident-42",
+        "caseId": "case-14",
+        "legId": "leg-shelter",
+        "resources": {
+          "places": 1,
+          "accessiblePlaces": 0
+        },
+        "arrivalWindow": {
+          "opensAt": "2026-11-27T19:25:00Z",
+          "closesAt": "2026-11-27T19:45:00Z"
+        },
         "expiresAt": "2026-11-27T20:15:00Z"
       }
     },
     {
       "shelterId": "shelter-a",
       "hold": {
-        "reservationId": "reservation-household-14", "incidentId": "incident-42", "caseId": "case-15", "legId": "leg-shelter",
-        "resources": { "places": 1, "accessiblePlaces": 1 },
-        "arrivalWindow": { "opensAt": "2026-11-27T19:30:00Z", "closesAt": "2026-11-27T19:50:00Z" },
+        "reservationId": "reservation-household-14",
+        "incidentId": "incident-42",
+        "caseId": "case-15",
+        "legId": "leg-shelter",
+        "resources": {
+          "places": 1,
+          "accessiblePlaces": 1
+        },
+        "arrivalWindow": {
+          "opensAt": "2026-11-27T19:30:00Z",
+          "closesAt": "2026-11-27T19:50:00Z"
+        },
         "expiresAt": "2026-11-27T20:15:00Z"
       }
     },
     {
       "shelterId": "shelter-b",
       "hold": {
-        "reservationId": "reservation-case-16", "incidentId": "incident-42", "caseId": "case-16", "legId": "leg-shelter",
-        "resources": { "places": 1, "accessiblePlaces": 0 },
-        "arrivalWindow": { "opensAt": "2026-11-27T19:30:00Z", "closesAt": "2026-11-27T19:50:00Z" },
+        "reservationId": "reservation-case-16",
+        "incidentId": "incident-42",
+        "caseId": "case-16",
+        "legId": "leg-shelter",
+        "resources": {
+          "places": 1,
+          "accessiblePlaces": 0
+        },
+        "arrivalWindow": {
+          "opensAt": "2026-11-27T19:30:00Z",
+          "closesAt": "2026-11-27T19:50:00Z"
+        },
+        "expiresAt": "2026-11-27T20:15:00Z"
+      }
+    },
+    {
+      "shelterId": "shelter-b",
+      "hold": {
+        "reservationId": "reservation-transfer-14",
+        "incidentId": "incident-42",
+        "caseId": "case-14",
+        "legId": "leg-transfer",
+        "resources": {
+          "places": 1,
+          "accessiblePlaces": 0
+        },
+        "arrivalWindow": {
+          "opensAt": "2026-11-27T19:45:00Z",
+          "closesAt": "2026-11-27T20:05:00Z"
+        },
         "expiresAt": "2026-11-27T20:15:00Z"
       }
     }

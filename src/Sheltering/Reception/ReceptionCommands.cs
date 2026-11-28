@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Cassini.Demo.SiteCatalog;
 using Cassini.Sheltering.Catalog;
+using Cassini.Sheltering.Infrastructure;
 
 namespace Cassini.Sheltering.Reception;
 
@@ -31,11 +32,12 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    internal ReceptionResult ConfirmAdmission(ConfirmShelterAdmissionCommand command)
+    internal ReceptionResult ConfirmAdmission(ConfirmShelterAdmissionCommand command, OperatorIdentity? caller = null)
     {
         var arrivals = command.Arrivals ?? [];
         Require(command.CommandId, command.ExpectedVersion, command.ShelterId, command.IncidentId, command.ReportId,
             command.ObservedAt, arrivals.Length);
+        OperatorDirectory.RequireReporter(caller, command.IncidentId, command.ShelterId);
         if (arrivals.Any(arrival => !SiteRules.IsId(arrival.CaseId) || !SiteRules.IsId(arrival.LegId) ||
                                     (arrival.ReservationId is not null && !SiteRules.IsId(arrival.ReservationId)) ||
                                     arrival.Resources is { IsValid: false }))
@@ -76,6 +78,17 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
                         .Any(item => item.Present && item.CaseId == caseId && item.LegId == legId)) is { } elsewhere)
                     throw new SiteCatalogError(409, "AdmittedElsewhere",
                         $"Case {caseId} is admitted at {elsewhere.ShelterId} for this leg; confirm that departure first.");
+                if (admissions.FirstOrDefault(item => item.Present && item.CaseId == caseId) is { } otherLeg)
+                    throw new SiteCatalogError(409, "AlreadyPresent",
+                        $"Case {caseId} is already present here on leg {otherLeg.LegId}.");
+
+                // A person still present at another shelter on an earlier leg arrives on a transfer leg. Link the two
+                // stays; the original places stay occupied until that shelter confirms the departure.
+                var origin = shelters.Values.Where(other => other.ShelterId != shelter.ShelterId)
+                    .SelectMany(other => other.Ledger.Admissions
+                        .Where(item => item.Present && item.CaseId == caseId && item.IncidentId == command.IncidentId)
+                        .Select(item => new StayRef(other.ShelterId, item.AdmissionId, item.LegId)))
+                    .FirstOrDefault();
 
                 var admissionId = $"{command.ReportId}-{index + 1}";
                 ShelterAdmission admission;
@@ -97,8 +110,8 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
                         OccupiedAccessiblePlaces = commitments.OccupiedAccessiblePlaces + hold.Resources.AccessiblePlaces,
                     };
                     admission = new(admissionId, command.IncidentId!, caseId, legId, hold.ReservationId, false, hold.Resources,
-                        command.ReportId!, observedAt, now);
-                    entries.Add(new(caseId, legId, admissionId, "Admitted", hold.ReservationId, hold.Resources));
+                        command.ReportId!, observedAt, now, ReportedBy: caller?.OperatorId, TransferFrom: origin);
+                    entries.Add(new(caseId, legId, admissionId, "Admitted", hold.ReservationId, hold.Resources, origin));
                 }
                 else
                 {
@@ -139,8 +152,8 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
                         throw new SiteCatalogError(409, "NoAvailablePlaces",
                             $"No {(need.AccessiblePlaces > 0 ? "accessible " : "")}place is free for walk-in {caseId}; record the unmet need with the coordinator.");
                     admission = new(admissionId, command.IncidentId!, caseId, legId, null, true, need, command.ReportId!,
-                        observedAt, now);
-                    entries.Add(new(caseId, legId, admissionId, "WalkInAdmitted", null, need));
+                        observedAt, now, ReportedBy: caller?.OperatorId, TransferFrom: origin);
+                    entries.Add(new(caseId, legId, admissionId, "WalkInAdmitted", null, need, origin));
                 }
 
                 admissions.Add(admission);
@@ -165,11 +178,12 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
         });
     }
 
-    internal ReceptionResult ConfirmDeparture(ConfirmShelterDepartureCommand command)
+    internal ReceptionResult ConfirmDeparture(ConfirmShelterDepartureCommand command, OperatorIdentity? caller = null)
     {
         var leavers = command.Departures ?? [];
         Require(command.CommandId, command.ExpectedVersion, command.ShelterId, command.IncidentId, command.ReportId,
             command.ObservedAt, leavers.Length);
+        OperatorDirectory.RequireReporter(caller, command.IncidentId, command.ShelterId);
         if (leavers.Any(leaver => !SiteRules.IsId(leaver.CaseId) || !SiteRules.IsId(leaver.LegId)))
             throw Invalid("Each departure needs a caseId and a legId.");
         if (leavers.DistinctBy(leaver => (leaver.CaseId, leaver.LegId)).Count() != leavers.Length)
@@ -213,7 +227,7 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
                     OccupiedPlaces = commitments.OccupiedPlaces - admission.Resources.Places,
                     OccupiedAccessiblePlaces = commitments.OccupiedAccessiblePlaces - admission.Resources.AccessiblePlaces,
                 };
-                admissions[row] = admission with { Departure = new ShelterDeparture(command.ReportId!, observedAt, now) };
+                admissions[row] = admission with { Departure = new ShelterDeparture(command.ReportId!, observedAt, now, caller?.OperatorId) };
                 entries.Add(new(caseId, legId, admission.AdmissionId, "Departed", admission.ReservationId, admission.Resources));
                 events.Add(Event("ShelterDepartureConfirmed.v1", shelter.ShelterId, version, now, admission, command.ReportId!, observedAt));
             }
@@ -281,7 +295,7 @@ internal sealed class ReceptionCommands(CatalogStore<Shelter> catalog, TimeProvi
         Guid.NewGuid(), type, "sheltering", shelterId, version, now, admission.IncidentId, reportId,
         new(shelterId, admission.IncidentId, admission.AdmissionId, admission.CaseId, admission.LegId,
             admission.ReservationId, admission.WalkIn, admission.Resources.Places, admission.Resources.AccessiblePlaces,
-            reportId, observedAt));
+            reportId, observedAt, admission.TransferFrom?.ShelterId));
 
     private static string Fingerprint(object content) =>
         Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(content, Json)));
