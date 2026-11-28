@@ -16,6 +16,7 @@ Przed zmianą przeczytaj `README.md`, odpowiednie pliki w `docs/` i kod usługi,
 | `src/Situation/` | Wersjonowany obraz sytuacji, zamknięcia odcinków i provenance warstw zagrożeń. |
 | `src/Routing/` | Graf, rozkład tras dla węzła, losowanie i weryfikacja wydanych tras, dojazd i wyjazd jednostki. |
 | `src/Dispatch/` | Zgłoszenia pomocy, rezerwacja jednostek i kolejne stany zadania. |
+| `src/Sheltering/` | Opcjonalny katalog schronień i zasobów. Situation jest właścicielem punktów zbiórki. |
 | `src/Gateway/`, `apps/web/` | Brama i widok operacyjny. Widok odczytuje dane właścicieli i przedstawia wynik losowania. |
 | `apps/offline-android/` | Samodzielne ćwiczenie i odczyt stanu kompatybilnego odbiornika GNSS. |
 
@@ -42,5 +43,6 @@ Przed zmianą przeczytaj `README.md`, odpowiednie pliki w `docs/` i kod usługi,
 ## Weryfikacja i przekazanie pracy
 
 - Uruchom `python scripts/offline_demo.py --test` oraz testy komponentu, który zmieniasz. Przy zmianie widoku sprawdź scenariusz z dostępną trasą, zamknięciem mostu i brakiem wyjścia. Przy zmianie Docker sprawdź konfigurację, budowę i uruchomienie, jeżeli silnik jest dostępny.
+- Przy zmianie katalogów punktów i schronień uruchom `python scripts/offline_demo.py --sheltering --test`.
 - Przekaż innemu agentowi zakres plików, zmiany kontraktu, sposób uruchomienia, wyniki testów i granice weryfikacji sprzętowej. Podaj jawnie użyte dane syntetyczne.
 - Jeżeli operator poprosi o regularne pushe, wypychaj małe sprawdzone checkpointy na uzgodniony branch. Sprawdź zakres staged przed commitem i zweryfikuj wynik push. Traktuj push i merge jako osobne operacje.

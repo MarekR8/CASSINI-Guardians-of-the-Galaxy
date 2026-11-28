@@ -32,6 +32,27 @@ Do pierwszej budowy potrzeba obrazów bazowych .NET dostępnych w lokalnym cache
 
 ## Przebieg prezentacji
 
+### Katalog punktów zbiórki i schronień
+
+Do ćwiczenia `sample` można dołączyć katalog SH-T01:
+
+```sh
+python scripts/offline_demo.py --sheltering --port 5480
+```
+
+W [panelu lokalnym](http://127.0.0.1:5480) rozwiń **Punkty zbiórki i schronienia**. Scenariusz pokazuje punkt północny i dwa schronienia z syntetycznymi limitami, rezerwacjami i zajętością. Właściciele katalogów obsługują zmiany przez [komendy HTTP](sheltering-interfaces.md#sh-t01-site-catalog-and-destination-reads). Zamknięte schronienie zostaje w panelu, a Routing pomija je w liście kandydatów. Ta lista nie potwierdza przejezdności trasy.
+
+Przygotowanie obrazów i uruchomienie alternatywne:
+
+```sh
+docker compose -p cassini-sheltering -f compose.yaml -f compose.sheltering.yaml build
+docker compose -p cassini-sheltering -f compose.yaml -f compose.sheltering.yaml up -d --no-build --pull never
+```
+
+Ustaw `CASSINI_PORT` na wolny port, gdy zwykłe demo już działa na 5080. Test katalogów uruchom przez `python scripts/offline_demo.py --sheltering --test --port 5480`.
+
+### Podstawowy scenariusz ewakuacji
+
 ### Ćwiczenie
 
 Powiększaj mapę kółkiem myszy, gestem dwóch palców albo przyciskami **+** i **−**. Przeciągnij mapę,

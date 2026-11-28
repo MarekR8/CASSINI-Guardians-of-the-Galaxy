@@ -2,6 +2,8 @@
 
 Extend the existing evacuation demo with assembly points, relationship-based grouping and shelter allocation. Follow [SH-01 through SH-06](domain/business-processes.md#detailed-sheltering-and-grouping-workflows) and the [domain invariants](domain/domain-invariants.md). The [architecture](domain-architecture.md#sheltering-and-grouping-extension) defines who owns each write. The [command and event catalog](mvp-commands-events.md#sheltering-and-grouping-extension) defines the proposed contracts and state transitions. This guide follows the structure of the [first MVP guide](mvp-implementation-guide.md), using the repository's current offline launcher and Gateway for Stage A. The [team tasks](tasks/sheltering/README.md) divide the work and list the integration handoffs.
 
+The [Sheltering and Grouping interfaces](sheltering-interfaces.md) specify the HTTP payloads, evidence checks and target event bindings for those handoffs.
+
 ## Deliverables and scope
 
 - **Stage A: offline exercise.** Extend Situation Data with assembly points and host Grouping in Management as a separate module. Add a Sheltering service, a coordinator and shelter operator walkthrough, deterministic fixture data and integration checks.

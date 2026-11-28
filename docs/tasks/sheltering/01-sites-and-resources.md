@@ -13,9 +13,9 @@ The coordinator opens one assembly point and two shelters. A shelter operator re
 
 ### Stage A (demo)
 
-- [ ] Implement `SetAssemblyPoint` in Situation and `ConfigureShelter` in Sheltering, with ownership and expected versions. Record place, access, time windows and source evidence.
-- [ ] Provide `GetAssemblyPoints` and `GetShelterAvailability` for SH-W1. Include previews of usable capacity, active holds, actual occupancy and the revision checked. SH-T04 and SH-T05 own the operations that change holds and occupancy.
-- [ ] Seed two synthetic shelters and one assembly point tied to the shared `sample` graph. A point and shelter may share a location, with separate functions and counters.
+- [x] Implement `SetAssemblyPoint` in Situation and `ConfigureShelter` in Sheltering, with ownership and expected versions. Record place, access, time windows and source evidence.
+- [x] Provide `GetAssemblyPoints` and `GetShelterAvailability` for SH-W1. Include previews of usable capacity, active holds, actual occupancy and the revision checked. SH-T04 and SH-T05 own the operations that change holds and occupancy.
+- [x] Seed two synthetic shelters and one assembly point tied to the shared `sample` graph. A point and shelter may share a location, with separate functions and counters.
 
 ### Stage B (completion)
 
@@ -28,4 +28,6 @@ Receive SH-W0 first. Deliver SH-W1 to SH-T03, SH-T04 and SH-T07. Capture a site 
 
 ## Results
 
-_(Fill in the checks, fixture IDs, evidence sources and any unverified limits.)_
+Stage A uses `assembly-north`, `shelter-a` and `shelter-b` from the [synthetic sample fixture](../../../data/demo/sheltering/sample-sites.json), with evidence from the exercise Situation snapshot at revision 0. See the [interface contracts, examples and future handoffs](../../sheltering-interfaces.md).
+
+The integration run `python scripts/offline_demo.py --sheltering --test --port 5480` passed, including owner catalog revisions, current eligibility, time windows, command retries, concurrent edits, restart recovery and preservation of seeded commitments. The existing sample integration test passed on the same build. Stage B authorization and outbox publication remain pending.
