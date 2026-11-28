@@ -1,0 +1,12 @@
+{
+  "name": "cassini-e2e",
+  "private": true,
+  "description": "Playwright end-to-end test of the offline dashboard (task 7).",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1"
+  }
+}

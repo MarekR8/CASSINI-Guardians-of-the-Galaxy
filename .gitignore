@@ -91,3 +91,9 @@ Thumbs.db
 *.log
 !/data/demo/valencia/imagery/2024-10-19-sentinel1-vv.tiff
 !/data/demo/valencia/imagery/2024-10-31-sentinel1-vv.tiff
+
+# Playwright end-to-end test (tests/e2e)
+tests/e2e/node_modules/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+tests/e2e/blob-report/
