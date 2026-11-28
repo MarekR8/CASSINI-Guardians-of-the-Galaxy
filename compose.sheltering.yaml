@@ -9,6 +9,7 @@ services:
     environment:
       Demo__Scenario: sample
       Sheltering__BaseUrl: http://sheltering:8080
+      Management__BaseUrl: http://management:8080
     depends_on: [sheltering]
 
   sheltering:

@@ -1,0 +1,28 @@
+{
+  "query": {
+    "incidentId": "incident-42",
+    "legId": "leg-exit",
+    "node": "walk-start",
+    "mode": "walking",
+    "at": "2026-11-27T19:34:00Z",
+    "clearBy": "2026-11-27T19:58:00Z",
+    "destinationKind": "shelter",
+    "destinationId": "shelter-a",
+    "recordedRouteId": "recording-east-walking"
+  },
+  "eligible": {
+    "status": "Eligible",
+    "situationRevision": 0,
+    "segments": ["walk-to-pickup", "east-link", "bridge-2"],
+    "arrivalWindow": {
+      "earliest": "2026-11-27T19:47:00+00:00",
+      "latestExclusive": "2026-11-27T19:47:01+00:00"
+    }
+  },
+  "afterBridgeClosure": {
+    "status": "Ineligible",
+    "situationRevision": 1,
+    "reason": "RecordedRouteIneligible",
+    "evidence": null
+  }
+}

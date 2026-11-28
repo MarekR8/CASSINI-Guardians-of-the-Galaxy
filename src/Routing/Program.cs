@@ -68,8 +68,11 @@ if (destinationsEnabled)
 {
     builder.Services.AddSingleton(new DestinationSources(
         new Uri((builder.Configuration["Situation:BaseUrl"] ?? "http://127.0.0.1:5082").TrimEnd('/') + "/"),
-        new Uri(builder.Configuration["Sheltering:BaseUrl"]!.TrimEnd('/') + "/")));
+        new Uri(builder.Configuration["Sheltering:BaseUrl"]!.TrimEnd('/') + "/"),
+        new Uri((builder.Configuration["Management:BaseUrl"] ?? "http://127.0.0.1:5081").TrimEnd('/') + "/")));
     builder.Services.AddSingleton(TimeProvider.System);
+    builder.Services.AddSingleton(DestinationEvidenceFixtures.Load(builder.Configuration["Routing:DestinationEvidenceFile"]));
+    builder.Services.AddTransient<DestinationRouteQueries>();
     builder.Services.AddHttpClient<DestinationQueries>(client => client.Timeout = TimeSpan.FromSeconds(4))
         .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
         {
@@ -106,6 +109,13 @@ if (destinationsEnabled)
 {
     queries.MapGet("/destinations", (string? incidentId, DateTimeOffset? at, DestinationQueries handler,
         CancellationToken cancellation) => handler.GetDestinations(incidentId, at, cancellation));
+    queries.MapGet("/destination-route", ([AsParameters] DestinationRouteRequest travel, string? destinationKind,
+        string? destinationId, string? recordedRouteId, string? expectedEvidenceId, string? transportId, DestinationRouteQueries handler,
+        CancellationToken cancellation) =>
+        handler.GetRoute(travel, destinationKind, destinationId, recordedRouteId, expectedEvidenceId, transportId, cancellation));
+    queries.MapGet("/first-leg", ([AsParameters] DestinationRouteRequest travel, string? reservationId,
+        string? transportId, DestinationRouteQueries handler, CancellationToken cancellation) =>
+        handler.GetFirstLeg(travel, reservationId, transportId, cancellation));
 }
 queries.MapGet("/network", () => new {
     Network.Nodes, Network.Segments, Network.Exits,
