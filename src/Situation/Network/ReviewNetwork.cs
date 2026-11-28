@@ -14,26 +14,13 @@ internal sealed record ReviewFeature(string Id, string Source, string Mode, stri
 internal sealed record ClosureEvidence(string Source, string? ReviewFeatureId, DateTimeOffset? ObservedAt,
     DateTimeOffset DecidedAt);
 
-internal sealed class ReviewNetwork(DemoNetwork? network, CityNetwork? city = null)
+internal sealed class ReviewNetwork(CityNetwork? city)
 {
-    internal bool CityOnly => network is null && city is not null;
+    internal bool CityOnly => city is not null;
     internal bool ContainsCitySegment(string id) => city?.Contains(id) == true;
-    internal static ReviewFeature ExerciseFeature(DemoNetwork network)
-    {
-        var geometry = JsonSerializer.SerializeToElement(new
-        {
-            type = "Polygon",
-            coordinates = new[] { new[] { new[] { 21.0334, 52.2412 }, new[] { 21.0345, 52.2412 },
-                new[] { 21.0345, 52.2421 }, new[] { 21.0334, 52.2421 }, new[] { 21.0334, 52.2412 } } }
-        });
-        return new ReviewFeature("demo-bridge", "exercise", "synthetic", "demo", "warsaw-exercise",
-            new DateTimeOffset(2026, 11, 27, 19, 20, 0, TimeSpan.Zero), null, null, geometry,
-            new ReviewNetwork(network).Match([geometry.GetProperty("coordinates")]));
-    }
-
     internal ReviewFeature[] Read(ImportReviewCommand command)
     {
-        if (network is null && city is null)
+        if (city is null)
             throw new SituationError(409, "ScenarioRequired", "FlyPix road review requires an exercise road network.");
         if (command.LayerId?.Trim() is not { Length: > 0 and <= 120 } layerId ||
             command.ImageProductId?.Trim() is not { Length: > 0 and <= 120 } product ||
@@ -71,28 +58,23 @@ internal sealed class ReviewNetwork(DemoNetwork? network, CityNetwork? city = nu
                 JsonSerializer.Serialize(new { layerId, product, observed = observed.ToUniversalTime(), command.ModelId, feature }))))[..24];
             var source = command.Mode switch { "synthetic" => "exercise", "manual" => "flypix-manual", _ => "flypix-ai" };
             result.Add(new ReviewFeature("flypix-" + id, source, command.Mode, layerId, product,
-                observed.ToUniversalTime(), command.ModelId, confidence, geometry.Clone(), Match(polygons)));
+                observed.ToUniversalTime(), command.ModelId, confidence, geometry.Clone(), Match(city, polygons)));
         }
         return result.DistinctBy(feature => feature.Id).ToArray();
     }
 
-    private string[] Match(JsonElement[] polygons)
+    private static string[] Match(CityNetwork city, JsonElement[] polygons)
     {
         var boundaries = polygons.Select(polygon => polygon.EnumerateArray().Select(ring => ring.EnumerateArray()
             .Select(point => (X: point[0].GetDouble(), Y: point[1].GetDouble())).ToArray()).ToArray()).ToArray();
-        var demo = (network?.Segments ?? []).Where(segment =>
-            new[] { segment.Geometry, segment.DrivingGeometry, segment.ReverseDrivingGeometry }
-                .Any(line => line is not null && Intersects(line, boundaries))).Select(segment => segment.Id);
-        if (city is null) return demo.ToArray();
-
         var points = boundaries.SelectMany(polygon => polygon[0]).ToArray();
-        if (CityOnly && boundaries.SelectMany(polygon => polygon).SelectMany(ring => ring)
+        if (boundaries.SelectMany(polygon => polygon).SelectMany(ring => ring)
             .Any(point => !city.InBounds(point.X, point.Y)))
             throw SituationCommands.Invalid("Review geometry must be inside the city bounds.");
         var candidates = city.IntersectingBounds(points.Min(point => point.X), points.Min(point => point.Y),
             points.Max(point => point.X), points.Max(point => point.Y));
-        return demo.Concat(candidates.Where(road => Intersects(road.Geometry, boundaries))
-            .Select(road => road.Id).Order(StringComparer.Ordinal)).ToArray();
+        return candidates.Where(road => Intersects(road.Geometry, boundaries))
+            .Select(road => road.Id).Order(StringComparer.Ordinal).ToArray();
     }
 
     private static bool Intersects(double[][] line, (double X, double Y)[][][] polygons)

@@ -17,8 +17,7 @@ from shapely import covers, make_valid, points, prepare, union_all
 from shapely.geometry import LineString, box, mapping, shape
 from shapely.strtree import STRtree
 
-from osm_to_graph import ROOT, read_data
-from prepare_warsaw_osm import build, fetch, read_pbf, svg_map
+from osm_network import ROOT, build, fetch, read_data, read_pbf, svg_map
 
 
 AREA = [-0.62, 39.24, -0.25, 39.61]
@@ -187,7 +186,7 @@ def run(output, evidence, inputs, refresh):
         scenes = write_images(evidence, stage)
         with gzip.open(stage / "city-network.json.gz", "wt", encoding="utf-8") as stream:
             json.dump(network, stream, ensure_ascii=False, separators=(",", ":"))
-        (stage / "city-map.svg").write_text(svg_map(network, show_paths=True), encoding="utf-8")
+        (stage / "city-map.svg").write_text(svg_map(network), encoding="utf-8")
         (stage / "city-nodes.svg").write_text(node_map(network["nodes"]), encoding="utf-8")
         write_json(stage / "flood.geojson", feature_collection)
         write_json(stage / "hazard-seed.json", hazard)

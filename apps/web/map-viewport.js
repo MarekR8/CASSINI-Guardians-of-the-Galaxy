@@ -3,7 +3,7 @@ const DRAG_THRESHOLD = 4;
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
 export function createMapViewport(map, { zoomIn, zoomOut, reset, maxZoom }) {
-  const { width, height } = map.viewBox.baseVal;
+  let { x: left, y: top, width, height } = map.viewBox.baseVal;
   const pointers = new Map();
   let zoom = 1;
   let x = 0;
@@ -15,8 +15,8 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset, maxZoom }) {
     zoom = clamp(nextZoom, 1, maxZoom());
     const visibleWidth = width / zoom;
     const visibleHeight = height / zoom;
-    x = clamp(nextX, 0, width - visibleWidth);
-    y = clamp(nextY, 0, height - visibleHeight);
+    x = clamp(nextX, left, left + width - visibleWidth);
+    y = clamp(nextY, top, top + height - visibleHeight);
     map.setAttribute('viewBox', [x, y, visibleWidth, visibleHeight].join(' '));
     zoomIn.disabled = zoom === maxZoom();
     zoomOut.disabled = reset.disabled = zoom === 1;
@@ -43,7 +43,13 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset, maxZoom }) {
   }
 
   function resetView() {
-    setView(0, 0, 1);
+    setView(left, top, 1);
+  }
+
+  function setExtent(extent) {
+    if (extent.x === left && extent.y === top && extent.width === width && extent.height === height) return;
+    ({ x: left, y: top, width, height } = extent);
+    resetView();
   }
 
   function fit(bounds) {
@@ -117,5 +123,5 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset, maxZoom }) {
   });
 
   resetView();
-  return { point, fit, reset: resetView };
+  return { point, fit, setExtent };
 }

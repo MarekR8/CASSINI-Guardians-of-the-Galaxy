@@ -1,12 +1,12 @@
 # Task 2 — Road network, FlyPix AI and closures
 
 **Owner:** __________
-**Directories:** `src/Situation/Network/`, `data/demo/network/`, `data/demo/review/`
+**Directories:** `src/Situation/Network/`, `experiments/network/`, `data/demo/routing/`
 **Technologies:** OpenStreetMap (Overpass), FlyPix AI (GeoJSON export / API), GeoJSON, `SituationChanged.v1` event
 
 ## What the demo shows
 
-A real piece of the road network with a bridge and a detour. FlyPix marks the bridge as "detected, unverified" (different map style, routes unchanged). The operator approves → the segment is closed → Routing withdraws affected routes.
+The Valencia viewer shows the real OSM network and observed flood extent. In an isolated integration test, a FlyPix detection enters the review queue and an approved decision updates the routing revision.
 
 ## Technology concept
 
@@ -17,8 +17,8 @@ A real piece of the road network with a bridge and a detour. FlyPix marks the br
 ## Scope
 
 ### Stage A (demo)
-- [ ] Agree the AOI with person 1 (W0) and write `data/demo/scenario.json` (bridge, 2 exits, pickup point, pedestrian start, unit).
-- [ ] Script `experiments/network/osm_to_graph.py` (Overpass → `data/demo/network/graph.json`, matching the shape of `GET /queries/network`). You provide **W1**.
+- [ ] Use the shared Sentinel‑1 extent in the Valencia task 03 dataset (W0).
+- [ ] Build the graph from a local OSM extract with `experiments/network/prepare_valencia.py` and export **W1** with `experiments/network/export_valencia_graph.py`.
 - [ ] Load the graph from the file in Routing instead of the arrays in `Network.cs` (agree with person 3, who owns the algorithm).
 - [ ] `IReviewLayerSource` (mock/live FlyPix) + command `POST /commands/review-decision` (approve/reject a detection) → on approval it closes the segment.
 - [ ] `GET /queries/validate-route?segments=...&at=...` returns `ok` or the reason `ClosedSegment` (**W5** for person 4).
@@ -42,26 +42,17 @@ A real piece of the road network with a bridge and a detour. FlyPix marks the br
 
 ```sh
 python scripts/offline_demo.py --test
-python experiments/network/osm_to_graph.py --check data/demo/network/graph.json   # consistency: no dangling segments, both exits reachable
+python scripts/offline_demo.py --scenario valencia --test
 ```
 - Test: an unapproved detection does not change the route distribution; an approved one closes the segment and increments the situation revision.
 - Idempotency test: the same decision with the same `commandId` gives the same result; different content → 409.
 
 ## Where to save results
 
-- `data/demo/network/graph.json` + `graph.meta.json` (bbox, export date, OSM attribution).
+- `data/demo/routing/valencia-task03.zip` with the graph, bounds, OSM attribution and observation metadata.
 - `data/demo/review/flypix-*.geojson` (+ `recorded/` for API responses).
 - Section below: FlyPix model parameters, confidence, time from image to result.
 
 ## Results
 
-Warsaw is available as a separate offline scenario. The graph uses OpenStreetMap road geometry and contains Most Świętokrzyski, a pedestrian exit inland in Praga, and a separate approach for the response unit. Situation matches FlyPix polygons to corridor geometry and applies an approved decision atomically. The Routing validation query checks segment IDs against the current situation revision. See the [Warsaw area and data handoff](../../data/local/README.md) and [graph provenance](../../data/demo/network/README.md).
-
-Verification commands are `python scripts/offline_demo.py --test` and `python scripts/offline_demo.py --scenario warsaw --test`. The exercise detection is synthetic. The model, a real FlyPix run and satellite observations for this area need to be verified with the team’s data. The demo keeps closures active until authorized reopening. RabbitMQ, PostGIS and ORS geometry validation remain Stage B work.
-
-The Warsaw-wide AOI is [20.830, 52.080, 21.300, 52.390]. The PBF preparation script builds a local city graph and basemap. The city route query excludes approved OSM closures. The Copernicus task connects through the [Warsaw sync manifest](../../data/local/warsaw-sync.example.json).
-
-
-## Valencia handoff
-
-The branch now opens the Valencia metropolitan exercise. [Preparation, browser FlyPix export and the task 03 graph contract](../../data/local/valencia.md) describe the EMSR773 observation, safe/hazard/unknown node labels, estimated edge capacities and operator-approved closures.
+The Valencia viewer shows the shared radar rectangle and the Copernicus EMS extent. Situation can match a browser-exported FlyPix polygon to OSM edges for isolated tests. Routing validation checks current closures by segment ID. [Data preparation and handoff](../../data/local/valencia.md) · [Task 03 input contract](../../data/local/valencia-task03.md)

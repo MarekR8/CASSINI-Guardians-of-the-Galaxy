@@ -13,7 +13,6 @@
   <header class="masthead">
     <div class="brand"><img src="/cassini.svg" width="42" height="42" alt=""><div><strong>CASSINI</strong><span>Guardians of the Galaxy</span></div></div>
     <div class="masthead-actions">
-      <a class="scenario-link" id="scenario-switch" hidden></a>
       <div class="connection"><span class="beacon" aria-hidden="true"></span> Tryb lokalny offline</div>
     </div>
   </header>
@@ -35,27 +34,15 @@
             <button id="map-zoom-reset" type="button">Resetuj widok</button>
           </div>
         </div>
-        <div class="scenario" id="city-tools" hidden>
-          <div class="buttons" id="city-routing" hidden>
-            <label for="city-mode">Tryb trasy
-              <select id="city-mode"><option value="walking">Pieszo</option><option value="driving">Samochodem</option></select>
-            </label>
-            <button id="city-pick" type="button" aria-pressed="false">Wskaż punkty trasy</button>
-          </div>
-          <p id="city-status" role="status"></p>
-        </div>
         <div class="map-layer-tools buttons" id="valencia-tools" hidden>
           <label for="valencia-image">Radar Sentinel-1</label>
           <select id="valencia-image">
-            <option value="">Mapa OSM</option>
             <option value="before">19.10.2024 · przed zalaniem</option>
             <option value="event" selected>31.10.2024 · po zdarzeniu</option>
           </select>
-          <label><input type="checkbox" id="valencia-nodes"> Pokaż strefy węzłów</label>
-          <span id="valencia-zone-counts"></span>
         </div>
         <div class="map-layer-tools" id="map-layer-tools" hidden><button id="map-layer" type="button">Pokaż Sentinel-2</button></div>
-        <div class="legend"><span class="exercise-legend"><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="archive-legend" hidden><i class="legend-archive"></i> <span id="archive-label"></span></span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span id="review-legend" hidden><i class="legend-review"></i> Detekcja do weryfikacji</span><span><i class="legend-path"></i> <span id="map-route-label">Wylosowana trasa</span></span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span class="exercise-legend"><i class="legend-exit"></i> Wyjście</span></div>
+        <div class="legend"><span class="exercise-legend"><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="archive-legend" hidden><i class="legend-archive"></i> <span id="archive-label"></span></span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span class="exercise-legend"><i class="legend-path"></i> Wylosowana trasa</span><span class="exercise-legend"><i class="legend-closed"></i> Zamknięty odcinek</span><span class="exercise-legend"><i class="legend-exit"></i> Wyjście</span></div>
         <p class="map-credit" id="satellite-credit" hidden><a id="satellite-source" target="_blank" rel="noopener noreferrer"></a><span id="satellite-date"></span></p>
         <p class="map-credit" id="ortho-credit" hidden><a id="ortho-source" target="_blank" rel="noopener noreferrer">Ortofotomapa · Geoportal / GUGiK</a></p>
         <p class="map-credit" id="archive-credit" hidden><a id="archive-source" target="_blank" rel="noopener noreferrer"></a><span id="archive-date"></span></p>
@@ -69,10 +56,6 @@
             <button id="reopen" disabled>Otwórz przejścia</button>
           </div>
         </div>
-        <section class="scenario" id="review-panel" hidden>
-          <h3>Weryfikacja detekcji</h3>
-          <ul class="records" id="reviews"></ul>
-        </section>
       </section>
       <section class="card routing-card" id="exercise-routing" aria-labelledby="routing-title">
         <div class="card-heading"><div><h2 id="routing-title">Rozkład tras</h2><p id="recipient">Przejścia piesze z wybranego węzła</p></div></div>

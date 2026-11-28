@@ -172,11 +172,9 @@ def main():
     args = parser.parse_args()
     if args.recordings is not None:
         check_replay(args.port, "sample", args.recordings.resolve(), "recorded")
-        check_replay(args.port, "warsaw", args.recordings.resolve(), "recorded")
-        print("Captured ORS routes passed the booking and replan checks for both cities.")
+        print("Captured ORS routes passed the booking and replan checks for Kłodzko.")
         return
     check_replay(args.port, "sample", expected_exit="exit-east")
-    check_replay(args.port, "warsaw", expected_exit="exit-north")
     check_dispatch_review(args.port)
 
     with TemporaryDirectory() as empty:

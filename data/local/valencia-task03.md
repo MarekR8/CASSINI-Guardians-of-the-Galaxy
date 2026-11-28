@@ -27,7 +27,7 @@ Najpierw etap 03 może czytać dokument z pliku. Przy integracji HTTP odpowiedź
 
 ## Jak odświeżyć zamknięcia z FlyPix
 
-Graf i klasy stref są już gotowe do pierwszej symulacji. W FlyPix dodawaj tylko małe poligony wokół konkretnych odcinków, na warstwie `valencia-road-review`. Eksportuj tę warstwę przez **⋯ → Export Layer → GeoJSON → EPSG:4326**. Uzupełnij manifest obrazem i czasem rzeczywiście użytej obserwacji. Zaimportuj plik przez `python experiments/network/import_valencia_review.py`. W panelu Situation sprawdź dopasowane identyfikatory OSM przed decyzją operatora. Do wyeksportowanego grafu trafiają jako zamknięte odcinki z aktualnego zapisu Situation.
+Graf i klasy stref są już gotowe do pierwszej symulacji. W FlyPix dodawaj tylko małe poligony wokół konkretnych odcinków, na warstwie `valencia-road-review`. Eksportuj tę warstwę przez **⋯ → Export Layer → GeoJSON → EPSG:4326**. Uzupełnij manifest obrazem i czasem rzeczywiście użytej obserwacji. Zaimportuj plik przez `python experiments/network/import_valencia_review.py`. Dopasowane identyfikatory OSM są w `reviewFeatures[].segmentIds` w zapytaniu Situation `GET /api/situation/queries/snapshot`. Podgląd Walencji służy do odczytu mapy i strefy EMS. Do wyeksportowanego grafu trafiają jako zamknięte odcinki z aktualnego zapisu Situation.
 
 Po aktualizacji przygotuj paczkę ponownie z katalogu repozytorium. Skrypt czyta stan `artifacts/valencia-demo/situation.json` lub inny wskazany przez `--state`. Można go uruchomić przy wyłączonym panelu.
 

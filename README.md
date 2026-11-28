@@ -21,6 +21,4 @@ Do uruchomienia potrzebny jest .NET 10 SDK i Python 3. [Dane, FlyPix w przegląd
 
 Zobacz [instrukcję demo i transportu obrazów](docs/offline-demo.md), [aplikację Android](apps/offline-android/README.md), [pola na dane zespołu](data/local/README.md) i [instrukcje dla agentów](AGENTS.md).
 
-Opcjonalną mapę poprzedniego ćwiczenia przygotowuje `python experiments/network/prepare_warsaw_osm.py`. Scenariusz uruchamia `python scripts/offline_demo.py --scenario warsaw`. [Przygotowanie mapy i podłączenie Copernicusa i FlyPix](data/local/README.md).
-
 Starszy [plan pełnej architektury](docs/mvp-implementation-guide.md) opisuje następną warstwę wdrożenia, w tym logowanie, bazy relacyjne i dystrybucję zdarzeń.
