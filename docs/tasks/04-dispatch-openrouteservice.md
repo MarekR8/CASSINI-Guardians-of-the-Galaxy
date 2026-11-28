@@ -17,10 +17,10 @@ A person without a car asks for transport. The dispatcher sees a unit, its posit
 ## Scope
 
 ### Stage A (demo)
-- [ ] `IRouteProvider` + both providers; configuration `Integrations:Ors:Mode`, `Integrations:Ors:BaseUrl`, `Integrations:Ors:ApiKey` (user-secrets).
+- [x] `IRouteProvider` + both providers; configuration `Integrations:Ors:Mode`, `Integrations:Ors:BaseUrl`, `Integrations:Ors:ApiKey` (user-secrets).
 - [ ] Record ORS responses for the scenario: approach and outbound before and after the bridge closure → `data/demo/ors/recorded/`.
-- [ ] Dispatch uses the provider for approach and outbound legs; keep the existing double-booking guard and `commandId` idempotency.
-- [ ] Unit position with `positionEvidence { source, egnosApplied, hpl, mode }` in `GET /queries/assignments`.
+- [x] Dispatch uses the provider for approach and outbound legs; keep the existing double-booking guard and `commandId` idempotency.
+- [x] Unit position with `positionEvidence { source, egnosApplied, hpl, mode }` in `GET /queries/assignments`.
 
 ### Stage B (completion)
 - [ ] Rank units by approach time using the ranking from task 3 (W4).
@@ -41,7 +41,8 @@ A person without a car asks for transport. The dispatcher sees a unit, its posit
 ## How to test
 
 ```sh
-python scripts/offline_demo.py --test        # mock mode, no key
+python scripts/offline_demo.py --test        # default offline graph, no key
+python tests/dispatch_ors_integration.py     # after building the solution
 dotnet user-secrets set Integrations:Ors:ApiKey <key> --project src/Routing/Cassini.Routing.csproj
 Integrations__Ors__Mode=live dotnet run --project src/Routing/Cassini.Routing.csproj   # manual recording
 ```
@@ -55,4 +56,48 @@ Integrations__Ors__Mode=live dotnet run --project src/Routing/Cassini.Routing.cs
 
 ## Results
 
-_(fill in)_
+Routing owns the provider request and candidate validation. It uses the current
+Situation revision and known closure geometry before returning either leg.
+Dispatch checks that revision before saving a booking or replan and retains the
+existing command receipt and active booking checks.
+
+| `Integrations:Ors:Mode` | Route source |
+| --- | --- |
+| `graph` (default) | Local exercise graph |
+| `mock` or `recorded` | Strict replay from the published `ors/recorded` directory or `Integrations:Ors:FixtureDirectory` |
+| `live` | ORS Directions GeoJSON over HTTP. Configure `Integrations:Ors:ApiKey` and optionally `Integrations:Ors:BaseUrl` |
+
+Use `Integrations__Ors__Mode=mock` with `scripts/offline_demo.py` to replay the
+bundled examples. The [request index](../../data/demo/ors/index.json) covers both
+exercise graphs and their before/after bridge scenarios. The files are labeled
+`synthetic`. Their geometry and duration come from the bundled exercise graphs.
+Warsaw approaches the pickup across the bridge before its closure, even though
+the local outbound ranking already prefers the north exit.
+
+To capture actual responses, load `Integrations__Ors__ApiKey` from your local
+environment and run `python scripts/record_ors_routes.py artifacts/ors-recorded`.
+Point `Integrations__Ors__FixtureDirectory` at that directory and use replay
+mode. The hash includes the profile and complete normalized request.
+Missing entries return `FixtureMissing`. The launcher sets the environment to
+Production. Use the environment variable with the launcher and use .NET
+user-secrets with a standalone Routing process in Development.
+
+The current closure check is an exercise approximation based on the active
+closed segments in Situation. For the Warsaw bridge it covers the river
+crossing, since the logical segment also contains approach roads used by the
+detour. An active closed segment with unknown geometry blocks ORS routing.
+PostGIS intersection with operational closure polygons remains part of task 02.
+
+The API includes `approachGeometry`, `outboundGeometry` and `provenance` in
+provider routes. The dashboard draws currently valid vehicle legs and labels
+the route source. The unit position fixture labels EGNOS as synthetic. If the
+reported quality is missing or the HPL exceeds `Integrations:Egnos:MaxHpl`
+(25 metres by default), the dispatcher can pass `confirmedStartNode` with the
+known node in an assign or replan command.
+
+Local verification covers both cities in replay mode, missing recordings,
+manual start position, and a route crossing the closed bridge rejected through
+an ORS-compatible HTTP test server. The browser check covered the position
+label, both vehicle legs, withdrawal after bridge closure, the detour and the
+state with no available exit. Actual ORS responses and hosted service limits
+still need validation with an API key.

@@ -8,7 +8,7 @@ const companionConfig = fetch('/ui/companion')
   .then(response => response.ok ? response.json() : null)
   .catch(() => null);
 const state = {
-  network: null, situation: null, distribution: null, draw: null,
+  network: null, situation: null, dispatch: null, distribution: null, draw: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null, reviewSignature: null,
   cityPicking: false, cityPoints: [], cityPath: null,
@@ -134,6 +134,7 @@ async function refresh(epoch) {
 
   state.network = network;
   state.situation = situation;
+  state.dispatch = dispatch;
   state.distribution = distribution;
   if (draw) state.draw = { id: state.draw.id, ...draw };
   if (cityPath && state.cityPath === previousCityPath) showCityPath(cityPath);
@@ -404,6 +405,15 @@ function renderMap(route) {
     routes.push({ points: pointsOnMap(state.cityPath.route.geometry), fill: 'none',
       stroke: '#8df0ce', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
   }
+  for (const assignment of state.dispatch?.assignments ?? []) {
+    if (!state.distribution || assignment.routeCurrent !== true || assignment.route.revision !== state.situation.revision)
+      continue;
+    for (const [geometry, dashed] of [[assignment.route.approachGeometry, true], [assignment.route.outboundGeometry, false]]) {
+      if (!geometry?.length) continue;
+      routes.push({ points: pointsOnMap(geometry), fill: 'none', stroke: '#fbd47e', 'stroke-width': 4,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': dashed ? '7 5' : 'none' });
+    }
+  }
   for (const line of routes) {
     map.append(svg('polyline', { ...line, stroke: '#102026', 'stroke-width': 7 }));
     map.append(svg('polyline', { ...line, class: 'map-route' }));
@@ -565,7 +575,8 @@ function renderOperations(incident, dispatch) {
 
   const unit = dispatch.units.find(item => item.unitId === 'unit-3');
   const occupied = dispatch.assignments.some(a => a.unitId === 'unit-3' && !['Completed', 'Cancelled'].includes(a.state));
-  text('unit-status', unit ? unit.name + ' · ' + (occupied ? 'w zadaniu' : 'gotowa') : 'Brak jednostki');
+  text('unit-status', unit ? unit.name + ' · ' + (occupied ? 'w zadaniu' : 'gotowa')
+    + ' · ' + unitPositionLabel(unit) : 'Brak jednostki');
   $('requests').replaceChildren(...dispatch.requests.map(item => {
     const row = element('li');
     const info = element('div');
@@ -575,8 +586,10 @@ function renderOperations(incident, dispatch) {
     row.append(info);
     const actions = element('div', null, 'buttons');
     if (!assignment && !occupied && unit) actions.append(button('Przydziel', () =>
-      api('dispatch', 'commands/assign', { commandId: commandId(), requestId: item.requestId, unitId: unit.unitId,
-        expectedVersion: item.version }).then(() => 'Zarezerwowano jednostkę.')));
+      withConfirmedUnitPosition(unit, confirmed => api('dispatch', 'commands/assign', {
+        commandId: commandId(), requestId: item.requestId, unitId: unit.unitId,
+        expectedVersion: item.version, ...confirmed,
+      }).then(() => 'Zarezerwowano jednostkę.'))));
     if (assignment?.route) {
       const route = assignment.route;
       const active = !['Completed', 'Cancelled'].includes(assignment.state);
@@ -584,10 +597,15 @@ function renderOperations(incident, dispatch) {
         ? label(route.exit) + ' · dojazd ' + minutes(route.approachSeconds) + ' · wyjazd ' + minutes(route.outboundSeconds)
         : active ? 'Trasa jednostki wymaga ponownej weryfikacji.' : null;
       if (routeText) info.append(element('p', routeText));
+      if (route.provenance) info.append(element('p', route.provenance.mode === 'synthetic'
+        ? 'Trasa jednostki · symulacja' : 'Trasa jednostki · OpenRouteService'
+          + (route.provenance.mode === 'recorded' ? ' · zapis' : '')));
       const change = (op, extra) => api('dispatch', 'commands/' + op, { commandId: commandId(),
         assignmentId: assignment.assignmentId, expectedVersion: assignment.version, ...extra })
         .then(() => 'Zapisano stan zadania.');
-      if (active && assignment.routeCurrent !== true) actions.append(button('Przelicz trasę jednostki', () => change('replan')));
+      if (active && assignment.routeCurrent !== true)
+        actions.append(button('Przelicz trasę jednostki', () =>
+          withConfirmedUnitPosition(unit, confirmed => change('replan', confirmed))));
       const step = { Assigned: ['acknowledge', 'Potwierdź zadanie'], Acknowledged: ['arrive', 'Zgłoś przyjazd'],
         AtPickup: ['pickup', 'Potwierdź odbiór'], PickupConfirmed: ['complete', 'Zakończ zadanie'] }[assignment.state];
       if (step && assignment.routeCurrent === true) actions.append(button(step[1], () => change('progress', { step: step[0] })));
@@ -595,6 +613,20 @@ function renderOperations(incident, dispatch) {
     if (actions.childElementCount) row.append(actions);
     return row;
   }));
+}
+
+function unitPositionLabel(unit) {
+  const evidence = unit.positionEvidence;
+  if (evidence?.mode === 'manual') return 'pozycja potwierdzona ręcznie';
+  if (evidence?.mode === 'synthetic' && evidence.egnosApplied === true && unit.positionVerified)
+    return 'EGNOS (symulacja) · HPL ' + evidence.hpl + ' m';
+  return 'pozycja wymaga potwierdzenia';
+}
+
+function withConfirmedUnitPosition(unit, action) {
+  if (unit.positionVerified) return action({});
+  if (window.confirm('Potwierdź pozycję jednostki: ' + label(unit.node) + '.'))
+    return action({ confirmedStartNode: unit.node });
 }
 
 function renderSources(hazards) {
