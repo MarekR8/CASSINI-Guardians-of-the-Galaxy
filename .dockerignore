@@ -17,6 +17,15 @@ data/demo/population/*
 !data/demo/population/estimate.json
 !data/demo/ors
 !data/demo/ors/**
+!data/demo/routing
+data/demo/routing/*
+!data/demo/routing/valencia-task03.zip
+!data/demo/routing/params.json
+!data/demo/routing/valencia
+data/demo/routing/valencia/*
+!data/demo/routing/valencia/population.json
+!data/demo/routing/valencia/deadlines.json
+!data/demo/routing/valencia/shelters.synthetic.json
 docs
 scripts
 tests

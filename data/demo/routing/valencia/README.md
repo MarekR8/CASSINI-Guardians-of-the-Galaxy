@@ -8,6 +8,7 @@ These files complement the graph in [valencia-task03.zip](../valencia-task03.zip
 | `flood-depth.geojson` | Observation | EMSR773 AOI01 `floodDepthA` classes clipped to the window and merged per class. Depth exists only for the *Flooded area* part of the observation, about 5 % of the estimated people. *Flood trace* areas in the towns have no depth. |
 | `flood-source.geojson` | Reference geometry | OSM way 41726575 *Barranc de Xiva*, the lower Poyo ravine that overflowed through Paiporta. |
 | `shelters.synthetic.json` | **Synthetic** | Exercise shelters in `cassini.shelters.v1`. Not real facilities. Replace with the client file. |
+| `deadlines.json` | Model assumption | Deadline per hazard node from the rule below, read by the Routing service. Rewrite with `python experiments/routing/deadlines.py --output data/demo/routing/valencia/deadlines.json` after changing the inputs or the deadline parameters. |
 
 ## Deadline to leave the flood
 
@@ -30,6 +31,10 @@ python -m unittest discover -s experiments/routing             # loaders and dea
 python experiments/routing/shelters.py data/demo/routing/valencia/shelters.synthetic.json
 python experiments/routing/deadlines.py                         # deadline bands weighted by people
 python experiments/routing/plot_inputs.py                       # map in experiments/routing/out/inputs.png
+python experiments/routing/model.py --baseline                  # model run, see docs/tasks/03
+python experiments/routing/model.py --shelters my-shelters.json --close osm-123-456-789
 ```
+
+`--node <OSM id>` prints the shelter distribution of one populated node per profile. `--close` treats extra road IDs as closed, for example a bridge.
 
 Sources. GHSL: Schiavina M. et al., *GHS-POP R2023A, epoch 2025*, European Commission JRC, CC BY 4.0. Flood depth: Copernicus Emergency Management Service, © European Union 2024, [EMSR773](https://mapping.emergency.copernicus.eu/activations/EMSR773/). Road graph and flood source: © OpenStreetMap contributors, ODbL.
