@@ -1,6 +1,6 @@
 # CASSINI Offline
 
-Domyślny widok tego brancha to [Walencja](../data/local/valencia.md). Poniżej opisano wcześniejsze scenariusze demonstracyjne.
+Domyślny widok launchera Python to odczytowa [mapa Walencji](../data/local/valencia.md). Poniżej opisano ćwiczenie Kłodzko (`--scenario sample`), które obejmuje losowanie tras, rezerwację jednostki i testy zamknięć.
 
 Panel koordynatora i węzła ewakuacji działa na jednym komputerze z czterema niezależnymi usługami ASP.NET Core .NET 10 oraz bramą HTTP. Android ma własny scenariusz ćwiczeniowy działający bez bramy. Wszystkie lokalizacje, mieszkańcy, jednostki i czasy marszu użyte przez scenariusz są syntetyczne.
 
@@ -32,26 +32,6 @@ Do pierwszej budowy potrzeba obrazów bazowych .NET dostępnych w lokalnym cache
 
 ## Przebieg prezentacji
 
-### Przełączanie między Kłodzkiem a Warszawą
-
-Uruchom dwa lokalne projekty Compose na osobnych portach, aby każde ćwiczenie zachowało swój stan.
-W PowerShellu uruchom z katalogu repozytorium:
-
-```powershell
-$env:CASSINI_SCENARIO = 'sample'
-$env:CASSINI_PORT = '5080'
-$env:CASSINI_COMPANION_PORT = '5180'
-docker compose up -d --build
-
-$env:CASSINI_SCENARIO = 'warsaw'
-$env:CASSINI_PORT = '5180'
-$env:CASSINI_COMPANION_PORT = '5080'
-docker compose -p cassini-warsaw-satellite up -d --no-build --pull never
-```
-
-Otwórz [Kłodzko](http://127.0.0.1:5080) i wybierz **Przełącz na Warszawę** w nagłówku. Panel
-Warszawy pokazuje w tym samym miejscu odnośnik do Kłodzka.
-
 ### Ćwiczenie
 
 Powiększaj mapę kółkiem myszy, gestem dwóch palców albo przyciskami **+** i **−**. Przeciągnij mapę,
@@ -80,8 +60,9 @@ Routing wyznacza najkrótszą dopuszczalną trasę do każdego dostępnego wyjś
 
 ## Źródła satelitarne i zakres offline
 
-- **Podkład mapy.** W Warszawie jedna mapa pokazuje Sentinel‑2, a przy powiększaniu w okolicy mostu Świętokrzyskiego nakłada szczegółową [ortofotomapę GUGiK](https://www.geoportal.gov.pl/pl/dane/ortofotomapa-orto/). Kłodzko używa ortofotomapy w domyślnym widoku. Przycisk **Pokaż Sentinel-2** pozwala ukryć ortofotomapę. Obrazy i [metadane](../apps/web/maps/satellite.json) są dołączone do Gateway i działają offline. Contains modified Copernicus Sentinel data 2026.
-- **Copernicus EMS** dostarcza warstwy archiwalne dla obu miast. W Kłodzku widać [EMSR756](https://mapping.emergency.copernicus.eu/activations/EMSR756/) z obserwacji 15 września 2024 r. W Warszawie widać [produkt GFM z obserwacji Sentinel‑1](https://stac.eodc.eu/api/v1/collections/GFM/items/ENSEMBLE_FLOOD_20190528T045228_VV_EU020M_E054N018T3) z 28 maja 2019 r. na południowym odcinku Wisły. **Zbliż na zalanie archiwalne** pokazuje pełny zasięg dołączonej warstwy. Rozkład tras uwzględnia zamknięcia z ćwiczenia.
+- **Podkład mapy.** Kłodzko używa [ortofotomapy GUGiK](https://www.geoportal.gov.pl/pl/dane/ortofotomapa-orto/) w domyślnym widoku. Przycisk **Pokaż Sentinel-2** pozwala ukryć ortofotomapę. Obrazy i [metadane](../apps/web/maps/satellite.json) są dołączone do Gateway i działają offline. Contains modified Copernicus Sentinel data 2026.
+- **Copernicus EMS.** Archiwalny zasięg powodzi Kłodzka pochodzi z [EMSR756](https://mapping.emergency.copernicus.eu/activations/EMSR756/) z 15 września 2024 r. Walencja korzysta z EMSR773 i pary zdjęć Sentinel‑1. [Źródła Walencji](../data/local/valencia.md)
+
 - **Galileo** jest odczytywany na kompatybilnym odbiorniku Androida. Aplikacja przyjmuje świeżą pozycję GNSS do zgłoszenia wyjścia. Udział Galileo zapisuje, gdy potwierdza go status odbiornika z czasu pomiaru. Prowadzenie po syntetycznym grafie nadal opiera się na scenariuszu ćwiczenia. [Galileo Open Service](https://www.euspa.europa.eu/galileo-os), [Android GnssStatus](https://developer.android.com/reference/android/location/GnssStatus).
 - **EGNOS** wymaga sprzętu, który potwierdza faktyczne zastosowanie korekt. **GOVSATCOM** i **IRIS²** przewidziano jako możliwe łącza dla wyposażonego punktu koordynacji. Demo nie wymaga terminala ani aktywnego połączenia. [EGNOS](https://www.euspa.europa.eu/eu-space-programme/egnos/services), [GOVSATCOM](https://www.euspa.europa.eu/govsatcom-hub), [IRIS²](https://defence-industry-space.ec.europa.eu/eu-space/iris2-secure-connectivity_en).
 

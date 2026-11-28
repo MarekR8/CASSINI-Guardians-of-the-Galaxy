@@ -9,9 +9,6 @@ apps/offline-android
 data/*
 !data/demo
 data/demo/*
-!data/demo/network
-data/demo/network/*
-!data/demo/network/graph.json
 !data/demo/population
 data/demo/population/*
 !data/demo/population/estimate.json

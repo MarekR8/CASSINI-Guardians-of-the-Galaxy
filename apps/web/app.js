@@ -4,21 +4,17 @@ const $ = id => document.getElementById(id);
 const satelliteScenes = fetch('/maps/satellite.json')
   .then(response => response.ok ? response.json() : null)
   .catch(() => null);
-const companionConfig = fetch('/ui/companion')
-  .then(response => response.ok ? response.json() : null)
-  .catch(() => null);
 const state = {
   network: null, situation: null, incident: null, dispatch: null, distribution: null, draw: null, readAvailable: false,
   cityImagery: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
-  operationsSignature: null, sourcesSignature: null, reviewSignature: null,
+  operationsSignature: null, sourcesSignature: null,
   dispatchSelections: new Map(), dispatchErrors: new Map(),
-  cityPicking: false, cityPoints: [], cityPath: null,
   satelliteScene: null, satelliteDetail: false,
 };
 const mapViewport = createMapViewport($('map'), {
   zoomIn: $('map-zoom-in'), zoomOut: $('map-zoom-out'), reset: $('map-zoom-reset'),
-  maxZoom: () => (state.network?.city || state.network?.scenario === 'warsaw') ? 32 : 5,
+  maxZoom: () => state.network?.city ? 32 : 5,
 });
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
@@ -40,20 +36,12 @@ const formatObservation = new Intl.DateTimeFormat('pl-PL', {
 const time = value => formatTime.format(new Date(value));
 const minutes = seconds => Math.round(seconds / 60) + ' min';
 const text = (id, value) => { $(id).textContent = value; };
-const label = id => (state.network?.scenario === 'warsaw'
-  ? state.network.nodes.find(node => node.id === id)?.label : names[id]) || id;
+const label = id => names[id] || id;
 const segmentLabel = id => ({
   'bridge-2': 'Most Świętokrzyski', 'north-link': 'Dojście północne',
   'walk-to-pickup': 'Dojście do punktu przesiadkowego', 'east-link': 'Dojazd do mostu',
   'north-exit-link': 'Dojście do wyjścia', 'outside-connector': 'Objazd dla jednostki',
 })[id] || id;
-const warsawMapLabels = {
-  'walk-start': ['Punkt zbiórki', 10, 22],
-  pickup: ['Punkt przesiadkowy', 12, -12],
-  'east-junction': ['Most Świętokrzyski', -12, -12],
-  'exit-east': ['Wyjście · Powiśle', -10, -14],
-  'exit-north': ['Wyjście · Praga', 10, -14],
-};
 const commandId = () => crypto.randomUUID();
 
 async function api(service, path, data) {
@@ -126,12 +114,11 @@ function invalidateRead() {
 async function refresh(epoch) {
   const network = state.network ?? await api('routing', 'queries/network');
   const valencia = network.scenario === 'valencia';
-  const [situation, incident, dispatch, scenes, companion, cityImagery] = await Promise.all([
+  const [situation, incident, dispatch, scenes, cityImagery] = await Promise.all([
     api('situation', 'queries/snapshot'),
     valencia ? null : api('management', 'queries/incident'),
     valencia ? null : api('dispatch', 'queries/assignments'),
     satelliteScenes,
-    companionConfig,
     valencia ? state.cityImagery ?? fetch('/maps/city-imagery.json').then(response => {
       if (!response.ok) throw new Error('Brak lokalnych metadanych scen Walencji.');
       return response.json();
@@ -139,16 +126,13 @@ async function refresh(epoch) {
   ]);
   if (state.epoch !== epoch) return;
   const node = $('node').value;
-  const previousCityPath = state.cityPath;
   const revisionChanged = state.situation?.revision !== situation.revision;
-  const [distribution, draw, cityPath] = await Promise.all([
+  const [distribution, draw] = await Promise.all([
     valencia ? null : api('routing', 'queries/distribution?node=' + encodeURIComponent(node)),
     state.draw ? api('routing', 'queries/draws/' + state.draw.id) : null,
-    previousCityPath && (previousCityPath.revision !== situation.revision || !state.readAvailable)
-      ? requestCityPath() : null,
   ]);
   if (state.epoch !== epoch) return;
-  if ([distribution, draw, cityPath].some(view => view && view.revision !== situation.revision))
+  if ([distribution, draw].some(view => view && view.revision !== situation.revision))
     throw new Error('Sytuacja zmieniła się podczas odczytu.');
 
   const restored = !state.readAvailable;
@@ -165,26 +149,13 @@ async function refresh(epoch) {
   if (valencia) $('map').setAttribute('aria-label', 'Mapa zalania i dróg w obszarze zdjęć Sentinel-1.');
   state.distribution = distribution;
   if (draw) state.draw = { id: state.draw.id, ...draw };
-  if (cityPath && state.cityPath === previousCityPath) showCityPath(cityPath);
-  const warsaw = network.scenario === 'warsaw';
-  const scenarioLink = $('scenario-switch');
-  const destination = new URL('/', window.location.origin);
-  scenarioLink.hidden = valencia || !companion?.port || String(companion.port) === destination.port;
-  if (!scenarioLink.hidden) {
-    destination.port = companion.port;
-    scenarioLink.href = destination.href;
-    scenarioLink.textContent = warsaw ? 'Przełącz na Kłodzko' : 'Przełącz na Warszawę';
-  }
   const scene = valencia ? null : scenes?.[network.scenario];
   state.satelliteScene = scene;
   text('incident', valencia ? 'DEMO · POWÓDŹ · WALENCJA'
-    : warsaw ? 'DEMO · POWÓDŹ · WARSZAWA' : 'DEMO · POWÓDŹ · ' + incident.incidentId);
+    : 'DEMO · POWÓDŹ · ' + incident.incidentId);
   text('map-area', valencia ? 'Walencja · obszar Sentinel-1'
-    : network.city ? 'Warszawa · ' + network.city.roadCount.toLocaleString('pl-PL') + ' odcinków OSM'
-    : warsaw ? 'Warszawa · lokalne ćwiczenie nad Wisłą' : 'Kłodzko · obszar ćwiczeń');
-  $('map-credit').hidden = !warsaw && !valencia;
-  $('city-tools').hidden = valencia || !network.city;
-  $('city-routing').hidden = valencia || !network.city;
+    : 'Kłodzko · obszar ćwiczeń');
+  $('map-credit').hidden = !valencia;
   if (scene) {
     $('satellite-source').href = scene.sourceUrl;
     text('satellite-source', 'Contains modified Copernicus Sentinel data ' + scene.observedAt.slice(0, 4));
@@ -202,7 +173,6 @@ async function refresh(epoch) {
     text('archive-date', ' · obserwacja ' + formatObservation.format(new Date(archive.observedAt)) + ' UTC' +
       (archive.resolutionMeters ? ' · ' + archive.resolutionMeters + ' m' : ''));
   }
-  $('review-panel').hidden = !warsaw;
   text('revision', 'Rewizja ' + situation.revision);
   if (valencia) {
     if (revisionChanged || restored) redrawMap();
@@ -230,12 +200,6 @@ async function refresh(epoch) {
       'Szacunek ludności w ' + zone + ' · ' + new Intl.NumberFormat('pl-PL').format(estimate.value) +
       ' osób · ' + estimate.source + ' ' + estimate.year);
   }
-  const reviews = warsaw ? situation.reviewFeatures || [] : [];
-  const reviewSignature = JSON.stringify(reviews);
-  if (reviewSignature !== state.reviewSignature) {
-    renderReviews(reviews);
-    state.reviewSignature = reviewSignature;
-  }
 }
 
 function syncControls() {
@@ -246,8 +210,6 @@ function syncControls() {
   $('north').disabled = state.busy || !closed.includes('bridge-2') || closed.includes('north-link');
   $('reopen').disabled = state.busy || !closed.length;
   $('alert').disabled = state.busy || !state.situation;
-  for (const control of $('reviews').querySelectorAll('button'))
-    control.disabled = state.busy || !state.situation;
   for (const control of $('requests').querySelectorAll('button, select'))
     control.disabled = state.busy || !state.readAvailable;
 }
@@ -327,21 +289,16 @@ $('map').addEventListener('map-view-change', updateMapDetail);
 function renderMap(route) {
   const map = $('map');
   if (!state.network) return;
-  const warsaw = state.network.scenario === 'warsaw';
   const valencia = state.network.scenario === 'valencia';
   const scene = state.satelliteScene;
   const city = state.network.city;
-  const cityBounds = valencia ? state.cityImagery.scenes.event.bounds
-    : city?.bounds ?? (warsaw ? scene?.bounds : null);
-  const bounds = cityBounds ?? scene?.viewBounds ?? state.network.bounds;
-  map.classList.toggle('map-city', Boolean(cityBounds));
+  const bounds = valencia ? state.cityImagery.scenes.event.bounds : scene?.viewBounds;
+  map.classList.toggle('map-city', valencia);
   const [west, south, east, north] = bounds || [16.646, 50.431, 16.660, 50.442];
   const ratio = Math.cos((south + north) * Math.PI / 360);
   const scale = Math.min(680 / ((east - west) * ratio), 360 / (north - south));
   const project = (lon, lat) => [380 + (lon - (west + east) / 2) * ratio * scale,
     210 + ((south + north) / 2 - lat) * scale];
-  state.unproject = (x, y) => [(x - 380) / (ratio * scale) + (west + east) / 2,
-    (south + north) / 2 - (y - 210) / scale];
   const pointsOnMap = line => line.map(([lon, lat]) => project(lon, lat).join(',')).join(' ');
   const shape = polygon => polygon.map(ring => 'M ' + pointsOnMap(ring).split(' ').join(' L ') + ' Z').join(' ');
   const mapImage = ([left, bottom, right, top], href, opacity) => {
@@ -391,16 +348,6 @@ function renderMap(route) {
     roads.classList.add('map-city-roads');
     canvas.append(roads);
   }
-  if (!cityBounds || warsaw) {
-    for (const line of (scene ? [] : state.network.waterways || [])) {
-      map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#285469', 'stroke-width': 18 }));
-    }
-    for (const line of state.network.contextRoads || []) {
-      map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none',
-        class: 'map-context',
-        stroke: scene ? '#9aacac' : '#38525a', 'stroke-opacity': scene ? .55 : 1, 'stroke-width': 1.15 }));
-    }
-  }
   const layers = state.situation.hazards || [];
   const hazards = valencia ? layers.filter(hazard => hazard.source === 'copernicus-ems-archive') : layers;
   $('observed-legend').hidden = !hazards.some(h => h.productId);
@@ -432,25 +379,6 @@ function renderMap(route) {
     }
     map.append(group);
   }
-  const pending = (state.situation.reviewFeatures || []).filter(feature => feature.status === 'Pending');
-  $('review-legend').hidden = !pending.length;
-  for (const feature of pending) {
-    const group = svg('g', { id: 'map-review-' + feature.id });
-    for (const polygon of polygons(feature.geometry)) {
-      group.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd', fill: '#9c67c2', 'fill-opacity': .38,
-        stroke: '#e0abff', 'stroke-width': 2.4, 'stroke-dasharray': '5 4' }));
-    }
-    map.append(group);
-  }
-  if (city) {
-    for (const feature of (state.situation.reviewFeatures || []).filter(item =>
-      item.status === 'Approved' && item.segmentIds.some(id => id.startsWith('osm-') && closed.has(id)))) {
-      for (const polygon of polygons(feature.geometry)) {
-        map.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd', fill: '#e27169', 'fill-opacity': .35,
-          stroke: '#ff9e8f', 'stroke-width': 2, 'stroke-dasharray': '4 3' }));
-      }
-    }
-  }
   map.append(svg('path', { d: 'M 713 62 V 29 M 706 38 L 713 29 L 720 38', stroke: '#a4babf', fill: 'none', 'stroke-width': 2 }));
   map.append(svg('text', { x: 708, y: 82, class: 'map-caption' }, 'N'));
   const routes = [];
@@ -467,10 +395,6 @@ function renderMap(route) {
     };
     if (inaccessible || active) routes.push(line);
     else map.append(svg('polyline', line));
-  }
-  if (state.readAvailable && state.cityPath?.revision === state.situation.revision && state.cityPath.route?.geometry.length) {
-    routes.push({ points: pointsOnMap(state.cityPath.route.geometry), fill: 'none',
-      stroke: '#8df0ce', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
   }
   for (const assignment of state.dispatch?.assignments ?? []) {
     const verifiedRevision = assignment.routeStatus?.revision ?? assignment.route.revision;
@@ -495,7 +419,7 @@ function renderMap(route) {
     marker.append(symbol);
     symbol.append(svg('circle', { r: isStart ? 9 : 6,
       fill: isExit ? '#fbd47e' : isStart ? '#8df0ce' : '#b7cbce', stroke: '#12232a', 'stroke-width': 2 }));
-    const caption = warsaw ? warsawMapLabels[id] : [
+    const caption = [
       label(id), id === 'pickup' ? -10 : 10, id === 'pickup' || id === 'east-junction' ? 26 : -14,
     ];
     if (caption) {
@@ -505,63 +429,11 @@ function renderMap(route) {
     }
     map.append(marker);
   }
-  for (const point of state.cityPoints) {
-    const [cx, cy] = project(...point);
-    const marker = svg('g', { transform: 'translate(' + cx + ' ' + cy + ')' });
-    marker.append(svg('circle', { class: 'map-symbol', r: 5, fill: '#fbd47e', stroke: '#12232a', 'stroke-width': 2 }));
-    map.append(marker);
-  }
-  if (state.cityPath && !state.readAvailable) {
-    text('city-status', 'Trasa oczekuje na ponowną weryfikację.');
-  }
   updateMapDetail();
-}
-
-function renderReviews(reviews) {
-  const list = $('reviews');
-  list.replaceChildren();
-  if (!reviews.length) list.append(element('li', 'Brak detekcji dla scenariusza.'));
-  for (const feature of reviews) {
-    const item = element('li');
-    const details = element('div');
-    const confidence = feature.confidence == null ? '' : ' · ' + Math.round(feature.confidence * 100) + '% pewności';
-    const status = { Pending: 'Do weryfikacji', Approved: 'Zatwierdzona', Rejected: 'Odrzucona' }[feature.status];
-    const provenance = feature.mode === 'synthetic' ? 'Symulacja'
-      : feature.mode === 'manual' ? 'FlyPix · adnotacja ręczna' : 'FlyPix AI · ' + (feature.mode === 'live' ? 'API' : 'zapis');
-    const corridors = feature.segmentIds.filter(id => !id.startsWith('osm-')).map(segmentLabel);
-    const roads = feature.segmentIds.length - corridors.length;
-    if (roads) corridors.push(roads + ' odc. OSM');
-    details.append(element('b', corridors.join(' · ') || 'Brak dopasowania do dróg'),
-      element('p', status + ' · ' + provenance + confidence),
-      element('p', feature.imageProductId + ' · ' + feature.observedAt));
-    item.append(details);
-    if (feature.status === 'Pending') {
-      const decide = decision => api('situation', 'commands/review-decision', {
-        commandId: commandId(), expectedRevision: state.situation.revision, reviewFeatureId: feature.id, decision,
-      }).then(() => decision === 'approve' ? 'Zatwierdzono zamknięcie wykrytych odcinków.' : 'Odrzucono detekcję.');
-      const controls = element('div', null, 'buttons');
-      if (feature.segmentIds.length) controls.append(button('Zatwierdź zamknięcie', () => decide('approve')));
-      controls.append(button('Odrzuć', () => decide('reject')));
-      item.append(controls);
-    }
-    list.append(item);
-  }
 }
 
 function redrawMap() {
   renderMap(state.draw?.state === 'Active' ? state.draw.route : null);
-}
-
-function requestCityPath() {
-  const [from, to] = state.cityPoints.map(value => value.map(number => number.toFixed(6)).join(','));
-  const query = new URLSearchParams({ from, to, mode: $('city-mode').value });
-  return api('routing', 'queries/city-route?' + query);
-}
-
-function showCityPath(path) {
-  state.cityPath = path;
-  const found = path.route;
-  text('city-status', found ? 'Trasa orientacyjna · ' + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
 }
 
 $('valencia-image').addEventListener('change', redrawMap);
@@ -573,43 +445,6 @@ $('map-layer').addEventListener('click', () => {
   state.satelliteDetail = !state.satelliteDetail;
   updateMapDetail();
 });
-$('city-pick').addEventListener('click', () => {
-  state.cityPicking = !state.cityPicking;
-  state.cityPoints = [];
-  state.cityPath = null;
-  $('city-pick').setAttribute('aria-pressed', state.cityPicking);
-  text('city-status', state.cityPicking ? 'Wskaż punkt startowy na mapie.' : '');
-  redrawMap();
-});
-$('city-mode').addEventListener('change', () => {
-  state.cityPicking = false;
-  state.cityPoints = [];
-  state.cityPath = null;
-  $('city-pick').setAttribute('aria-pressed', 'false');
-  text('city-status', 'Wskaż punkty trasy dla wybranego trybu.');
-  redrawMap();
-});
-$('map').addEventListener('click', event => {
-  if (!state.cityPicking || state.busy || !state.readAvailable) return;
-  const svgPoint = mapViewport.point(event.clientX, event.clientY);
-  const point = state.unproject(svgPoint.x, svgPoint.y);
-  const [w, s, e, n] = state.network.city.bounds;
-  if (point[0] < w || point[0] > e || point[1] < s || point[1] > n) return;
-  state.cityPoints.push(point);
-  redrawMap();
-  if (state.cityPoints.length === 1) {
-    text('city-status', 'Wskaż cel na mapie.');
-    return;
-  }
-  state.cityPicking = false;
-  $('city-pick').setAttribute('aria-pressed', 'false');
-  run(async () => {
-    const path = await requestCityPath();
-    if (state.cityPoints.length === 2) showCityPath(path);
-    return 'Sprawdzono dojazd w bieżącej rewizji.';
-  });
-});
-
 function renderOperations(incident, dispatch) {
   text('alert-count', 'Liczba zgłoszeń: ' + incident.alerts.length);
   $('cases').replaceChildren(...incident.cases.map(item => {

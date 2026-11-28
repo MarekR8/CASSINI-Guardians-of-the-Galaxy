@@ -68,11 +68,9 @@ existing command receipt and active booking checks.
 | `live` | ORS Directions GeoJSON at `https://api.heigit.org/openrouteservice`. Configure `Integrations:Ors:ApiKey` and optionally `Integrations:Ors:BaseUrl` |
 
 Use `Integrations__Ors__Mode=mock` with `scripts/offline_demo.py` to replay the
-bundled examples. The [request index](../../data/demo/ors/index.json) covers both
-exercise graphs and their before/after bridge scenarios. The files are labeled
-`synthetic`. Their geometry and duration come from the bundled exercise graphs.
-Warsaw approaches the pickup across the bridge before its closure, even though
-the local outbound ranking already prefers the north exit.
+bundled examples. The [request index](../../data/demo/ors/index.json) covers Kłodzko
+before and after bridge closure. The files are labeled `synthetic`. Their geometry
+and duration come from the exercise graph.
 
 To capture actual responses, configure `Integrations__Ors__ApiKey` in your local
 environment or use the Routing project's .NET user-secrets. Run
@@ -86,9 +84,8 @@ Production. Use the environment variable with the launcher and use .NET
 user-secrets with a standalone Routing process in Development.
 
 The current closure check is an exercise approximation based on the active
-closed segments in Situation. For the Warsaw bridge it covers the river
-crossing, since the logical segment also contains approach roads used by the
-detour. An active closed segment with unknown geometry blocks ORS routing.
+closed segments in Situation. An active closed segment with unknown geometry
+blocks ORS routing.
 PostGIS intersection with operational closure polygons remains part of task 02.
 
 The API includes `approachGeometry`, `outboundGeometry` and `provenance` in
@@ -99,13 +96,11 @@ reported quality is missing or the HPL exceeds `Integrations:Egnos:MaxHpl`
 known node in an assign or replan command.
 
 Local verification covers capturing responses from an ORS-compatible HTTP
-test server and replaying those files for both cities, missing recordings,
+test server and replaying those files for Kłodzko, missing recordings,
 manual start position, and rejection of a route crossing the closed bridge.
 The browser check covered the position label, both vehicle legs, withdrawal after
 bridge closure, the detour and the state with no available exit.
 
-Hosted HeiGIT Directions returned nine recordings on 2026-11-28. Both cities
-passed booking, withdrawal of the old route and replanning from those recordings.
 Kłodzko uses a separate vehicle endpoint for `exit-north`, at the actual road
 connection. The pedestrian waypoint keeps its original coordinates. The replay
 captures are local under `artifacts/ors-verified`.
@@ -113,7 +108,7 @@ captures are local under `artifacts/ors-verified`.
 ## Konfiguracja ORS na kolejnych komputerach
 
 Na komputerze z .NET 10 SDK i Pythonem 3 demo Dispatch offline uruchom poleceniem
-`python scripts/offline_demo.py --scenario sample` lub `--scenario warsaw`.
+`python scripts/offline_demo.py --scenario sample`.
 Aby odtworzyć gotowe nagrania zespołu,
 rozpakuj `ors-verified.zip` do `artifacts/` na komputerze z tą samą wersją
 kodu. Pliki JSON powinny znaleźć się w `artifacts/ors-verified`.
@@ -122,7 +117,7 @@ W PowerShellu uruchom:
 ```powershell
 $env:Integrations__Ors__Mode = 'recorded'
 $env:Integrations__Ors__FixtureDirectory = (Resolve-Path 'artifacts/ors-verified').Path
-python scripts/offline_demo.py --scenario warsaw
+python scripts/offline_demo.py --scenario sample
 ```
 
 W Bashu ustaw te same zmienne przez `export`. Wybierz `--scenario sample`

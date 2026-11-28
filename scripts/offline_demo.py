@@ -101,7 +101,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=5080, help="Gateway port (uses this port and the next four)")
     parser.add_argument("--data", type=Path, help="Local state/log directory")
-    parser.add_argument("--scenario", choices=("valencia", "sample", "warsaw"),
+    parser.add_argument("--scenario", choices=("valencia", "sample"),
                         help="Defaults to Valencia, or to the sample when running --test")
     parser.add_argument("--city-directory", type=Path, help="Directory with the generated offline map and graph")
     parser.add_argument("--no-build", action="store_true", help="Use existing compiled services")
@@ -114,8 +114,7 @@ def main():
         parser.error("--city-directory requires a city scenario")
     city = args.city_directory
     default_city = ARTIFACTS / (args.scenario + "-city")
-    auto_city = args.scenario == "valencia" or (args.scenario == "warsaw" and not args.test)
-    if city is None and auto_city and (default_city / "city-network.json.gz").is_file():
+    if city is None and args.scenario == "valencia" and (default_city / "city-network.json.gz").is_file():
         city = default_city
     if args.scenario == "valencia" and (city is None or not all(
         (city / name).is_file() for name in ("city-network.json.gz", "city-map.svg", "hazard-seed.json",
@@ -133,8 +132,7 @@ def main():
                 subprocess.run(
                     [os.sys.executable, str(ROOT / "tests" / (
                         "valencia_integration.py" if args.scenario == "valencia" else
-                        "warsaw_city_integration.py" if city else
-                        "warsaw_integration.py" if args.scenario == "warsaw" else "offline_integration.py")), url],
+                        "offline_integration.py")), url],
                     cwd=ROOT,
                     check=True,
                 )

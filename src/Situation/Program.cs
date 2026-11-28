@@ -9,12 +9,13 @@ builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 
 var scenario = builder.Configuration["Demo:Scenario"] is { Length: > 0 } configured ? configured : "sample";
 var valencia = scenario == "valencia";
 var directory = builder.Configuration["Demo:CityDirectory"];
-var network = DemoNetwork.Load(valencia ? "sample" : scenario);
-var city = scenario == "sample" ? null : CityNetwork.Load(directory, scenario);
+if (scenario is not ("sample" or "valencia"))
+    throw new InvalidDataException($"Unknown demo scenario '{scenario}'.");
+var city = valencia ? CityNetwork.Load(directory, scenario) : null;
 var population = new MockGhslEstimator(Path.Combine(AppContext.BaseDirectory, "population-estimate.json"));
-builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situation:StateFile"], network, population,
+builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situation:StateFile"], population,
     scenario, valencia ? Path.Combine(directory!, "hazard-seed.json") : null));
-builder.Services.AddSingleton(new ReviewNetwork(network, city));
+builder.Services.AddSingleton(new ReviewNetwork(city));
 builder.Services.AddSingleton<SituationQueries>();
 builder.Services.AddSingleton<SituationCommands>();
 

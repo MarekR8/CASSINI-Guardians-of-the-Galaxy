@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Cassini.Demo;
 
 namespace Situation;
 
@@ -35,14 +34,14 @@ internal sealed class SituationStore
     private readonly string? file;
     private State state;
 
-    internal SituationStore(string? stateFile, DemoNetwork? network, IPopulationEstimator population,
+    internal SituationStore(string? stateFile, IPopulationEstimator population,
         string scenario, string? hazardSeed)
     {
         file = string.IsNullOrWhiteSpace(stateFile) ? null : Path.GetFullPath(stateFile);
         state = file is not null && File.Exists(file)
             ? JsonSerializer.Deserialize<State>(File.ReadAllBytes(file), Json)
                 ?? throw new InvalidDataException("Situation state is empty.")
-            : new State(InitialSnapshot(network, hazardSeed), new Dictionary<string, Receipt>(), scenario);
+            : new State(InitialSnapshot(hazardSeed), new Dictionary<string, Receipt>(), scenario);
         if ((state.Scenario ?? "sample") != scenario)
             throw new InvalidDataException("The situation state belongs to a different scenario. Use a separate state directory.");
         state = state with
@@ -101,7 +100,7 @@ internal sealed class SituationStore
         File.Move(temporaryPath, path, overwrite: true);
     }
 
-    private static SituationSnapshot InitialSnapshot(DemoNetwork? network, string? hazardSeed)
+    private static SituationSnapshot InitialSnapshot(string? hazardSeed)
     {
         if (hazardSeed is not null)
         {
@@ -112,21 +111,6 @@ internal sealed class SituationStore
             var layer = new HazardLayer("copernicus:" + product, "copernicus-ems-archive", product, observed,
                 SituationCommands.ReadPolygons(seed.GeoJson), SituationCommands.CheckSourceUrl(seed.SourceUrl));
             return new SituationSnapshot(0, 0, [], [layer], [], []);
-        }
-
-        if (network is not null)
-        {
-            var exerciseFlood = JsonSerializer.SerializeToElement(new
-            {
-                type = "Polygon",
-                coordinates = new[] { new[] { new[] { 21.0314, 52.2396 }, new[] { 21.0365, 52.2405 },
-                    new[] { 21.0389, 52.2421 }, new[] { 21.0383, 52.2438 }, new[] { 21.0350, 52.2442 },
-                    new[] { 21.0327, 52.2422 }, new[] { 21.0314, 52.2396 } } }
-            });
-            return new SituationSnapshot(0, 0, [],
-                [new HazardLayer("flood-warsaw-exercise", "synthetic", null,
-                    new DateTimeOffset(2026, 11, 27, 19, 20, 0, TimeSpan.Zero), exerciseFlood)],
-                [], [ReviewNetwork.ExerciseFeature(network)]);
         }
 
         var syntheticFlood = JsonSerializer.SerializeToElement(new
