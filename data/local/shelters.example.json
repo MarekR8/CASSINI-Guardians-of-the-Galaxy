@@ -1,0 +1,21 @@
+{
+  "sheltersVersion": "cassini.shelters.v1",
+  "scenario": "valencia",
+  "provenance": {
+    "source": "",
+    "mode": "client",
+    "preparedAt": null,
+    "note": null
+  },
+  "shelters": [
+    {
+      "id": "",
+      "name": "",
+      "longitude": null,
+      "latitude": null,
+      "capacity": null,
+      "intakePerHour": null,
+      "stepFree": false
+    }
+  ]
+}

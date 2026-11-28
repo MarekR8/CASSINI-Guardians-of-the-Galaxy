@@ -1,0 +1,794 @@
+{
+ "expectedVersion": "cassini.routing-expected.v1",
+ "model": "logit-sue-msa",
+ "tolerance": 1e-06,
+ "cases": {
+  "baseline": {
+   "status": {
+    "Ok": 950.0
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 458.4369438292831,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 491.56305617071683,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 5.535508865789781,
+      "shares": {
+       "s10": 0.5986649599342463,
+       "s20": 0.4013350400657536
+      }
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 7.830303300666533,
+      "shares": {
+       "s10": 0.6390928093660267,
+       "s20": 0.3609071906339733
+      }
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 9.087212422451465,
+      "shares": {
+       "s10": 0.6607564415600301,
+       "s20": 0.33924355843996995
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 5.161543362090237,
+      "shares": {
+       "s10": 0.3100280553897376,
+       "s20": 0.6899719446102623
+      }
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 7.111608686238265,
+      "shares": {
+       "s10": 0.24179619603484284,
+       "s20": 0.7582038039651571
+      }
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 8.149376177751614,
+      "shares": {
+       "s10": 0.20860855214887883,
+       "s20": 0.7913914478511211
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 200,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 450,
+     "iterations": 2,
+     "gap": 5e-06
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 300,
+     "iterations": 2,
+     "gap": 1.4e-05
+    }
+   ]
+  },
+  "bridge-closed": {
+   "status": {
+    "Ok": 950.0
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 203.63475395959563,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 746.3652460404044,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 7.262235024385243,
+      "shares": {
+       "s10": 0.23157031283335192,
+       "s20": 0.7684296871666481
+      }
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 9.919677522550872,
+      "shares": {
+       "s10": 0.15260886389476605,
+       "s20": 0.847391136105234
+      }
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 11.350252287416494,
+      "shares": {
+       "s10": 0.11920311056634891,
+       "s20": 0.8807968894336512
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 5.266965112709056,
+      "shares": {
+       "s10": 0.23189119485351092,
+       "s20": 0.768108805146489
+      }
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 7.065269108177745,
+      "shares": {
+       "s10": 0.15270743356350344,
+       "s20": 0.8472925664364965
+      }
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 8.01691490865106,
+      "shares": {
+       "s10": 0.11920311056634897,
+       "s20": 0.880796889433651
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 128,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 522,
+     "iterations": 2,
+     "gap": 5.5e-05
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 300,
+     "iterations": 2,
+     "gap": 0.000243
+    }
+   ]
+  },
+  "no-exit": {
+   "status": {
+    "NoEligibleExit": 950.0
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 2,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "leaveFloodMinutes": null,
+      "shares": null
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "leaveFloodMinutes": null,
+      "shares": null
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 450,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 120,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 380,
+     "iterations": 2,
+     "gap": 0.0
+    }
+   ]
+  },
+  "flooded-before-arrival": {
+   "status": {
+    "DeadlineInfeasible": 650.0,
+    "Ok": 300.0
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 365.4285272123618,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 584.5714727876382,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 4,
+      "status": "DeadlineInfeasible",
+      "leaveFloodMinutes": 5.535508865789781,
+      "shares": {
+       "s10": 0.5986649599342463,
+       "s20": 0.4013350400657536
+      }
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 4,
+      "status": "DeadlineInfeasible",
+      "leaveFloodMinutes": 7.830303300666533,
+      "shares": {
+       "s10": 0.6390928093660267,
+       "s20": 0.3609071906339733
+      }
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 4,
+      "status": "DeadlineInfeasible",
+      "leaveFloodMinutes": 9.087212422451465,
+      "shares": {
+       "s10": 0.6607564415600301,
+       "s20": 0.33924355843996995
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 5,
+      "status": "Ok",
+      "leaveFloodMinutes": 4.336294879879492,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 5,
+      "status": "DeadlineInfeasible",
+      "leaveFloodMinutes": 7.111608686238265,
+      "shares": {
+       "s10": 0.24179619603484284,
+       "s20": 0.7582038039651571
+      }
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 5,
+      "status": "DeadlineInfeasible",
+      "leaveFloodMinutes": 8.149376177751614,
+      "shares": {
+       "s10": 0.20860855214887883,
+       "s20": 0.7913914478511211
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 200,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 450,
+     "iterations": 2,
+     "gap": 5e-06
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 300,
+     "iterations": 2,
+     "gap": 0.0
+    }
+   ]
+  },
+  "congestion": {
+   "status": {
+    "Ok": 19000.0
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 3000,
+     "expectedLoad": 2716.578564342435,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 30000,
+     "expectedLoad": 16283.421435657563,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 10500.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "leaveFloodMinutes": 27.188723313784703,
+      "shares": {
+       "s10": 0.13757085448737177,
+       "s20": 0.8624291455126282
+      }
+     },
+     "slow": {
+      "people": 2520.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "leaveFloodMinutes": 12.826785175268611,
+      "shares": {
+       "s10": 0.16527576236170033,
+       "s20": 0.8347242376382997
+      }
+     },
+     "wheelchair": {
+      "people": 280.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "leaveFloodMinutes": 14.891734623567924,
+      "shares": {
+       "s10": 0.1450575063243461,
+       "s20": 0.8549424936756539
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 4500.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "leaveFloodMinutes": 19.41714156265714,
+      "shares": {
+       "s10": 0.13757085448737152,
+       "s20": 0.8624291455126285
+      }
+     },
+     "slow": {
+      "people": 1080.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "leaveFloodMinutes": 9.328267510269951,
+      "shares": {
+       "s10": 0.16527576236170025,
+       "s20": 0.8347242376382997
+      }
+     },
+     "wheelchair": {
+      "people": 120.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "leaveFloodMinutes": 10.810130681069491,
+      "shares": {
+       "s10": 0.14505750632434608,
+       "s20": 0.8549424936756539
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 4000,
+     "iterations": 8,
+     "gap": 0.005874
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 15000,
+     "iterations": 17,
+     "gap": 0.009463
+    }
+   ]
+  },
+  "wheelchair-steps": {
+   "status": {
+    "Ok": 950.0
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 286.6499769172878,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 663.3500230827121,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 750.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 3.3042064763085297,
+      "shares": {
+       "s10": 0.3209683265627164,
+       "s20": 0.6790316734372835
+      }
+     },
+     "slow": {
+      "people": 180.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 4.482618962933507,
+      "shares": {
+       "s10": 0.25513184441805836,
+       "s20": 0.7448681555819415
+      }
+     },
+     "wheelchair": {
+      "people": 20.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 8.333334254517096,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 200,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 750,
+     "iterations": 2,
+     "gap": 0.000111
+    }
+   ]
+  },
+  "no-reentry": {
+   "status": {
+    "Ok": 475.0
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 475.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 375.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 3.3343264822435605,
+      "shares": {
+       "s10": 1.0
+      }
+     },
+     "slow": {
+      "people": 90.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 4.761907548936356,
+      "shares": {
+       "s10": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 10.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "leaveFloodMinutes": 5.555558807092416,
+      "shares": {
+       "s10": 1.0
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 100,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 375,
+     "iterations": 2,
+     "gap": 0.0
+    }
+   ]
+  }
+ }
+}

@@ -1,4 +1,5 @@
 using Cassini.Routing;
+using Cassini.Routing.Evacuation;
 using Cassini.Demo;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,17 @@ builder.Services.AddSingleton(_ => new DrawJournal(
     Path.Combine(builder.Environment.ContentRootPath, "artifacts", "routing-draws.json")));
 builder.Services.AddTransient<RoutingQueries>();
 builder.Services.AddTransient<RoutingCommands>();
+if (valencia)
+{
+    // Task 03 evacuation model: inputs prepared by experiments/routing, plan recomputed per Situation revision.
+    var evacuationDirectory = builder.Configuration["Routing:EvacuationDirectory"] is { Length: > 0 } directory
+        ? directory : Path.Combine(AppContext.BaseDirectory, "evacuation");
+    var shelterFile = builder.Configuration["Routing:EvacuationShelters"] is { Length: > 0 } file ? file : null;
+    builder.Services.AddSingleton(_ => EvacuationInputs.ReadDirectory(evacuationDirectory, shelterFile));
+    builder.Services.AddSingleton<EvacuationPlanner>();
+    builder.Services.AddHostedService<EvacuationPlanRefresher>();
+    builder.Services.AddTransient<EvacuationRouting>();
+}
 var ors = builder.Configuration.GetSection("Integrations:Ors");
 var providerMode = ors["Mode"] ?? "graph";
 switch (providerMode)
@@ -104,6 +116,20 @@ queries.MapGet("/assistance-restrictions",
     var commands = app.MapGroup("/commands");
     commands.MapPost("/draw",
         (DrawCommand command, RoutingCommands handlers, CancellationToken cancellationToken) =>
+            handlers.DrawAsync(command, cancellationToken));
+}
+else
+{
+    queries.MapGet("/evacuation-plan", (EvacuationRouting handlers, CancellationToken cancellationToken) =>
+        handlers.PlanAsync(cancellationToken));
+    queries.MapGet("/distribution",
+        (string node, string? profile, EvacuationRouting handlers, CancellationToken cancellationToken) =>
+            handlers.DistributionAsync(node, profile, cancellationToken));
+    queries.MapGet("/draws/{commandId}",
+        (string commandId, RoutingQueries handlers, CancellationToken cancellationToken) =>
+            handlers.DrawStatusAsync(commandId, cancellationToken));
+    app.MapGroup("/commands").MapPost("/draw",
+        (DrawCommand command, EvacuationRouting handlers, CancellationToken cancellationToken) =>
             handlers.DrawAsync(command, cancellationToken));
 }
 

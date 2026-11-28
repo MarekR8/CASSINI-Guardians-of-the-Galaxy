@@ -1,0 +1,82 @@
+{
+ "sheltersVersion": "cassini.shelters.v1",
+ "scenario": "valencia",
+ "provenance": {
+  "source": "experiments/routing/prepare_inputs.py",
+  "mode": "synthetic",
+  "preparedAt": "2026-11-28T12:50:23+00:00",
+  "note": "Exercise shelters on dry nodes 300-1500 m behind the observed flood edge, with at most 15% hazard nodes within 1000 m and at least 1000 m from the flood source. Capacity is 1.25 times the GHSL estimate nearest each point; intake fills it in about two hours. Not real facilities."
+ },
+ "shelters": [
+  {
+   "id": "shelter-a",
+   "name": "Punkt ćwiczeniowy A",
+   "longitude": -0.429,
+   "latitude": 39.40535,
+   "nodeId": 12306984578,
+   "capacity": 15150,
+   "intakePerHour": 7600,
+   "stepFree": true
+  },
+  {
+   "id": "shelter-b",
+   "name": "Punkt ćwiczeniowy B",
+   "longitude": -0.440833,
+   "latitude": 39.414976,
+   "nodeId": 11307011111,
+   "capacity": 25400,
+   "intakePerHour": 12700,
+   "stepFree": true
+  },
+  {
+   "id": "shelter-c",
+   "name": "Punkt ćwiczeniowy C",
+   "longitude": -0.38005,
+   "latitude": 39.438234,
+   "nodeId": 9850090777,
+   "capacity": 50750,
+   "intakePerHour": 25400,
+   "stepFree": true
+  },
+  {
+   "id": "shelter-d",
+   "name": "Punkt ćwiczeniowy D",
+   "longitude": -0.460492,
+   "latitude": 39.456437,
+   "nodeId": 1328301139,
+   "capacity": 40300,
+   "intakePerHour": 20150,
+   "stepFree": true
+  },
+  {
+   "id": "shelter-e",
+   "name": "Punkt ćwiczeniowy E",
+   "longitude": -0.45871,
+   "latitude": 39.431531,
+   "nodeId": 6402985719,
+   "capacity": 7150,
+   "intakePerHour": 3600,
+   "stepFree": true
+  },
+  {
+   "id": "shelter-f",
+   "name": "Punkt ćwiczeniowy F",
+   "longitude": -0.333212,
+   "latitude": 39.411647,
+   "nodeId": 13389472238,
+   "capacity": 650,
+   "intakePerHour": 350,
+   "stepFree": false
+  },
+  {
+   "id": "shelter-g",
+   "name": "Punkt ćwiczeniowy G",
+   "longitude": -0.337996,
+   "latitude": 39.424212,
+   "nodeId": 2466453194,
+   "capacity": 3250,
+   "intakePerHour": 1650,
+   "stepFree": false
+  }
+ ]
+}
