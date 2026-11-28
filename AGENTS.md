@@ -4,7 +4,7 @@ Read the [agent guide](docs/agents/README.md) before editing. Check the current 
 
 ## Cel projektu
 
-Budujemy demo ewakuacji podczas powodzi. Scenariusz uruchamia się na jednym komputerze bez internetu. Cztery niezależne mikroserwisy .NET 10 udostępniają API po lokalnym HTTP, a Gateway serwuje panel. Android może uruchomić przygotowane ćwiczenie samodzielnie, również poza siecią lokalną.
+Budujemy demo ewakuacji podczas powodzi. Scenariusz uruchamia się na jednym komputerze bez internetu. Pięć niezależnych mikroserwisów .NET 10 udostępnia API po lokalnym HTTP w domyślnym `sample`, a Gateway serwuje panel. Walencja nie korzysta z syntetycznego katalogu schronień Kłodzka. Android może uruchomić przygotowane ćwiczenie samodzielnie, również poza siecią lokalną.
 
 Przed zmianą przeczytaj `README.md`, odpowiednie pliki w `docs/` i kod usługi, której dotyka zadanie. Starsze specyfikacje opisują też architekturę docelową. W razie rozbieżności z demonstratorem sprawdź aktualne kontrakty HTTP i testy. W zadaniach równoległych ustal właściciela danego katalogu i uzgodnij kontrakt przed zmianą współdzielonych plików.
 
@@ -16,7 +16,7 @@ Przed zmianą przeczytaj `README.md`, odpowiednie pliki w `docs/` i kod usługi,
 | `src/Situation/` | Wersjonowany obraz sytuacji, zamknięcia odcinków i provenance warstw zagrożeń. |
 | `src/Routing/` | Graf, rozkład tras dla węzła, losowanie i weryfikacja wydanych tras, dojazd i wyjazd jednostki. |
 | `src/Dispatch/` | Zgłoszenia pomocy, rezerwacja jednostek i kolejne stany zadania. |
-| `src/Sheltering/` | Opcjonalny katalog schronień i zasobów. Situation jest właścicielem punktów zbiórki. |
+| `src/Sheltering/` | Katalog schronień i zasobów, przydziały, rezerwacje, przyjęcia i wyjazdy. Situation jest właścicielem punktów zbiórki. |
 | `src/Gateway/`, `apps/web/` | Brama i widok operacyjny. Widok odczytuje dane właścicieli i przedstawia wynik losowania. |
 | `apps/offline-android/` | Samodzielne ćwiczenie i odczyt stanu kompatybilnego odbiornika GNSS. |
 
@@ -43,6 +43,6 @@ Przed zmianą przeczytaj `README.md`, odpowiednie pliki w `docs/` i kod usługi,
 ## Weryfikacja i przekazanie pracy
 
 - Uruchom `python scripts/offline_demo.py --test` oraz testy komponentu, który zmieniasz. Przy zmianie widoku sprawdź scenariusz z dostępną trasą, zamknięciem mostu i brakiem wyjścia. Przy zmianie Docker sprawdź konfigurację, budowę i uruchomienie, jeżeli silnik jest dostępny.
-- Przy zmianie katalogów punktów i schronień uruchom `python scripts/offline_demo.py --sheltering --test`.
+- Standardowy `--test` obejmuje również zintegrowany przepływ Sheltering; przy zmianie katalogów punktów i schronień uruchom także `python scripts/offline_demo.py --sheltering --test` (regresja katalogów i przyjęć z restartem).
 - Przekaż innemu agentowi zakres plików, zmiany kontraktu, sposób uruchomienia, wyniki testów i granice weryfikacji sprzętowej. Podaj jawnie użyte dane syntetyczne.
 - Jeżeli operator poprosi o regularne pushe, wypychaj małe sprawdzone checkpointy na uzgodniony branch. Sprawdź zakres staged przed commitem i zweryfikuj wynik push. Traktuj push i merge jako osobne operacje.

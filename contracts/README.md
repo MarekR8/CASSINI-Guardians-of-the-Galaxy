@@ -7,6 +7,20 @@ Example payloads and schemas shared between services and clients. Paths are rela
 | [`management/`](management/) | Management (task 6) | Android (task 5, **W2**), dashboard (task 7), Dispatch |
 | [`events/`](events/) | Producer named in each file (task 6 delivers the envelope, **W3**) | Services subscribed to `evacuation.events` |
 | [`gateway/`](gateway/) | Gateway link simulator (task 6, hosted by task 7) | Dashboard, field clients, Android |
+| [`http/grouping/`](http/grouping/) | Management Grouping | Routing, Sheltering, coordinator |
+| [`http/routing/`](http/routing/) | Routing | Sheltering, Dispatch, coordinator |
+| [`http/sheltering/`](http/sheltering/) | Situation assembly-point catalog and Sheltering (separate owners) | Routing, Management, coordinator, shelter operator |
+
+## Common wire conventions and migration limits
+
+- Keep query and command handlers separate: `GET /queries/…` reads; `POST /commands/…` writes only at the owner. Gateway prepends `/api/{service}` without owning state.
+- IDs are opaque strings; pass `incidentId`, `caseId`, `legId`, `shelterId` and `commandId` where the owner contract requires them. Reuse a command ID only for an identical retry; reconcile unknown results before taking a new decision.
+- Keep aggregate version, catalog revision, Situation revision, and route version separate. Mutation checks belong to the owner and stale evidence must not become an eligible route.
+- Use ISO 8601 UTC instants; position geometry uses WGS 84 longitude/latitude, distances metres, travel durations seconds except where an existing field explicitly says otherwise. Sheltering place and intake units are separate.
+- Existing clients receive either a problem response with stable `code` or a JSON error object with `code` and `detail`; migrate this shape additively, not by silently changing existing codes/statuses. Status 409 is a version or command conflict, 422 is a rejected decision and 503 marks unavailable/uncertain evidence where documented.
+- The [event envelope](events/README.md) has explicit `eventId`, producer, subject version, correlation and causation identifiers. Local owner outboxes and broker confirms have different meanings from business delivery, pickup, exit, reservation, route publication or admission. Never infer those milestones from one another.
+
+The mandatory sample flow uses these existing contracts directly. A single common error/configuration implementation and authenticated service-to-service claims remain migration work; no DTO or existing on-disk state format is replaced by this document.
 
 ## Management
 

@@ -6,6 +6,42 @@
     "geoJsonFile": "",
     "sourceUrl": ""
   },
+  "cdse": {
+    "collection": "",
+    "productIds": [],
+    "acquisitionRangeUtc": "",
+    "areaOfInterest": "",
+    "localExportFile": "",
+    "licenceAndAttribution": ""
+  },
+  "apex": {
+    "processId": "",
+    "processVersion": "",
+    "parametersFile": "",
+    "outputFile": "",
+    "observedRangeUtc": "",
+    "licenceAndAttribution": ""
+  },
+  "flypix": {
+    "imageProductId": "",
+    "modelOrLayerId": "",
+    "observedAtUtc": "",
+    "geoJsonFile": "",
+    "licenceAndAttribution": ""
+  },
+  "population": {
+    "productId": "",
+    "referenceYear": "",
+    "method": "",
+    "localFile": ""
+  },
+  "forecast": {
+    "productId": "",
+    "issuedAtUtc": "",
+    "validUntilUtc": "",
+    "units": "",
+    "localFile": ""
+  },
   "routing": {
     "validatedRoadGraphFile": "",
     "validatedExitsFile": "",
@@ -13,7 +49,14 @@
   },
   "equipment": {
     "galileoReceiverModel": "",
+    "osnmaEvidenceFormat": "",
     "egnosEvidenceFormat": "",
     "authorizedSatelliteTerminal": ""
+  },
+  "partnerConnectivity": {
+    "provider": "",
+    "approvedContractVersion": "",
+    "acknowledgementFormat": "",
+    "localRecordingFile": ""
   }
 }

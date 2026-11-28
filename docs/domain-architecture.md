@@ -1,6 +1,73 @@
 # MVP domain architecture and service contracts
 
-This proposal uses four service boundaries for the [MVP workflows](business-processes.md). An aggregate root owns a local consistency boundary. An entity has an identity and lifecycle within that boundary. A value object is immutable and compared by value. Services own their writes and exchange IDs, snapshots and committed facts.
+## Running offline architecture
+
+The `sample` runtime now has five independent owners and Gateway. Each service owns its state and CQRS endpoints, including the Grouping module inside Management. Gateway composes UI/forwards HTTP; it does not own a case, shelter, route or reservation. The default stack uses private local HTTP and local storage; RabbitMQ and databases remain explicit optional deployment variations. An in-memory bus is per process, not a substitute for cross-process acknowledgement. Valencia continues to run its city routing and archived imagery, without the synthetic sample shelter catalogue.
+
+```mermaid
+flowchart TB
+    Client[Coordinator / resident UI] --> G[Gateway on loopback]
+    G --> M[Management / Grouping]
+    G --> S[Situation]
+    G --> R[Routing]
+    G --> D[Dispatch]
+    G --> H[Sheltering]
+    M -. reads population .-> S
+    R -. reads versioned evidence .-> S
+    R -. reads case/group .-> M
+    R -. reads catalog / reservation .-> H
+    D -. reads case / routes .-> M
+    D -. reads route evidence .-> R
+    D -. reads situation .-> S
+    H -. checks case group .-> M
+    H -. checks site evidence .-> S
+    H -. validates / requests publication .-> R
+    M --- MS[(Management state)]
+    S --- SS[(Situation state)]
+    R --- RS[(Routing journal / instructions)]
+    D --- DS[(Dispatch state)]
+    H --- HS[(Sheltering catalog / allocation / reception)]
+```
+
+### Tested same-incident sample slice
+
+The mandatory [`sample_sheltering_flow.py`](../tests/sample_sheltering_flow.py) runs behind Gateway on fresh state, directly against owner APIs, in both the standard launcher and prepared-image rehearsal. It is a simulated exercise, not operational guidance.
+
+```mermaid
+sequenceDiagram
+    actor C as Coordinator / exercise
+    participant M as Management
+    participant S as Situation
+    participant R as Routing
+    participant D as Dispatch
+    participant H as Sheltering
+    C->>M: Record alert
+    C->>R: Read distribution, draw at revision 0
+    C->>H: Open pending assignment, no available places
+    C->>R: Read first leg (shelter pending)
+    C->>S: Close bridge at current revision
+    C->>R: Read withdrawal, draw alternative at revision 1
+    C->>M: Report position and explicit exit independently
+    C->>M: Register separate required-care party
+    C->>R: Check care party (never split; no verified transport)
+    C->>D: Read assistance requests
+    C->>H: Reverify site, read candidate, reserve
+    H->>R: Recheck route evidence
+    C->>H: Reconcile publication
+    H->>R: Commit current instruction
+    C->>H: Close site and invalidate assignment
+    H->>R: Reconcile withdrawal
+    C->>H: Reserve new verified site
+    H->>R: Publish replacement via outside-only connector
+    C->>H: Confirm arrival (hold to occupancy)
+    C->>H: Confirm departure (release occupancy)
+```
+
+The individual allocation uses case 14; cases 15/16 demonstrate the no-split care policy and missing transport evidence, not a completed assigned group trip. Existing Grouping/Dispatch component journeys cover approvals, handovers and field tasks separately. A dynamically revalidated group plan and confirmed Dispatch transport window in the same reservation chain remain an explicit integration gap. There is no claim that the sample transport or positions were measured. Gateway sign-in and owner scopes are not yet a complete protected deployment.
+
+## Earlier target architecture
+
+The original proposal uses four service boundaries for the [MVP workflows](business-processes.md). The Sheltering extension later in this document defines the fifth. An aggregate root owns a local consistency boundary. An entity has an identity and lifecycle within that boundary. A value object is immutable and compared by value. Services own their writes and exchange IDs, snapshots and committed facts. Use the current [offline runbook](offline-demo.md) and [contracts](../contracts/) for actual interfaces; the target design below is retained for planning.
 
 ## Service boundaries and aggregate model
 

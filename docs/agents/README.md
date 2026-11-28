@@ -1,5 +1,7 @@
 # Agent guide
 
+For staged repository unification, see the [refactoring guide](https://github.com/MarekR8/CASSINI-Guardians-of-the-Galaxy/blob/feature/refactoring-guide/docs/agents/refactoring-prompt.md) and the current branch's [handoff](../../HANDOFF.md). Resume from the recorded next step rather than starting the audit again.
+
 - Check the working tree before editing and preserve other people's changes.
 - Use the [business processes](../domain/business-processes.md) and [domain invariants](../domain/domain-invariants.md) for domain decisions. Use the [pitch](../pitch/README.md) for demo scope.
 - Follow the [source layout](../../src/README.md). Coordinate changes to shared identifiers, formats and units across .NET and Python.

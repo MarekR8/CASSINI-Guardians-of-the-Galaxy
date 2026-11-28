@@ -4,7 +4,7 @@ A prototype for coordinating civilian evacuation during a flood. The offline dem
 
 - [Pitch and flood demo](docs/pitch/README.md) and [project one-pager](docs/pitch/project-one-pager.md)
 - [Business processes](docs/domain/business-processes.md) and [domain invariants](docs/domain/domain-invariants.md)
-- [Planned source layout and stack](src/README.md) and [sample data](data/sample/README.md)
+- [Current source layout and stack](src/README.md) and [sample data](data/sample/README.md)
 - [Space technologies and tools](docs/tools/README.md)
 - [Git workflow](CONTRIBUTING.md) and [agent guide](docs/agents/README.md)
 

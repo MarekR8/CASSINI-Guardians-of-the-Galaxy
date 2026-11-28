@@ -13,7 +13,7 @@ This contract describes the communication needed for the [sheltering and groupin
 | Dispatch | Assistance requests, unit bookings and pickup | The current Management case and Routing evidence. Pickup does not admit a person to a shelter. |
 | Gateway and coordinator view | Composed read views and authorized command forwarding | The owning service for each query or command. An unavailable owner is shown separately from a valid empty result. |
 
-Gateway clients use `/api/{service}/...`. Calls between services use private HTTP endpoints with the same path after removing that prefix. Grouping uses the Management service prefix while hosted there, with a separate handler and DTO boundary. The SH-T01 slice is opt-in for the offline `sample` exercise over local HTTP. Catalog writes also support the authenticated [SH-T01 Stage B configuration](tasks/sheltering/01-sites-and-resources.md#stage-b-operation).
+Gateway clients use `/api/{service}/...`. Calls between services use private HTTP endpoints with the same path after removing that prefix. Grouping uses the Management service prefix while hosted there, with a separate handler and DTO boundary. The SH-T01 slice is included in the standard offline `sample` launcher and base Compose; the legacy flag and overlay remain compatible. Valencia does not use the sample catalog. Catalog writes also support the authenticated [SH-T01 Stage B configuration](tasks/sheltering/01-sites-and-resources.md#stage-b-operation). Other protected owner paths still need a consistent authorization policy before deployment beyond the local exercise.
 
 ## SH-T01 site catalog and destination reads
 
