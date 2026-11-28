@@ -69,6 +69,38 @@
       </section>
     </div>
 
+    <details class="card data" id="integration-preview">
+      <summary>Integracje · symulacja offline</summary>
+      <div class="data-body">
+        <div class="integration-sources">
+          <section>
+            <h3>Copernicus EMS</h3>
+            <p>Wybór aktywacji, obszaru i produktu z zasięgiem zalania.</p>
+            <button type="button" data-integration="integration-copernicus">Pobierz zasięg zalania</button>
+          </section>
+          <section>
+            <h3>FlyPix AI</h3>
+            <p>Docelowo klucz API umożliwi uruchomienie modelu na rastrze i pobranie detekcji do weryfikacji.</p>
+            <button type="button" data-integration="integration-flypix">Pobierz przykładową detekcję</button>
+          </section>
+          <section>
+            <h3>Dane miasta</h3>
+            <p>Przykładowe dane dla systemu HR lub rejestru ludności.</p>
+            <div class="buttons">
+              <button type="button" data-integration="city-data">Pobierz dane</button>
+              <button type="button" data-integration="city-map">Pobierz mapę</button>
+            </div>
+          </section>
+        </div>
+        <p id="integration-status" role="status"></p>
+        <svg id="integration-map" class="integration-map" viewBox="0 0 760 420" role="img" aria-label="Podgląd syntetycznej geometrii" hidden></svg>
+        <details id="integration-response" hidden>
+          <summary>Odpowiedź JSON</summary>
+          <pre id="integration-json" tabindex="0"></pre>
+        </details>
+      </div>
+    </details>
+
     <div class="operations" id="exercise-operations">
       <section class="card" aria-labelledby="cases-title">
         <div class="card-heading"><div><h2 id="cases-title">Zgłoszenia i mieszkańcy</h2><p id="alert-count">Ładowanie…</p></div><button id="alert" disabled>Zgłoś zalanie</button></div>

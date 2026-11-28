@@ -1,0 +1,282 @@
+{
+ "caseVersion": "cassini.routing-case.v1",
+ "case": "wheelchair-steps",
+ "description": "Steps lead to the nearest step-free shelter; wheelchair users take the ramp and walk on.",
+ "graph": {
+  "inputVersion": "cassini.evacuation-input.v1",
+  "scenario": "synthetic-routing-fixture",
+  "bounds": [
+   0,
+   0,
+   0.01,
+   0.01
+  ],
+  "osmTimestamp": "2024-10-19T00:00:00Z",
+  "situationRevision": 0,
+  "hazardObservation": {
+   "productId": "exercise-flood",
+   "sourceUrl": null,
+   "source": "synthetic",
+   "acquisitionsUtc": [
+    "2024-10-31T00:00:00Z"
+   ],
+   "coverage": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       0
+      ],
+      [
+       0.01,
+       0
+      ],
+      [
+       0.01,
+       0.01
+      ],
+      [
+       0,
+       0.01
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    ]
+   },
+   "geoJson": {
+    "type": "FeatureCollection",
+    "features": []
+   }
+  },
+  "closureEvidence": [],
+  "boundaryNodeIds": [],
+  "nodes": [
+   {
+    "id": 1,
+    "longitude": 0.001,
+    "latitude": 0.005,
+    "zone": "hazard"
+   },
+   {
+    "id": 10,
+    "longitude": 0.002,
+    "latitude": 0.005,
+    "zone": "safe"
+   },
+   {
+    "id": 20,
+    "longitude": 0.003,
+    "latitude": 0.005,
+    "zone": "safe"
+   }
+  ],
+  "roads": [
+   {
+    "id": "ramp",
+    "from": 1,
+    "to": 10,
+    "class": "footway",
+    "lengthMetres": 390.0,
+    "geometry": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "walk": [
+     300,
+     300
+    ],
+    "drive": [
+     null,
+     null
+    ],
+    "pedestriansPerHour": 900,
+    "vehiclesPerHour": null,
+    "zone": "hazard",
+    "closed": false,
+    "intersectsObservedFlood": true
+   },
+   {
+    "id": "stairs",
+    "from": 1,
+    "to": 20,
+    "class": "steps",
+    "lengthMetres": 195.0,
+    "geometry": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "walk": [
+     150,
+     150
+    ],
+    "drive": [
+     null,
+     null
+    ],
+    "pedestriansPerHour": 900,
+    "vehiclesPerHour": null,
+    "zone": "hazard",
+    "closed": false,
+    "intersectsObservedFlood": true
+   },
+   {
+    "id": "promenade",
+    "from": 10,
+    "to": 20,
+    "class": "footway",
+    "lengthMetres": 260.0,
+    "geometry": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0
+     ]
+    ],
+    "walk": [
+     200,
+     200
+    ],
+    "drive": [
+     null,
+     null
+    ],
+    "pedestriansPerHour": 900,
+    "vehiclesPerHour": null,
+    "zone": "safe",
+    "closed": false,
+    "intersectsObservedFlood": false
+   }
+  ]
+ },
+ "people": [
+  {
+   "nodeId": 1,
+   "people": 1000
+  }
+ ],
+ "deadlines": [
+  {
+   "nodeId": 1,
+   "minutes": 30
+  }
+ ],
+ "shelters": [
+  {
+   "id": "s10",
+   "name": "s10",
+   "nodeId": 10,
+   "capacity": 2000,
+   "intakePerHour": null,
+   "stepFree": false
+  },
+  {
+   "id": "s20",
+   "name": "s20",
+   "nodeId": 20,
+   "capacity": 2000,
+   "intakePerHour": null,
+   "stepFree": true
+  }
+ ],
+ "params": {
+  "paramsVersion": "cassini.routing-params.v1",
+  "deadline": {
+   "note": "Model assumption, not a forecast. A hazard node must be left before the earlier of the depth rule and the distance rule.",
+   "depthMinutes": [
+    {
+     "minMetres": 2.0,
+     "minutes": 15
+    },
+    {
+     "minMetres": 1.0,
+     "minutes": 30
+    },
+    {
+     "minMetres": 0.5,
+     "minutes": 45
+    },
+    {
+     "minMetres": 0.0,
+     "minutes": 60
+    }
+   ],
+   "depthToleranceMetres": 25,
+   "distance": {
+    "minutesAtSource": 15,
+    "minutesPerKm": 10,
+    "maxMinutes": 90
+   }
+  },
+  "profiles": {
+   "note": "Synthetic shares of the estimated population. 'assisted' needs transport and is handed over outside task 03.",
+   "independent": {
+    "share": 0.75,
+    "speedFactor": 1.0,
+    "excludedClasses": [],
+    "stepFreeOnly": false
+   },
+   "slow": {
+    "share": 0.18,
+    "speedFactor": 0.7,
+    "excludedClasses": [],
+    "stepFreeOnly": false
+   },
+   "wheelchair": {
+    "share": 0.02,
+    "speedFactor": 0.6,
+    "excludedClasses": [
+     "steps",
+     "track",
+     "path"
+    ],
+    "stepFreeOnly": true
+   },
+   "assisted": {
+    "share": 0.05,
+    "handedOver": true
+   }
+  },
+  "model": {
+   "note": "Logit stochastic user equilibrium solved by MSA, loaded in priority waves.",
+   "thetaPerMinute": 0.3,
+   "capacityFactor": 10,
+   "capacityNote": "The graph gives nominal pedestrian flows of 300-900 people/h per road. An evacuation uses the full street width; Fruin's walkway capacity is about 4,500 people/h per metre, so the nominal values are scaled by 10. Calibrate before operational use.",
+   "bpr": {
+    "alpha": 0.15,
+    "beta": 4
+   },
+   "bprNote": "Above capacity the BPR curve continues along its tangent, which approximates queueing instead of diverging.",
+   "shelterDelay": {
+    "minutes": 10,
+    "beta": 2
+   },
+   "capacityPenaltyMinutes": 120,
+   "waves": 4,
+   "waveStaggerMinutes": 0,
+   "wavesNote": "Waves are priority classes: each is assigned on the road and shelter capacity left by the more urgent ones. With a median free-flow reserve of about 9 minutes, delaying departures costs more than it relieves (Valencia: 64 % on time with 0 min stagger, 45 % with 5 min, 12 % with 10 min).",
+   "waveWindowMinutes": 15,
+   "maxIterations": 100,
+   "tolerance": 0.01
+  }
+ },
+ "closed": []
+}

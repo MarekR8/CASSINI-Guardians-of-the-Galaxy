@@ -1,0 +1,10367 @@
+{
+ "populationVersion": "cassini.population.v1",
+ "scenario": "valencia",
+ "kind": "estimate",
+ "source": {
+  "product": "Copernicus GHSL GHS-POP R2023A",
+  "epoch": 2025,
+  "resolutionMetres": 100,
+  "crs": "ESRI:54009",
+  "url": "https://jrc-ghsl.s3.eu-central-1.amazonaws.com/ghs-pop/r2023a/54009/100m/2025/GHS_POP_E2025_GLOBE_R2023A_54009_100_V1_0.tif",
+  "licence": "CC BY 4.0, European Commission JRC",
+  "accessedAt": "2026-11-28"
+ },
+ "method": "GHS-POP cells whose centres lie inside the observed flood extent of EMSR773_AOI01_DEL_PRODUCT_v1, each assigned to the nearest hazard node on the main pedestrian network.",
+ "bounds": [
+  -0.4717250000013336,
+  39.39558334839552,
+  -0.32921062140691404,
+  39.47583924294906
+ ],
+ "totals": {
+  "inWindow": 753520,
+  "inObservedFlood": 113980,
+  "cells": 3220,
+  "nodes": 2584,
+  "maxSnapMetres": 753.1,
+  "p95SnapMetres": 137.9
+ },
+ "nodes": [
+  {
+   "nodeId": 104549451,
+   "people": 86.07
+  },
+  {
+   "nodeId": 104550229,
+   "people": 13.92
+  },
+  {
+   "nodeId": 104550255,
+   "people": 12.55
+  },
+  {
+   "nodeId": 104550417,
+   "people": 79.49
+  },
+  {
+   "nodeId": 104550486,
+   "people": 40.44
+  },
+  {
+   "nodeId": 104551460,
+   "people": 72.18
+  },
+  {
+   "nodeId": 104629279,
+   "people": 4.29
+  },
+  {
+   "nodeId": 104629937,
+   "people": 0.24
+  },
+  {
+   "nodeId": 104631018,
+   "people": 1.65
+  },
+  {
+   "nodeId": 104634643,
+   "people": 13.53
+  },
+  {
+   "nodeId": 104634952,
+   "people": 8.58
+  },
+  {
+   "nodeId": 104634997,
+   "people": 78.65
+  },
+  {
+   "nodeId": 104635920,
+   "people": 10.63
+  },
+  {
+   "nodeId": 104636009,
+   "people": 61.44
+  },
+  {
+   "nodeId": 111164128,
+   "people": 3.09
+  },
+  {
+   "nodeId": 111164154,
+   "people": 2.76
+  },
+  {
+   "nodeId": 112466379,
+   "people": 0.09
+  },
+  {
+   "nodeId": 112466396,
+   "people": 8.16
+  },
+  {
+   "nodeId": 112469174,
+   "people": 0.12
+  },
+  {
+   "nodeId": 122518858,
+   "people": 2.74
+  },
+  {
+   "nodeId": 146044527,
+   "people": 3.2
+  },
+  {
+   "nodeId": 146044860,
+   "people": 10.92
+  },
+  {
+   "nodeId": 150706892,
+   "people": 75.73
+  },
+  {
+   "nodeId": 150706902,
+   "people": 159.3
+  },
+  {
+   "nodeId": 150706904,
+   "people": 164.62
+  },
+  {
+   "nodeId": 150707862,
+   "people": 1.01
+  },
+  {
+   "nodeId": 150707877,
+   "people": 27.01
+  },
+  {
+   "nodeId": 150707941,
+   "people": 17.04
+  },
+  {
+   "nodeId": 150707957,
+   "people": 5.79
+  },
+  {
+   "nodeId": 150707964,
+   "people": 8.1
+  },
+  {
+   "nodeId": 150707987,
+   "people": 15.98
+  },
+  {
+   "nodeId": 150707999,
+   "people": 84.2
+  },
+  {
+   "nodeId": 150745840,
+   "people": 35.19
+  },
+  {
+   "nodeId": 150745864,
+   "people": 5.18
+  },
+  {
+   "nodeId": 150745917,
+   "people": 44.08
+  },
+  {
+   "nodeId": 150746230,
+   "people": 14.37
+  },
+  {
+   "nodeId": 155298574,
+   "people": 8.6
+  },
+  {
+   "nodeId": 155325705,
+   "people": 20.88
+  },
+  {
+   "nodeId": 155325731,
+   "people": 14.47
+  },
+  {
+   "nodeId": 155325789,
+   "people": 16.24
+  },
+  {
+   "nodeId": 155325954,
+   "people": 12.63
+  },
+  {
+   "nodeId": 156420299,
+   "people": 267.66
+  },
+  {
+   "nodeId": 158750394,
+   "people": 92.28
+  },
+  {
+   "nodeId": 251703165,
+   "people": 5.02
+  },
+  {
+   "nodeId": 251703446,
+   "people": 1.22
+  },
+  {
+   "nodeId": 252986352,
+   "people": 47.11
+  },
+  {
+   "nodeId": 252987838,
+   "people": 9.02
+  },
+  {
+   "nodeId": 252987839,
+   "people": 33.8
+  },
+  {
+   "nodeId": 252987857,
+   "people": 54.39
+  },
+  {
+   "nodeId": 252989003,
+   "people": 2.26
+  },
+  {
+   "nodeId": 253098648,
+   "people": 25.91
+  },
+  {
+   "nodeId": 253098653,
+   "people": 5.77
+  },
+  {
+   "nodeId": 253098655,
+   "people": 31.14
+  },
+  {
+   "nodeId": 253098658,
+   "people": 10.98
+  },
+  {
+   "nodeId": 253098689,
+   "people": 0.1
+  },
+  {
+   "nodeId": 253098691,
+   "people": 3.93
+  },
+  {
+   "nodeId": 253098694,
+   "people": 28.48
+  },
+  {
+   "nodeId": 253098707,
+   "people": 39.97
+  },
+  {
+   "nodeId": 253098720,
+   "people": 10.21
+  },
+  {
+   "nodeId": 253098723,
+   "people": 18.4
+  },
+  {
+   "nodeId": 253098743,
+   "people": 1.96
+  },
+  {
+   "nodeId": 253098777,
+   "people": 25.67
+  },
+  {
+   "nodeId": 253098823,
+   "people": 2.88
+  },
+  {
+   "nodeId": 253098857,
+   "people": 18.48
+  },
+  {
+   "nodeId": 253098891,
+   "people": 42.43
+  },
+  {
+   "nodeId": 253098896,
+   "people": 115.22
+  },
+  {
+   "nodeId": 253098959,
+   "people": 2.32
+  },
+  {
+   "nodeId": 253098980,
+   "people": 13.61
+  },
+  {
+   "nodeId": 253099028,
+   "people": 72.02
+  },
+  {
+   "nodeId": 253099070,
+   "people": 40.97
+  },
+  {
+   "nodeId": 253099133,
+   "people": 30.93
+  },
+  {
+   "nodeId": 253099192,
+   "people": 26.91
+  },
+  {
+   "nodeId": 253099221,
+   "people": 2.16
+  },
+  {
+   "nodeId": 253099223,
+   "people": 0.17
+  },
+  {
+   "nodeId": 253099240,
+   "people": 2.8
+  },
+  {
+   "nodeId": 253099242,
+   "people": 23.6
+  },
+  {
+   "nodeId": 253099277,
+   "people": 43.4
+  },
+  {
+   "nodeId": 253099298,
+   "people": 7.41
+  },
+  {
+   "nodeId": 253099414,
+   "people": 29.0
+  },
+  {
+   "nodeId": 253099420,
+   "people": 51.04
+  },
+  {
+   "nodeId": 253099452,
+   "people": 0.24
+  },
+  {
+   "nodeId": 253099469,
+   "people": 0.89
+  },
+  {
+   "nodeId": 253099470,
+   "people": 6.36
+  },
+  {
+   "nodeId": 253099472,
+   "people": 3.39
+  },
+  {
+   "nodeId": 253110706,
+   "people": 4.89
+  },
+  {
+   "nodeId": 253110722,
+   "people": 3.02
+  },
+  {
+   "nodeId": 253110757,
+   "people": 9.45
+  },
+  {
+   "nodeId": 253110760,
+   "people": 19.48
+  },
+  {
+   "nodeId": 253110763,
+   "people": 4.97
+  },
+  {
+   "nodeId": 253110790,
+   "people": 13.32
+  },
+  {
+   "nodeId": 253110811,
+   "people": 20.54
+  },
+  {
+   "nodeId": 253110872,
+   "people": 6.17
+  },
+  {
+   "nodeId": 253110888,
+   "people": 3.35
+  },
+  {
+   "nodeId": 253110890,
+   "people": 50.69
+  },
+  {
+   "nodeId": 253110894,
+   "people": 9.32
+  },
+  {
+   "nodeId": 253110906,
+   "people": 23.23
+  },
+  {
+   "nodeId": 253110927,
+   "people": 0.06
+  },
+  {
+   "nodeId": 253110932,
+   "people": 4.87
+  },
+  {
+   "nodeId": 253110989,
+   "people": 479.59
+  },
+  {
+   "nodeId": 253111002,
+   "people": 24.4
+  },
+  {
+   "nodeId": 253111005,
+   "people": 131.1
+  },
+  {
+   "nodeId": 253111032,
+   "people": 93.05
+  },
+  {
+   "nodeId": 253111036,
+   "people": 22.91
+  },
+  {
+   "nodeId": 253111074,
+   "people": 23.91
+  },
+  {
+   "nodeId": 253111160,
+   "people": 277.82
+  },
+  {
+   "nodeId": 253111164,
+   "people": 228.76
+  },
+  {
+   "nodeId": 266913998,
+   "people": 11.46
+  },
+  {
+   "nodeId": 288943247,
+   "people": 70.62
+  },
+  {
+   "nodeId": 288943339,
+   "people": 261.79
+  },
+  {
+   "nodeId": 326381133,
+   "people": 53.43
+  },
+  {
+   "nodeId": 326381190,
+   "people": 36.41
+  },
+  {
+   "nodeId": 326381343,
+   "people": 44.98
+  },
+  {
+   "nodeId": 326381362,
+   "people": 34.41
+  },
+  {
+   "nodeId": 326381434,
+   "people": 35.81
+  },
+  {
+   "nodeId": 326381865,
+   "people": 9.54
+  },
+  {
+   "nodeId": 326382003,
+   "people": 39.46
+  },
+  {
+   "nodeId": 330153848,
+   "people": 0.11
+  },
+  {
+   "nodeId": 330418264,
+   "people": 29.2
+  },
+  {
+   "nodeId": 330418311,
+   "people": 64.14
+  },
+  {
+   "nodeId": 330418317,
+   "people": 130.82
+  },
+  {
+   "nodeId": 330418322,
+   "people": 103.52
+  },
+  {
+   "nodeId": 330418327,
+   "people": 60.3
+  },
+  {
+   "nodeId": 330418399,
+   "people": 35.67
+  },
+  {
+   "nodeId": 330418407,
+   "people": 12.83
+  },
+  {
+   "nodeId": 330418411,
+   "people": 35.98
+  },
+  {
+   "nodeId": 330418431,
+   "people": 21.16
+  },
+  {
+   "nodeId": 330418447,
+   "people": 9.56
+  },
+  {
+   "nodeId": 330418471,
+   "people": 5.24
+  },
+  {
+   "nodeId": 330418485,
+   "people": 38.87
+  },
+  {
+   "nodeId": 330418504,
+   "people": 19.14
+  },
+  {
+   "nodeId": 330424844,
+   "people": 52.45
+  },
+  {
+   "nodeId": 330424847,
+   "people": 17.43
+  },
+  {
+   "nodeId": 330424848,
+   "people": 8.87
+  },
+  {
+   "nodeId": 339659803,
+   "people": 12.61
+  },
+  {
+   "nodeId": 339659841,
+   "people": 1.81
+  },
+  {
+   "nodeId": 339659988,
+   "people": 3.13
+  },
+  {
+   "nodeId": 339660062,
+   "people": 153.96
+  },
+  {
+   "nodeId": 339660132,
+   "people": 22.78
+  },
+  {
+   "nodeId": 339660140,
+   "people": 57.38
+  },
+  {
+   "nodeId": 339660223,
+   "people": 6.71
+  },
+  {
+   "nodeId": 339660508,
+   "people": 6.19
+  },
+  {
+   "nodeId": 339660571,
+   "people": 4.71
+  },
+  {
+   "nodeId": 339780101,
+   "people": 38.77
+  },
+  {
+   "nodeId": 339780259,
+   "people": 0.99
+  },
+  {
+   "nodeId": 365693775,
+   "people": 0.07
+  },
+  {
+   "nodeId": 365693803,
+   "people": 4.92
+  },
+  {
+   "nodeId": 365693907,
+   "people": 4.35
+  },
+  {
+   "nodeId": 365693954,
+   "people": 0.87
+  },
+  {
+   "nodeId": 411632037,
+   "people": 13.71
+  },
+  {
+   "nodeId": 411644084,
+   "people": 16.89
+  },
+  {
+   "nodeId": 411644099,
+   "people": 6.77
+  },
+  {
+   "nodeId": 411644100,
+   "people": 47.56
+  },
+  {
+   "nodeId": 411644108,
+   "people": 5.37
+  },
+  {
+   "nodeId": 412554167,
+   "people": 26.88
+  },
+  {
+   "nodeId": 418333974,
+   "people": 4.34
+  },
+  {
+   "nodeId": 429652560,
+   "people": 4.84
+  },
+  {
+   "nodeId": 429652564,
+   "people": 7.38
+  },
+  {
+   "nodeId": 429652572,
+   "people": 4.84
+  },
+  {
+   "nodeId": 429652574,
+   "people": 24.67
+  },
+  {
+   "nodeId": 429652606,
+   "people": 2.95
+  },
+  {
+   "nodeId": 429652627,
+   "people": 40.51
+  },
+  {
+   "nodeId": 429860223,
+   "people": 22.92
+  },
+  {
+   "nodeId": 429860242,
+   "people": 64.93
+  },
+  {
+   "nodeId": 429860272,
+   "people": 33.16
+  },
+  {
+   "nodeId": 429860274,
+   "people": 23.17
+  },
+  {
+   "nodeId": 429860276,
+   "people": 2.17
+  },
+  {
+   "nodeId": 429860283,
+   "people": 0.02
+  },
+  {
+   "nodeId": 429860289,
+   "people": 57.08
+  },
+  {
+   "nodeId": 429860294,
+   "people": 9.91
+  },
+  {
+   "nodeId": 429860300,
+   "people": 45.59
+  },
+  {
+   "nodeId": 429860302,
+   "people": 60.77
+  },
+  {
+   "nodeId": 429860303,
+   "people": 3.26
+  },
+  {
+   "nodeId": 429860315,
+   "people": 17.91
+  },
+  {
+   "nodeId": 429860317,
+   "people": 93.67
+  },
+  {
+   "nodeId": 429860322,
+   "people": 35.43
+  },
+  {
+   "nodeId": 429860324,
+   "people": 72.49
+  },
+  {
+   "nodeId": 429860326,
+   "people": 56.52
+  },
+  {
+   "nodeId": 429860330,
+   "people": 8.71
+  },
+  {
+   "nodeId": 429860334,
+   "people": 11.19
+  },
+  {
+   "nodeId": 429860338,
+   "people": 54.52
+  },
+  {
+   "nodeId": 429860340,
+   "people": 33.66
+  },
+  {
+   "nodeId": 429860342,
+   "people": 27.42
+  },
+  {
+   "nodeId": 429860350,
+   "people": 112.87
+  },
+  {
+   "nodeId": 429860354,
+   "people": 4.98
+  },
+  {
+   "nodeId": 429860357,
+   "people": 25.04
+  },
+  {
+   "nodeId": 429860363,
+   "people": 14.41
+  },
+  {
+   "nodeId": 429860364,
+   "people": 2.72
+  },
+  {
+   "nodeId": 429860384,
+   "people": 48.35
+  },
+  {
+   "nodeId": 429860410,
+   "people": 22.37
+  },
+  {
+   "nodeId": 429860527,
+   "people": 20.15
+  },
+  {
+   "nodeId": 429860531,
+   "people": 15.49
+  },
+  {
+   "nodeId": 429860535,
+   "people": 78.45
+  },
+  {
+   "nodeId": 429860537,
+   "people": 99.61
+  },
+  {
+   "nodeId": 429860573,
+   "people": 29.29
+  },
+  {
+   "nodeId": 429860576,
+   "people": 235.73
+  },
+  {
+   "nodeId": 429860607,
+   "people": 226.63
+  },
+  {
+   "nodeId": 429860610,
+   "people": 267.62
+  },
+  {
+   "nodeId": 429860652,
+   "people": 250.63
+  },
+  {
+   "nodeId": 429860699,
+   "people": 0.24
+  },
+  {
+   "nodeId": 429860740,
+   "people": 78.05
+  },
+  {
+   "nodeId": 429860743,
+   "people": 1.68
+  },
+  {
+   "nodeId": 429860755,
+   "people": 63.13
+  },
+  {
+   "nodeId": 429860761,
+   "people": 257.64
+  },
+  {
+   "nodeId": 429860769,
+   "people": 311.96
+  },
+  {
+   "nodeId": 429860842,
+   "people": 278.62
+  },
+  {
+   "nodeId": 429860872,
+   "people": 252.73
+  },
+  {
+   "nodeId": 429860874,
+   "people": 235.54
+  },
+  {
+   "nodeId": 429860877,
+   "people": 141.21
+  },
+  {
+   "nodeId": 430350968,
+   "people": 45.1
+  },
+  {
+   "nodeId": 430813457,
+   "people": 27.71
+  },
+  {
+   "nodeId": 430813552,
+   "people": 7.58
+  },
+  {
+   "nodeId": 430813563,
+   "people": 111.37
+  },
+  {
+   "nodeId": 433009059,
+   "people": 47.96
+  },
+  {
+   "nodeId": 433030342,
+   "people": 40.91
+  },
+  {
+   "nodeId": 433030379,
+   "people": 28.46
+  },
+  {
+   "nodeId": 433030397,
+   "people": 46.12
+  },
+  {
+   "nodeId": 433030409,
+   "people": 6.42
+  },
+  {
+   "nodeId": 433030426,
+   "people": 13.19
+  },
+  {
+   "nodeId": 434539211,
+   "people": 15.81
+  },
+  {
+   "nodeId": 434544919,
+   "people": 18.47
+  },
+  {
+   "nodeId": 434544934,
+   "people": 10.26
+  },
+  {
+   "nodeId": 434552489,
+   "people": 1.55
+  },
+  {
+   "nodeId": 434556359,
+   "people": 25.01
+  },
+  {
+   "nodeId": 435101195,
+   "people": 77.07
+  },
+  {
+   "nodeId": 435104861,
+   "people": 28.66
+  },
+  {
+   "nodeId": 435104960,
+   "people": 4.02
+  },
+  {
+   "nodeId": 435104968,
+   "people": 87.49
+  },
+  {
+   "nodeId": 435106094,
+   "people": 21.24
+  },
+  {
+   "nodeId": 435106107,
+   "people": 11.35
+  },
+  {
+   "nodeId": 435106108,
+   "people": 0.07
+  },
+  {
+   "nodeId": 435106115,
+   "people": 49.83
+  },
+  {
+   "nodeId": 435235742,
+   "people": 12.68
+  },
+  {
+   "nodeId": 435235744,
+   "people": 0.4
+  },
+  {
+   "nodeId": 435236156,
+   "people": 26.57
+  },
+  {
+   "nodeId": 435238727,
+   "people": 9.05
+  },
+  {
+   "nodeId": 435239729,
+   "people": 20.69
+  },
+  {
+   "nodeId": 435240155,
+   "people": 34.96
+  },
+  {
+   "nodeId": 435240157,
+   "people": 45.27
+  },
+  {
+   "nodeId": 435243265,
+   "people": 2.41
+  },
+  {
+   "nodeId": 435243267,
+   "people": 10.88
+  },
+  {
+   "nodeId": 435243270,
+   "people": 32.79
+  },
+  {
+   "nodeId": 435243271,
+   "people": 1.76
+  },
+  {
+   "nodeId": 435244857,
+   "people": 18.15
+  },
+  {
+   "nodeId": 475317770,
+   "people": 14.88
+  },
+  {
+   "nodeId": 475317772,
+   "people": 89.06
+  },
+  {
+   "nodeId": 475317776,
+   "people": 34.99
+  },
+  {
+   "nodeId": 475317823,
+   "people": 0.25
+  },
+  {
+   "nodeId": 475317836,
+   "people": 0.03
+  },
+  {
+   "nodeId": 479118335,
+   "people": 5.7
+  },
+  {
+   "nodeId": 506252736,
+   "people": 189.18
+  },
+  {
+   "nodeId": 506252737,
+   "people": 257.12
+  },
+  {
+   "nodeId": 506252738,
+   "people": 359.52
+  },
+  {
+   "nodeId": 506252740,
+   "people": 54.1
+  },
+  {
+   "nodeId": 506252747,
+   "people": 277.15
+  },
+  {
+   "nodeId": 506252761,
+   "people": 3.64
+  },
+  {
+   "nodeId": 506252775,
+   "people": 269.3
+  },
+  {
+   "nodeId": 506252779,
+   "people": 3.76
+  },
+  {
+   "nodeId": 506252789,
+   "people": 2.49
+  },
+  {
+   "nodeId": 506252793,
+   "people": 284.91
+  },
+  {
+   "nodeId": 506252798,
+   "people": 73.2
+  },
+  {
+   "nodeId": 506260689,
+   "people": 60.36
+  },
+  {
+   "nodeId": 506260716,
+   "people": 97.56
+  },
+  {
+   "nodeId": 506260724,
+   "people": 21.1
+  },
+  {
+   "nodeId": 506260742,
+   "people": 115.23
+  },
+  {
+   "nodeId": 506260743,
+   "people": 81.73
+  },
+  {
+   "nodeId": 506260759,
+   "people": 127.9
+  },
+  {
+   "nodeId": 506265575,
+   "people": 103.4
+  },
+  {
+   "nodeId": 506265583,
+   "people": 286.99
+  },
+  {
+   "nodeId": 506265585,
+   "people": 276.3
+  },
+  {
+   "nodeId": 506265600,
+   "people": 244.54
+  },
+  {
+   "nodeId": 506265604,
+   "people": 210.43
+  },
+  {
+   "nodeId": 506265633,
+   "people": 317.47
+  },
+  {
+   "nodeId": 506265680,
+   "people": 265.85
+  },
+  {
+   "nodeId": 506265693,
+   "people": 242.24
+  },
+  {
+   "nodeId": 506268822,
+   "people": 260.71
+  },
+  {
+   "nodeId": 506268826,
+   "people": 211.95
+  },
+  {
+   "nodeId": 506268884,
+   "people": 224.77
+  },
+  {
+   "nodeId": 506274258,
+   "people": 247.97
+  },
+  {
+   "nodeId": 506274264,
+   "people": 327.87
+  },
+  {
+   "nodeId": 506274332,
+   "people": 260.57
+  },
+  {
+   "nodeId": 506459630,
+   "people": 228.67
+  },
+  {
+   "nodeId": 506459661,
+   "people": 256.86
+  },
+  {
+   "nodeId": 506459689,
+   "people": 57.43
+  },
+  {
+   "nodeId": 506459693,
+   "people": 202.64
+  },
+  {
+   "nodeId": 506460445,
+   "people": 253.56
+  },
+  {
+   "nodeId": 506460447,
+   "people": 276.32
+  },
+  {
+   "nodeId": 506514767,
+   "people": 276.6
+  },
+  {
+   "nodeId": 506514770,
+   "people": 37.51
+  },
+  {
+   "nodeId": 506514792,
+   "people": 77.56
+  },
+  {
+   "nodeId": 506514830,
+   "people": 285.0
+  },
+  {
+   "nodeId": 506514867,
+   "people": 148.81
+  },
+  {
+   "nodeId": 506514872,
+   "people": 124.41
+  },
+  {
+   "nodeId": 506519866,
+   "people": 153.83
+  },
+  {
+   "nodeId": 506519878,
+   "people": 310.78
+  },
+  {
+   "nodeId": 506519879,
+   "people": 264.23
+  },
+  {
+   "nodeId": 506519886,
+   "people": 127.17
+  },
+  {
+   "nodeId": 506519896,
+   "people": 308.6
+  },
+  {
+   "nodeId": 506519908,
+   "people": 202.43
+  },
+  {
+   "nodeId": 506519921,
+   "people": 382.58
+  },
+  {
+   "nodeId": 506519929,
+   "people": 313.1
+  },
+  {
+   "nodeId": 506525287,
+   "people": 8.21
+  },
+  {
+   "nodeId": 506525326,
+   "people": 0.07
+  },
+  {
+   "nodeId": 506525330,
+   "people": 14.25
+  },
+  {
+   "nodeId": 506525355,
+   "people": 0.67
+  },
+  {
+   "nodeId": 506525381,
+   "people": 5.4
+  },
+  {
+   "nodeId": 506525383,
+   "people": 32.86
+  },
+  {
+   "nodeId": 506525398,
+   "people": 8.48
+  },
+  {
+   "nodeId": 506525431,
+   "people": 4.18
+  },
+  {
+   "nodeId": 506533638,
+   "people": 44.48
+  },
+  {
+   "nodeId": 506533642,
+   "people": 9.59
+  },
+  {
+   "nodeId": 506533644,
+   "people": 84.89
+  },
+  {
+   "nodeId": 506533647,
+   "people": 70.64
+  },
+  {
+   "nodeId": 506533652,
+   "people": 31.13
+  },
+  {
+   "nodeId": 506533690,
+   "people": 225.96
+  },
+  {
+   "nodeId": 506533695,
+   "people": 77.05
+  },
+  {
+   "nodeId": 506533704,
+   "people": 20.91
+  },
+  {
+   "nodeId": 506533715,
+   "people": 155.93
+  },
+  {
+   "nodeId": 506533718,
+   "people": 243.55
+  },
+  {
+   "nodeId": 506533737,
+   "people": 207.18
+  },
+  {
+   "nodeId": 506533740,
+   "people": 38.59
+  },
+  {
+   "nodeId": 513426030,
+   "people": 56.45
+  },
+  {
+   "nodeId": 513480494,
+   "people": 56.55
+  },
+  {
+   "nodeId": 513480831,
+   "people": 26.07
+  },
+  {
+   "nodeId": 513481000,
+   "people": 19.03
+  },
+  {
+   "nodeId": 513481142,
+   "people": 31.57
+  },
+  {
+   "nodeId": 513502092,
+   "people": 6.82
+  },
+  {
+   "nodeId": 513502365,
+   "people": 14.06
+  },
+  {
+   "nodeId": 513502405,
+   "people": 5.67
+  },
+  {
+   "nodeId": 513502463,
+   "people": 11.05
+  },
+  {
+   "nodeId": 513502533,
+   "people": 21.3
+  },
+  {
+   "nodeId": 513502749,
+   "people": 8.85
+  },
+  {
+   "nodeId": 513502837,
+   "people": 10.71
+  },
+  {
+   "nodeId": 513502980,
+   "people": 28.66
+  },
+  {
+   "nodeId": 513502992,
+   "people": 36.15
+  },
+  {
+   "nodeId": 513503018,
+   "people": 8.98
+  },
+  {
+   "nodeId": 513503420,
+   "people": 68.52
+  },
+  {
+   "nodeId": 513503465,
+   "people": 100.07
+  },
+  {
+   "nodeId": 513503472,
+   "people": 25.63
+  },
+  {
+   "nodeId": 513619534,
+   "people": 78.49
+  },
+  {
+   "nodeId": 513619535,
+   "people": 41.55
+  },
+  {
+   "nodeId": 513619536,
+   "people": 46.6
+  },
+  {
+   "nodeId": 513619543,
+   "people": 72.14
+  },
+  {
+   "nodeId": 513619546,
+   "people": 50.74
+  },
+  {
+   "nodeId": 513619610,
+   "people": 14.01
+  },
+  {
+   "nodeId": 513619611,
+   "people": 10.73
+  },
+  {
+   "nodeId": 513619616,
+   "people": 90.75
+  },
+  {
+   "nodeId": 513619631,
+   "people": 42.12
+  },
+  {
+   "nodeId": 513619634,
+   "people": 6.05
+  },
+  {
+   "nodeId": 513619636,
+   "people": 40.4
+  },
+  {
+   "nodeId": 513619639,
+   "people": 34.24
+  },
+  {
+   "nodeId": 513619662,
+   "people": 10.58
+  },
+  {
+   "nodeId": 513662786,
+   "people": 145.23
+  },
+  {
+   "nodeId": 513683657,
+   "people": 22.02
+  },
+  {
+   "nodeId": 513743249,
+   "people": 5.86
+  },
+  {
+   "nodeId": 515645760,
+   "people": 4.86
+  },
+  {
+   "nodeId": 515651843,
+   "people": 135.33
+  },
+  {
+   "nodeId": 515651962,
+   "people": 26.0
+  },
+  {
+   "nodeId": 515834470,
+   "people": 30.87
+  },
+  {
+   "nodeId": 515836225,
+   "people": 30.52
+  },
+  {
+   "nodeId": 515855849,
+   "people": 63.26
+  },
+  {
+   "nodeId": 515855879,
+   "people": 87.84
+  },
+  {
+   "nodeId": 515855883,
+   "people": 142.75
+  },
+  {
+   "nodeId": 516036268,
+   "people": 36.26
+  },
+  {
+   "nodeId": 516036283,
+   "people": 29.32
+  },
+  {
+   "nodeId": 516036309,
+   "people": 25.22
+  },
+  {
+   "nodeId": 516036462,
+   "people": 3.28
+  },
+  {
+   "nodeId": 516036567,
+   "people": 38.28
+  },
+  {
+   "nodeId": 521303373,
+   "people": 86.28
+  },
+  {
+   "nodeId": 521355678,
+   "people": 123.97
+  },
+  {
+   "nodeId": 525410187,
+   "people": 74.8
+  },
+  {
+   "nodeId": 525410197,
+   "people": 131.72
+  },
+  {
+   "nodeId": 536735768,
+   "people": 45.32
+  },
+  {
+   "nodeId": 536735812,
+   "people": 29.17
+  },
+  {
+   "nodeId": 537518264,
+   "people": 58.41
+  },
+  {
+   "nodeId": 537518267,
+   "people": 60.99
+  },
+  {
+   "nodeId": 538183184,
+   "people": 13.39
+  },
+  {
+   "nodeId": 538183208,
+   "people": 13.48
+  },
+  {
+   "nodeId": 538183219,
+   "people": 208.04
+  },
+  {
+   "nodeId": 540600837,
+   "people": 29.21
+  },
+  {
+   "nodeId": 540600843,
+   "people": 26.18
+  },
+  {
+   "nodeId": 540600847,
+   "people": 27.14
+  },
+  {
+   "nodeId": 540600852,
+   "people": 36.62
+  },
+  {
+   "nodeId": 540600875,
+   "people": 38.91
+  },
+  {
+   "nodeId": 540600893,
+   "people": 16.37
+  },
+  {
+   "nodeId": 540600898,
+   "people": 2.77
+  },
+  {
+   "nodeId": 540600905,
+   "people": 2.07
+  },
+  {
+   "nodeId": 540600918,
+   "people": 8.05
+  },
+  {
+   "nodeId": 540600925,
+   "people": 0.17
+  },
+  {
+   "nodeId": 540600956,
+   "people": 4.17
+  },
+  {
+   "nodeId": 540601010,
+   "people": 0.57
+  },
+  {
+   "nodeId": 540601240,
+   "people": 10.86
+  },
+  {
+   "nodeId": 540601244,
+   "people": 13.81
+  },
+  {
+   "nodeId": 540601305,
+   "people": 4.28
+  },
+  {
+   "nodeId": 540601310,
+   "people": 6.06
+  },
+  {
+   "nodeId": 540601328,
+   "people": 15.76
+  },
+  {
+   "nodeId": 540601351,
+   "people": 13.49
+  },
+  {
+   "nodeId": 540601368,
+   "people": 12.4
+  },
+  {
+   "nodeId": 540601373,
+   "people": 38.84
+  },
+  {
+   "nodeId": 540601431,
+   "people": 19.48
+  },
+  {
+   "nodeId": 540601776,
+   "people": 11.9
+  },
+  {
+   "nodeId": 540601778,
+   "people": 0.06
+  },
+  {
+   "nodeId": 544787574,
+   "people": 13.68
+  },
+  {
+   "nodeId": 546133187,
+   "people": 87.73
+  },
+  {
+   "nodeId": 546133201,
+   "people": 72.38
+  },
+  {
+   "nodeId": 546133218,
+   "people": 33.35
+  },
+  {
+   "nodeId": 546133243,
+   "people": 1.97
+  },
+  {
+   "nodeId": 546133255,
+   "people": 74.61
+  },
+  {
+   "nodeId": 546133257,
+   "people": 93.88
+  },
+  {
+   "nodeId": 546133264,
+   "people": 2.44
+  },
+  {
+   "nodeId": 546133302,
+   "people": 44.62
+  },
+  {
+   "nodeId": 546133304,
+   "people": 27.51
+  },
+  {
+   "nodeId": 546133308,
+   "people": 23.78
+  },
+  {
+   "nodeId": 559740263,
+   "people": 0.71
+  },
+  {
+   "nodeId": 559740272,
+   "people": 19.02
+  },
+  {
+   "nodeId": 559751783,
+   "people": 46.18
+  },
+  {
+   "nodeId": 559751841,
+   "people": 90.62
+  },
+  {
+   "nodeId": 559751997,
+   "people": 9.33
+  },
+  {
+   "nodeId": 559752264,
+   "people": 3.38
+  },
+  {
+   "nodeId": 559918634,
+   "people": 22.35
+  },
+  {
+   "nodeId": 559918638,
+   "people": 8.65
+  },
+  {
+   "nodeId": 559918665,
+   "people": 175.72
+  },
+  {
+   "nodeId": 559920437,
+   "people": 0.13
+  },
+  {
+   "nodeId": 559920458,
+   "people": 1.21
+  },
+  {
+   "nodeId": 559920467,
+   "people": 28.91
+  },
+  {
+   "nodeId": 559949628,
+   "people": 84.49
+  },
+  {
+   "nodeId": 559965125,
+   "people": 38.55
+  },
+  {
+   "nodeId": 559965129,
+   "people": 36.98
+  },
+  {
+   "nodeId": 559965138,
+   "people": 22.84
+  },
+  {
+   "nodeId": 559965145,
+   "people": 2.0
+  },
+  {
+   "nodeId": 559965156,
+   "people": 142.24
+  },
+  {
+   "nodeId": 559965210,
+   "people": 2.82
+  },
+  {
+   "nodeId": 559970250,
+   "people": 63.64
+  },
+  {
+   "nodeId": 559970251,
+   "people": 41.1
+  },
+  {
+   "nodeId": 559970252,
+   "people": 8.86
+  },
+  {
+   "nodeId": 559970256,
+   "people": 17.96
+  },
+  {
+   "nodeId": 559970278,
+   "people": 2.1
+  },
+  {
+   "nodeId": 559970290,
+   "people": 7.87
+  },
+  {
+   "nodeId": 559970297,
+   "people": 30.98
+  },
+  {
+   "nodeId": 559970454,
+   "people": 0.06
+  },
+  {
+   "nodeId": 559970523,
+   "people": 44.42
+  },
+  {
+   "nodeId": 559970524,
+   "people": 13.94
+  },
+  {
+   "nodeId": 559970540,
+   "people": 81.46
+  },
+  {
+   "nodeId": 559970546,
+   "people": 89.28
+  },
+  {
+   "nodeId": 559970552,
+   "people": 251.03
+  },
+  {
+   "nodeId": 559970665,
+   "people": 166.81
+  },
+  {
+   "nodeId": 560100925,
+   "people": 5.35
+  },
+  {
+   "nodeId": 560100929,
+   "people": 4.2
+  },
+  {
+   "nodeId": 560100930,
+   "people": 9.8
+  },
+  {
+   "nodeId": 560100931,
+   "people": 6.05
+  },
+  {
+   "nodeId": 560100932,
+   "people": 42.32
+  },
+  {
+   "nodeId": 560100934,
+   "people": 65.25
+  },
+  {
+   "nodeId": 560100939,
+   "people": 31.38
+  },
+  {
+   "nodeId": 560100952,
+   "people": 19.55
+  },
+  {
+   "nodeId": 560100957,
+   "people": 161.68
+  },
+  {
+   "nodeId": 560100960,
+   "people": 89.81
+  },
+  {
+   "nodeId": 560100974,
+   "people": 16.16
+  },
+  {
+   "nodeId": 560100983,
+   "people": 17.07
+  },
+  {
+   "nodeId": 560100988,
+   "people": 30.04
+  },
+  {
+   "nodeId": 560101001,
+   "people": 181.97
+  },
+  {
+   "nodeId": 560101020,
+   "people": 108.39
+  },
+  {
+   "nodeId": 560101022,
+   "people": 28.11
+  },
+  {
+   "nodeId": 560101026,
+   "people": 9.62
+  },
+  {
+   "nodeId": 560833496,
+   "people": 32.84
+  },
+  {
+   "nodeId": 560833497,
+   "people": 25.97
+  },
+  {
+   "nodeId": 560833498,
+   "people": 45.58
+  },
+  {
+   "nodeId": 560833521,
+   "people": 70.35
+  },
+  {
+   "nodeId": 560833522,
+   "people": 41.2
+  },
+  {
+   "nodeId": 560833523,
+   "people": 34.59
+  },
+  {
+   "nodeId": 560833525,
+   "people": 84.97
+  },
+  {
+   "nodeId": 560833533,
+   "people": 47.5
+  },
+  {
+   "nodeId": 560843349,
+   "people": 8.14
+  },
+  {
+   "nodeId": 560843351,
+   "people": 7.66
+  },
+  {
+   "nodeId": 560843366,
+   "people": 29.91
+  },
+  {
+   "nodeId": 560843368,
+   "people": 24.48
+  },
+  {
+   "nodeId": 560843386,
+   "people": 17.29
+  },
+  {
+   "nodeId": 560843388,
+   "people": 34.82
+  },
+  {
+   "nodeId": 560843394,
+   "people": 103.78
+  },
+  {
+   "nodeId": 560843395,
+   "people": 35.61
+  },
+  {
+   "nodeId": 560843400,
+   "people": 33.56
+  },
+  {
+   "nodeId": 560843402,
+   "people": 26.47
+  },
+  {
+   "nodeId": 560843412,
+   "people": 32.09
+  },
+  {
+   "nodeId": 560843420,
+   "people": 42.78
+  },
+  {
+   "nodeId": 560977509,
+   "people": 68.7
+  },
+  {
+   "nodeId": 560977510,
+   "people": 0.91
+  },
+  {
+   "nodeId": 560977521,
+   "people": 9.83
+  },
+  {
+   "nodeId": 560977530,
+   "people": 70.5
+  },
+  {
+   "nodeId": 560981458,
+   "people": 203.81
+  },
+  {
+   "nodeId": 560981463,
+   "people": 162.55
+  },
+  {
+   "nodeId": 560981564,
+   "people": 213.7
+  },
+  {
+   "nodeId": 560981570,
+   "people": 237.17
+  },
+  {
+   "nodeId": 560981573,
+   "people": 229.22
+  },
+  {
+   "nodeId": 560981601,
+   "people": 162.57
+  },
+  {
+   "nodeId": 560981609,
+   "people": 229.48
+  },
+  {
+   "nodeId": 560981708,
+   "people": 255.63
+  },
+  {
+   "nodeId": 560981786,
+   "people": 2.84
+  },
+  {
+   "nodeId": 560981826,
+   "people": 182.81
+  },
+  {
+   "nodeId": 560982054,
+   "people": 222.71
+  },
+  {
+   "nodeId": 561139758,
+   "people": 81.25
+  },
+  {
+   "nodeId": 561139767,
+   "people": 176.62
+  },
+  {
+   "nodeId": 561139774,
+   "people": 127.66
+  },
+  {
+   "nodeId": 561139777,
+   "people": 127.32
+  },
+  {
+   "nodeId": 561139783,
+   "people": 221.14
+  },
+  {
+   "nodeId": 561139784,
+   "people": 174.75
+  },
+  {
+   "nodeId": 561146823,
+   "people": 91.49
+  },
+  {
+   "nodeId": 561146827,
+   "people": 294.0
+  },
+  {
+   "nodeId": 561146879,
+   "people": 225.24
+  },
+  {
+   "nodeId": 561146883,
+   "people": 234.37
+  },
+  {
+   "nodeId": 561146886,
+   "people": 176.57
+  },
+  {
+   "nodeId": 561146888,
+   "people": 251.16
+  },
+  {
+   "nodeId": 561146889,
+   "people": 238.85
+  },
+  {
+   "nodeId": 561146890,
+   "people": 253.14
+  },
+  {
+   "nodeId": 561146892,
+   "people": 334.82
+  },
+  {
+   "nodeId": 561146893,
+   "people": 197.95
+  },
+  {
+   "nodeId": 561146896,
+   "people": 125.98
+  },
+  {
+   "nodeId": 561146897,
+   "people": 202.53
+  },
+  {
+   "nodeId": 561146898,
+   "people": 229.8
+  },
+  {
+   "nodeId": 561146927,
+   "people": 226.47
+  },
+  {
+   "nodeId": 561181126,
+   "people": 9.71
+  },
+  {
+   "nodeId": 561181136,
+   "people": 5.69
+  },
+  {
+   "nodeId": 561181142,
+   "people": 22.72
+  },
+  {
+   "nodeId": 561181151,
+   "people": 12.43
+  },
+  {
+   "nodeId": 561181168,
+   "people": 7.94
+  },
+  {
+   "nodeId": 561181179,
+   "people": 0.5
+  },
+  {
+   "nodeId": 561181184,
+   "people": 12.77
+  },
+  {
+   "nodeId": 561181193,
+   "people": 0.93
+  },
+  {
+   "nodeId": 561181216,
+   "people": 8.81
+  },
+  {
+   "nodeId": 561181222,
+   "people": 12.91
+  },
+  {
+   "nodeId": 561181259,
+   "people": 6.72
+  },
+  {
+   "nodeId": 561181260,
+   "people": 3.86
+  },
+  {
+   "nodeId": 561181263,
+   "people": 0.42
+  },
+  {
+   "nodeId": 561181265,
+   "people": 97.6
+  },
+  {
+   "nodeId": 561181266,
+   "people": 40.62
+  },
+  {
+   "nodeId": 561181270,
+   "people": 27.66
+  },
+  {
+   "nodeId": 561181277,
+   "people": 87.95
+  },
+  {
+   "nodeId": 561195711,
+   "people": 257.72
+  },
+  {
+   "nodeId": 561195713,
+   "people": 263.75
+  },
+  {
+   "nodeId": 561195716,
+   "people": 233.31
+  },
+  {
+   "nodeId": 561195766,
+   "people": 209.32
+  },
+  {
+   "nodeId": 561195770,
+   "people": 218.22
+  },
+  {
+   "nodeId": 561195780,
+   "people": 197.24
+  },
+  {
+   "nodeId": 561195793,
+   "people": 193.49
+  },
+  {
+   "nodeId": 561195796,
+   "people": 57.15
+  },
+  {
+   "nodeId": 561195798,
+   "people": 129.69
+  },
+  {
+   "nodeId": 561195801,
+   "people": 160.86
+  },
+  {
+   "nodeId": 561195817,
+   "people": 248.98
+  },
+  {
+   "nodeId": 561195853,
+   "people": 160.43
+  },
+  {
+   "nodeId": 561195980,
+   "people": 204.61
+  },
+  {
+   "nodeId": 561220350,
+   "people": 2.04
+  },
+  {
+   "nodeId": 561220364,
+   "people": 33.43
+  },
+  {
+   "nodeId": 561220378,
+   "people": 2.84
+  },
+  {
+   "nodeId": 561220404,
+   "people": 6.47
+  },
+  {
+   "nodeId": 561220406,
+   "people": 5.14
+  },
+  {
+   "nodeId": 561220410,
+   "people": 0.25
+  },
+  {
+   "nodeId": 561220439,
+   "people": 30.42
+  },
+  {
+   "nodeId": 561220457,
+   "people": 4.95
+  },
+  {
+   "nodeId": 561220469,
+   "people": 144.21
+  },
+  {
+   "nodeId": 561220483,
+   "people": 218.7
+  },
+  {
+   "nodeId": 561220491,
+   "people": 2.4
+  },
+  {
+   "nodeId": 561222590,
+   "people": 0.49
+  },
+  {
+   "nodeId": 561222711,
+   "people": 13.41
+  },
+  {
+   "nodeId": 561222716,
+   "people": 1.97
+  },
+  {
+   "nodeId": 561222723,
+   "people": 0.01
+  },
+  {
+   "nodeId": 561222741,
+   "people": 0.01
+  },
+  {
+   "nodeId": 561222812,
+   "people": 3.05
+  },
+  {
+   "nodeId": 561227064,
+   "people": 1.89
+  },
+  {
+   "nodeId": 561227083,
+   "people": 0.54
+  },
+  {
+   "nodeId": 561227117,
+   "people": 14.39
+  },
+  {
+   "nodeId": 561227172,
+   "people": 4.97
+  },
+  {
+   "nodeId": 561227179,
+   "people": 11.35
+  },
+  {
+   "nodeId": 561230053,
+   "people": 0.4
+  },
+  {
+   "nodeId": 561230054,
+   "people": 5.35
+  },
+  {
+   "nodeId": 561230056,
+   "people": 1.55
+  },
+  {
+   "nodeId": 561230307,
+   "people": 3.43
+  },
+  {
+   "nodeId": 561240565,
+   "people": 39.74
+  },
+  {
+   "nodeId": 561240566,
+   "people": 0.83
+  },
+  {
+   "nodeId": 561240628,
+   "people": 3.55
+  },
+  {
+   "nodeId": 561240660,
+   "people": 29.86
+  },
+  {
+   "nodeId": 561240667,
+   "people": 4.3
+  },
+  {
+   "nodeId": 561240701,
+   "people": 24.18
+  },
+  {
+   "nodeId": 561240727,
+   "people": 1.85
+  },
+  {
+   "nodeId": 561240734,
+   "people": 6.9
+  },
+  {
+   "nodeId": 561240863,
+   "people": 0.97
+  },
+  {
+   "nodeId": 561397985,
+   "people": 5.27
+  },
+  {
+   "nodeId": 561591971,
+   "people": 55.85
+  },
+  {
+   "nodeId": 562625903,
+   "people": 75.57
+  },
+  {
+   "nodeId": 562625929,
+   "people": 57.5
+  },
+  {
+   "nodeId": 562625944,
+   "people": 13.37
+  },
+  {
+   "nodeId": 564997614,
+   "people": 72.49
+  },
+  {
+   "nodeId": 564997920,
+   "people": 45.92
+  },
+  {
+   "nodeId": 564997936,
+   "people": 22.71
+  },
+  {
+   "nodeId": 564998002,
+   "people": 5.51
+  },
+  {
+   "nodeId": 564998102,
+   "people": 34.46
+  },
+  {
+   "nodeId": 565417368,
+   "people": 151.96
+  },
+  {
+   "nodeId": 565422950,
+   "people": 0.34
+  },
+  {
+   "nodeId": 565422957,
+   "people": 0.81
+  },
+  {
+   "nodeId": 565422958,
+   "people": 0.81
+  },
+  {
+   "nodeId": 565422966,
+   "people": 1.07
+  },
+  {
+   "nodeId": 565422993,
+   "people": 83.8
+  },
+  {
+   "nodeId": 565423012,
+   "people": 0.28
+  },
+  {
+   "nodeId": 565423016,
+   "people": 7.37
+  },
+  {
+   "nodeId": 565423022,
+   "people": 0.33
+  },
+  {
+   "nodeId": 565423032,
+   "people": 1.71
+  },
+  {
+   "nodeId": 565423073,
+   "people": 3.06
+  },
+  {
+   "nodeId": 565423093,
+   "people": 2.1
+  },
+  {
+   "nodeId": 565423135,
+   "people": 1.47
+  },
+  {
+   "nodeId": 565423189,
+   "people": 8.21
+  },
+  {
+   "nodeId": 565425319,
+   "people": 3.96
+  },
+  {
+   "nodeId": 565425328,
+   "people": 0.57
+  },
+  {
+   "nodeId": 565425372,
+   "people": 0.29
+  },
+  {
+   "nodeId": 565452285,
+   "people": 71.49
+  },
+  {
+   "nodeId": 565452299,
+   "people": 127.23
+  },
+  {
+   "nodeId": 565452303,
+   "people": 18.92
+  },
+  {
+   "nodeId": 565452308,
+   "people": 120.37
+  },
+  {
+   "nodeId": 565577049,
+   "people": 81.05
+  },
+  {
+   "nodeId": 565589769,
+   "people": 2.9
+  },
+  {
+   "nodeId": 565589847,
+   "people": 0.79
+  },
+  {
+   "nodeId": 565589883,
+   "people": 0.51
+  },
+  {
+   "nodeId": 565589899,
+   "people": 3.61
+  },
+  {
+   "nodeId": 565590098,
+   "people": 6.18
+  },
+  {
+   "nodeId": 565590105,
+   "people": 8.13
+  },
+  {
+   "nodeId": 565590109,
+   "people": 3.56
+  },
+  {
+   "nodeId": 565590167,
+   "people": 3.32
+  },
+  {
+   "nodeId": 565590177,
+   "people": 13.0
+  },
+  {
+   "nodeId": 565590234,
+   "people": 1.05
+  },
+  {
+   "nodeId": 565590241,
+   "people": 0.22
+  },
+  {
+   "nodeId": 565590268,
+   "people": 7.71
+  },
+  {
+   "nodeId": 565590270,
+   "people": 3.08
+  },
+  {
+   "nodeId": 565590321,
+   "people": 75.46
+  },
+  {
+   "nodeId": 565590456,
+   "people": 20.26
+  },
+  {
+   "nodeId": 565590459,
+   "people": 11.53
+  },
+  {
+   "nodeId": 566113039,
+   "people": 4.8
+  },
+  {
+   "nodeId": 566113075,
+   "people": 0.1
+  },
+  {
+   "nodeId": 566113088,
+   "people": 2.29
+  },
+  {
+   "nodeId": 566113169,
+   "people": 9.23
+  },
+  {
+   "nodeId": 566663716,
+   "people": 157.18
+  },
+  {
+   "nodeId": 566663717,
+   "people": 130.13
+  },
+  {
+   "nodeId": 566686455,
+   "people": 20.03
+  },
+  {
+   "nodeId": 566686506,
+   "people": 5.43
+  },
+  {
+   "nodeId": 566686542,
+   "people": 4.3
+  },
+  {
+   "nodeId": 566688119,
+   "people": 36.14
+  },
+  {
+   "nodeId": 566688135,
+   "people": 12.29
+  },
+  {
+   "nodeId": 566688139,
+   "people": 11.28
+  },
+  {
+   "nodeId": 566688171,
+   "people": 7.27
+  },
+  {
+   "nodeId": 566688172,
+   "people": 13.1
+  },
+  {
+   "nodeId": 566688182,
+   "people": 12.28
+  },
+  {
+   "nodeId": 566688192,
+   "people": 3.82
+  },
+  {
+   "nodeId": 566688232,
+   "people": 5.46
+  },
+  {
+   "nodeId": 566688303,
+   "people": 7.43
+  },
+  {
+   "nodeId": 575869005,
+   "people": 112.21
+  },
+  {
+   "nodeId": 575869044,
+   "people": 18.69
+  },
+  {
+   "nodeId": 576521440,
+   "people": 5.58
+  },
+  {
+   "nodeId": 576521476,
+   "people": 38.97
+  },
+  {
+   "nodeId": 576521478,
+   "people": 23.7
+  },
+  {
+   "nodeId": 576521485,
+   "people": 27.6
+  },
+  {
+   "nodeId": 576521519,
+   "people": 0.8
+  },
+  {
+   "nodeId": 576785621,
+   "people": 3.92
+  },
+  {
+   "nodeId": 576889859,
+   "people": 3.65
+  },
+  {
+   "nodeId": 576889871,
+   "people": 39.57
+  },
+  {
+   "nodeId": 576889873,
+   "people": 1.67
+  },
+  {
+   "nodeId": 576889876,
+   "people": 46.12
+  },
+  {
+   "nodeId": 576889878,
+   "people": 19.62
+  },
+  {
+   "nodeId": 597393639,
+   "people": 243.87
+  },
+  {
+   "nodeId": 597393642,
+   "people": 177.72
+  },
+  {
+   "nodeId": 597393644,
+   "people": 170.26
+  },
+  {
+   "nodeId": 597393645,
+   "people": 95.33
+  },
+  {
+   "nodeId": 597393651,
+   "people": 245.5
+  },
+  {
+   "nodeId": 597393656,
+   "people": 231.41
+  },
+  {
+   "nodeId": 597393661,
+   "people": 199.55
+  },
+  {
+   "nodeId": 597393667,
+   "people": 333.15
+  },
+  {
+   "nodeId": 603299183,
+   "people": 89.7
+  },
+  {
+   "nodeId": 653932522,
+   "people": 14.39
+  },
+  {
+   "nodeId": 653932530,
+   "people": 0.41
+  },
+  {
+   "nodeId": 736331436,
+   "people": 165.07
+  },
+  {
+   "nodeId": 736336856,
+   "people": 263.17
+  },
+  {
+   "nodeId": 736336857,
+   "people": 252.32
+  },
+  {
+   "nodeId": 863514015,
+   "people": 95.19
+  },
+  {
+   "nodeId": 863514073,
+   "people": 84.86
+  },
+  {
+   "nodeId": 863514102,
+   "people": 94.57
+  },
+  {
+   "nodeId": 1035446222,
+   "people": 6.95
+  },
+  {
+   "nodeId": 1035446366,
+   "people": 5.46
+  },
+  {
+   "nodeId": 1059244710,
+   "people": 14.73
+  },
+  {
+   "nodeId": 1059244833,
+   "people": 9.98
+  },
+  {
+   "nodeId": 1059715513,
+   "people": 2.32
+  },
+  {
+   "nodeId": 1125009357,
+   "people": 32.4
+  },
+  {
+   "nodeId": 1154524157,
+   "people": 6.27
+  },
+  {
+   "nodeId": 1154791603,
+   "people": 27.98
+  },
+  {
+   "nodeId": 1154792014,
+   "people": 15.88
+  },
+  {
+   "nodeId": 1154792104,
+   "people": 25.95
+  },
+  {
+   "nodeId": 1154792126,
+   "people": 9.44
+  },
+  {
+   "nodeId": 1154792265,
+   "people": 18.02
+  },
+  {
+   "nodeId": 1258331456,
+   "people": 34.75
+  },
+  {
+   "nodeId": 1258331522,
+   "people": 2.4
+  },
+  {
+   "nodeId": 1258331563,
+   "people": 12.65
+  },
+  {
+   "nodeId": 1258331566,
+   "people": 37.58
+  },
+  {
+   "nodeId": 1258331591,
+   "people": 16.73
+  },
+  {
+   "nodeId": 1328300984,
+   "people": 0.38
+  },
+  {
+   "nodeId": 1328628589,
+   "people": 92.22
+  },
+  {
+   "nodeId": 1328628619,
+   "people": 26.94
+  },
+  {
+   "nodeId": 1334394484,
+   "people": 28.64
+  },
+  {
+   "nodeId": 1365262238,
+   "people": 0.14
+  },
+  {
+   "nodeId": 1365262278,
+   "people": 2.63
+  },
+  {
+   "nodeId": 1562673154,
+   "people": 11.09
+  },
+  {
+   "nodeId": 1573981329,
+   "people": 0.69
+  },
+  {
+   "nodeId": 1576284489,
+   "people": 0.82
+  },
+  {
+   "nodeId": 1576284507,
+   "people": 34.91
+  },
+  {
+   "nodeId": 1576287639,
+   "people": 21.32
+  },
+  {
+   "nodeId": 1576292029,
+   "people": 111.75
+  },
+  {
+   "nodeId": 1602010271,
+   "people": 9.26
+  },
+  {
+   "nodeId": 1621473791,
+   "people": 12.16
+  },
+  {
+   "nodeId": 1621473979,
+   "people": 0.01
+  },
+  {
+   "nodeId": 1621474006,
+   "people": 4.42
+  },
+  {
+   "nodeId": 1621474226,
+   "people": 1.88
+  },
+  {
+   "nodeId": 1621474593,
+   "people": 5.42
+  },
+  {
+   "nodeId": 1621474731,
+   "people": 0.01
+  },
+  {
+   "nodeId": 1621474822,
+   "people": 5.06
+  },
+  {
+   "nodeId": 1621475500,
+   "people": 3.97
+  },
+  {
+   "nodeId": 1621475793,
+   "people": 0.46
+  },
+  {
+   "nodeId": 1623803843,
+   "people": 57.31
+  },
+  {
+   "nodeId": 1623803857,
+   "people": 35.16
+  },
+  {
+   "nodeId": 1623803861,
+   "people": 15.45
+  },
+  {
+   "nodeId": 1660670385,
+   "people": 143.87
+  },
+  {
+   "nodeId": 1663009659,
+   "people": 3.35
+  },
+  {
+   "nodeId": 1694521738,
+   "people": 61.73
+  },
+  {
+   "nodeId": 1694521758,
+   "people": 0.07
+  },
+  {
+   "nodeId": 1694521798,
+   "people": 7.47
+  },
+  {
+   "nodeId": 1761139534,
+   "people": 9.54
+  },
+  {
+   "nodeId": 1764351311,
+   "people": 16.49
+  },
+  {
+   "nodeId": 1764551203,
+   "people": 2.55
+  },
+  {
+   "nodeId": 1764573669,
+   "people": 118.74
+  },
+  {
+   "nodeId": 1774906209,
+   "people": 9.75
+  },
+  {
+   "nodeId": 1776614140,
+   "people": 36.99
+  },
+  {
+   "nodeId": 1776614143,
+   "people": 5.09
+  },
+  {
+   "nodeId": 1776614210,
+   "people": 47.27
+  },
+  {
+   "nodeId": 1776614233,
+   "people": 55.12
+  },
+  {
+   "nodeId": 1776614240,
+   "people": 2.53
+  },
+  {
+   "nodeId": 1776614254,
+   "people": 20.2
+  },
+  {
+   "nodeId": 1776614258,
+   "people": 201.96
+  },
+  {
+   "nodeId": 1776614787,
+   "people": 19.86
+  },
+  {
+   "nodeId": 1776634183,
+   "people": 21.24
+  },
+  {
+   "nodeId": 1776634218,
+   "people": 30.46
+  },
+  {
+   "nodeId": 1776634333,
+   "people": 94.22
+  },
+  {
+   "nodeId": 1776638480,
+   "people": 0.65
+  },
+  {
+   "nodeId": 1784929739,
+   "people": 94.2
+  },
+  {
+   "nodeId": 1784929860,
+   "people": 0.25
+  },
+  {
+   "nodeId": 1784929913,
+   "people": 5.0
+  },
+  {
+   "nodeId": 1784929962,
+   "people": 3.31
+  },
+  {
+   "nodeId": 1784949160,
+   "people": 0.22
+  },
+  {
+   "nodeId": 1798016766,
+   "people": 1.41
+  },
+  {
+   "nodeId": 1804862110,
+   "people": 0.33
+  },
+  {
+   "nodeId": 1825655626,
+   "people": 4.03
+  },
+  {
+   "nodeId": 1880615703,
+   "people": 26.02
+  },
+  {
+   "nodeId": 1885541678,
+   "people": 123.08
+  },
+  {
+   "nodeId": 1885541681,
+   "people": 108.72
+  },
+  {
+   "nodeId": 1885563288,
+   "people": 25.88
+  },
+  {
+   "nodeId": 1885563292,
+   "people": 112.7
+  },
+  {
+   "nodeId": 1887837942,
+   "people": 83.09
+  },
+  {
+   "nodeId": 1968780521,
+   "people": 247.9
+  },
+  {
+   "nodeId": 1968780525,
+   "people": 282.55
+  },
+  {
+   "nodeId": 1968780539,
+   "people": 220.72
+  },
+  {
+   "nodeId": 1968780546,
+   "people": 324.25
+  },
+  {
+   "nodeId": 1968780556,
+   "people": 368.64
+  },
+  {
+   "nodeId": 1969914471,
+   "people": 0.63
+  },
+  {
+   "nodeId": 1969914581,
+   "people": 118.9
+  },
+  {
+   "nodeId": 2172406003,
+   "people": 61.57
+  },
+  {
+   "nodeId": 2207557897,
+   "people": 0.38
+  },
+  {
+   "nodeId": 2225560853,
+   "people": 4.53
+  },
+  {
+   "nodeId": 2245190034,
+   "people": 0.05
+  },
+  {
+   "nodeId": 2245190043,
+   "people": 3.99
+  },
+  {
+   "nodeId": 2245190045,
+   "people": 15.02
+  },
+  {
+   "nodeId": 2245190052,
+   "people": 0.08
+  },
+  {
+   "nodeId": 2245190056,
+   "people": 2.0
+  },
+  {
+   "nodeId": 2245190086,
+   "people": 0.01
+  },
+  {
+   "nodeId": 2245190094,
+   "people": 1.98
+  },
+  {
+   "nodeId": 2245190104,
+   "people": 3.02
+  },
+  {
+   "nodeId": 2245190128,
+   "people": 4.09
+  },
+  {
+   "nodeId": 2245190155,
+   "people": 0.81
+  },
+  {
+   "nodeId": 2245190157,
+   "people": 9.53
+  },
+  {
+   "nodeId": 2245190162,
+   "people": 5.73
+  },
+  {
+   "nodeId": 2245190237,
+   "people": 24.17
+  },
+  {
+   "nodeId": 2256218662,
+   "people": 1.72
+  },
+  {
+   "nodeId": 2256218665,
+   "people": 42.87
+  },
+  {
+   "nodeId": 2256218688,
+   "people": 2.22
+  },
+  {
+   "nodeId": 2256218705,
+   "people": 12.25
+  },
+  {
+   "nodeId": 2256218733,
+   "people": 2.15
+  },
+  {
+   "nodeId": 2256218749,
+   "people": 17.03
+  },
+  {
+   "nodeId": 2256218764,
+   "people": 3.7
+  },
+  {
+   "nodeId": 2256218771,
+   "people": 3.06
+  },
+  {
+   "nodeId": 2256218819,
+   "people": 7.94
+  },
+  {
+   "nodeId": 2256218824,
+   "people": 33.21
+  },
+  {
+   "nodeId": 2256218841,
+   "people": 3.12
+  },
+  {
+   "nodeId": 2256218848,
+   "people": 6.0
+  },
+  {
+   "nodeId": 2256218863,
+   "people": 0.05
+  },
+  {
+   "nodeId": 2256218886,
+   "people": 0.08
+  },
+  {
+   "nodeId": 2256218924,
+   "people": 1.13
+  },
+  {
+   "nodeId": 2256218925,
+   "people": 6.29
+  },
+  {
+   "nodeId": 2256218930,
+   "people": 0.07
+  },
+  {
+   "nodeId": 2256218943,
+   "people": 4.15
+  },
+  {
+   "nodeId": 2256218981,
+   "people": 18.62
+  },
+  {
+   "nodeId": 2256219009,
+   "people": 9.72
+  },
+  {
+   "nodeId": 2256219023,
+   "people": 0.27
+  },
+  {
+   "nodeId": 2256219031,
+   "people": 3.75
+  },
+  {
+   "nodeId": 2265785038,
+   "people": 110.5
+  },
+  {
+   "nodeId": 2265785043,
+   "people": 2.42
+  },
+  {
+   "nodeId": 2270510570,
+   "people": 1.86
+  },
+  {
+   "nodeId": 2295928951,
+   "people": 0.41
+  },
+  {
+   "nodeId": 2300022373,
+   "people": 0.27
+  },
+  {
+   "nodeId": 2300032207,
+   "people": 18.07
+  },
+  {
+   "nodeId": 2300302490,
+   "people": 14.01
+  },
+  {
+   "nodeId": 2300302495,
+   "people": 26.33
+  },
+  {
+   "nodeId": 2300303360,
+   "people": 0.66
+  },
+  {
+   "nodeId": 2300303363,
+   "people": 6.43
+  },
+  {
+   "nodeId": 2331257828,
+   "people": 15.6
+  },
+  {
+   "nodeId": 2331257854,
+   "people": 0.18
+  },
+  {
+   "nodeId": 2394179953,
+   "people": 0.87
+  },
+  {
+   "nodeId": 2394179966,
+   "people": 0.49
+  },
+  {
+   "nodeId": 2394179968,
+   "people": 1.01
+  },
+  {
+   "nodeId": 2394179971,
+   "people": 0.62
+  },
+  {
+   "nodeId": 2394179977,
+   "people": 2.33
+  },
+  {
+   "nodeId": 2394179991,
+   "people": 21.51
+  },
+  {
+   "nodeId": 2394179996,
+   "people": 18.15
+  },
+  {
+   "nodeId": 2394180002,
+   "people": 32.08
+  },
+  {
+   "nodeId": 2394180016,
+   "people": 6.79
+  },
+  {
+   "nodeId": 2394180017,
+   "people": 11.23
+  },
+  {
+   "nodeId": 2394180027,
+   "people": 5.53
+  },
+  {
+   "nodeId": 2419903828,
+   "people": 83.8
+  },
+  {
+   "nodeId": 2419919986,
+   "people": 2.27
+  },
+  {
+   "nodeId": 2466453009,
+   "people": 5.75
+  },
+  {
+   "nodeId": 2466453024,
+   "people": 10.22
+  },
+  {
+   "nodeId": 2466453036,
+   "people": 24.0
+  },
+  {
+   "nodeId": 2466453084,
+   "people": 88.69
+  },
+  {
+   "nodeId": 2466453130,
+   "people": 31.79
+  },
+  {
+   "nodeId": 2466453133,
+   "people": 12.7
+  },
+  {
+   "nodeId": 2466453159,
+   "people": 15.47
+  },
+  {
+   "nodeId": 2466453170,
+   "people": 11.92
+  },
+  {
+   "nodeId": 2466453185,
+   "people": 25.67
+  },
+  {
+   "nodeId": 2466453190,
+   "people": 6.97
+  },
+  {
+   "nodeId": 2466453193,
+   "people": 1.19
+  },
+  {
+   "nodeId": 2466453208,
+   "people": 0.44
+  },
+  {
+   "nodeId": 2466453213,
+   "people": 27.81
+  },
+  {
+   "nodeId": 2477521754,
+   "people": 6.12
+  },
+  {
+   "nodeId": 2477521775,
+   "people": 5.12
+  },
+  {
+   "nodeId": 2501240043,
+   "people": 22.53
+  },
+  {
+   "nodeId": 2501240045,
+   "people": 38.17
+  },
+  {
+   "nodeId": 2501240073,
+   "people": 25.94
+  },
+  {
+   "nodeId": 2501240090,
+   "people": 33.53
+  },
+  {
+   "nodeId": 2501240144,
+   "people": 25.38
+  },
+  {
+   "nodeId": 2501240152,
+   "people": 26.57
+  },
+  {
+   "nodeId": 2501240161,
+   "people": 13.37
+  },
+  {
+   "nodeId": 2501240163,
+   "people": 9.88
+  },
+  {
+   "nodeId": 2509888347,
+   "people": 31.79
+  },
+  {
+   "nodeId": 2509888352,
+   "people": 7.55
+  },
+  {
+   "nodeId": 2509889919,
+   "people": 70.14
+  },
+  {
+   "nodeId": 2511812736,
+   "people": 17.87
+  },
+  {
+   "nodeId": 2550509579,
+   "people": 21.93
+  },
+  {
+   "nodeId": 2550560560,
+   "people": 159.05
+  },
+  {
+   "nodeId": 2550560589,
+   "people": 339.23
+  },
+  {
+   "nodeId": 2550816057,
+   "people": 12.13
+  },
+  {
+   "nodeId": 2550816059,
+   "people": 42.63
+  },
+  {
+   "nodeId": 2550816062,
+   "people": 3.7
+  },
+  {
+   "nodeId": 2550816109,
+   "people": 22.51
+  },
+  {
+   "nodeId": 2550816110,
+   "people": 6.34
+  },
+  {
+   "nodeId": 2550816136,
+   "people": 19.08
+  },
+  {
+   "nodeId": 2550816159,
+   "people": 7.4
+  },
+  {
+   "nodeId": 2550816255,
+   "people": 34.99
+  },
+  {
+   "nodeId": 2552470307,
+   "people": 50.63
+  },
+  {
+   "nodeId": 2552470308,
+   "people": 20.06
+  },
+  {
+   "nodeId": 2552477043,
+   "people": 24.18
+  },
+  {
+   "nodeId": 2561057815,
+   "people": 12.74
+  },
+  {
+   "nodeId": 2671581461,
+   "people": 0.51
+  },
+  {
+   "nodeId": 2671588581,
+   "people": 9.47
+  },
+  {
+   "nodeId": 2686983458,
+   "people": 68.85
+  },
+  {
+   "nodeId": 2687067240,
+   "people": 57.25
+  },
+  {
+   "nodeId": 2717143898,
+   "people": 200.05
+  },
+  {
+   "nodeId": 2929110081,
+   "people": 35.58
+  },
+  {
+   "nodeId": 2967533995,
+   "people": 151.02
+  },
+  {
+   "nodeId": 3036057004,
+   "people": 154.21
+  },
+  {
+   "nodeId": 3081366489,
+   "people": 202.04
+  },
+  {
+   "nodeId": 3081366491,
+   "people": 121.85
+  },
+  {
+   "nodeId": 3081367913,
+   "people": 14.94
+  },
+  {
+   "nodeId": 3081367916,
+   "people": 27.82
+  },
+  {
+   "nodeId": 3081367920,
+   "people": 0.49
+  },
+  {
+   "nodeId": 3081375477,
+   "people": 6.14
+  },
+  {
+   "nodeId": 3081381435,
+   "people": 37.07
+  },
+  {
+   "nodeId": 3105338118,
+   "people": 17.31
+  },
+  {
+   "nodeId": 3105343371,
+   "people": 15.41
+  },
+  {
+   "nodeId": 3105343379,
+   "people": 30.25
+  },
+  {
+   "nodeId": 3169234576,
+   "people": 0.78
+  },
+  {
+   "nodeId": 3169234592,
+   "people": 39.43
+  },
+  {
+   "nodeId": 3169234605,
+   "people": 3.99
+  },
+  {
+   "nodeId": 3169234606,
+   "people": 16.43
+  },
+  {
+   "nodeId": 3169234616,
+   "people": 10.88
+  },
+  {
+   "nodeId": 3169234627,
+   "people": 17.84
+  },
+  {
+   "nodeId": 3169234642,
+   "people": 17.14
+  },
+  {
+   "nodeId": 3169590939,
+   "people": 14.55
+  },
+  {
+   "nodeId": 3169590957,
+   "people": 45.3
+  },
+  {
+   "nodeId": 3169594464,
+   "people": 68.27
+  },
+  {
+   "nodeId": 3169594472,
+   "people": 19.2
+  },
+  {
+   "nodeId": 3226375810,
+   "people": 11.3
+  },
+  {
+   "nodeId": 3254964524,
+   "people": 22.82
+  },
+  {
+   "nodeId": 3254964531,
+   "people": 7.02
+  },
+  {
+   "nodeId": 3254964533,
+   "people": 1.97
+  },
+  {
+   "nodeId": 3254964543,
+   "people": 4.02
+  },
+  {
+   "nodeId": 3254964558,
+   "people": 3.38
+  },
+  {
+   "nodeId": 3254965175,
+   "people": 14.72
+  },
+  {
+   "nodeId": 3254965301,
+   "people": 22.91
+  },
+  {
+   "nodeId": 3392491765,
+   "people": 6.23
+  },
+  {
+   "nodeId": 3392491778,
+   "people": 46.34
+  },
+  {
+   "nodeId": 3482814634,
+   "people": 257.89
+  },
+  {
+   "nodeId": 3645190014,
+   "people": 142.46
+  },
+  {
+   "nodeId": 3645190019,
+   "people": 159.56
+  },
+  {
+   "nodeId": 3645190020,
+   "people": 5.72
+  },
+  {
+   "nodeId": 3871854512,
+   "people": 30.89
+  },
+  {
+   "nodeId": 3904962796,
+   "people": 11.76
+  },
+  {
+   "nodeId": 3905109559,
+   "people": 8.88
+  },
+  {
+   "nodeId": 3916110800,
+   "people": 28.04
+  },
+  {
+   "nodeId": 3918735394,
+   "people": 46.84
+  },
+  {
+   "nodeId": 3918735399,
+   "people": 56.69
+  },
+  {
+   "nodeId": 3918735402,
+   "people": 0.32
+  },
+  {
+   "nodeId": 3942546238,
+   "people": 81.11
+  },
+  {
+   "nodeId": 3942547164,
+   "people": 21.48
+  },
+  {
+   "nodeId": 3942547170,
+   "people": 38.57
+  },
+  {
+   "nodeId": 4000727031,
+   "people": 98.9
+  },
+  {
+   "nodeId": 4000769285,
+   "people": 6.03
+  },
+  {
+   "nodeId": 4000777690,
+   "people": 16.78
+  },
+  {
+   "nodeId": 4000777708,
+   "people": 1.82
+  },
+  {
+   "nodeId": 4000782867,
+   "people": 29.09
+  },
+  {
+   "nodeId": 4000782876,
+   "people": 5.28
+  },
+  {
+   "nodeId": 4000782887,
+   "people": 0.58
+  },
+  {
+   "nodeId": 4000782900,
+   "people": 18.39
+  },
+  {
+   "nodeId": 4000782901,
+   "people": 0.98
+  },
+  {
+   "nodeId": 4006950506,
+   "people": 85.74
+  },
+  {
+   "nodeId": 4006950509,
+   "people": 40.88
+  },
+  {
+   "nodeId": 4006950517,
+   "people": 34.74
+  },
+  {
+   "nodeId": 4006968635,
+   "people": 83.89
+  },
+  {
+   "nodeId": 4006974211,
+   "people": 37.01
+  },
+  {
+   "nodeId": 4007436096,
+   "people": 15.2
+  },
+  {
+   "nodeId": 4024045275,
+   "people": 0.65
+  },
+  {
+   "nodeId": 4191845657,
+   "people": 60.14
+  },
+  {
+   "nodeId": 4192895433,
+   "people": 3.03
+  },
+  {
+   "nodeId": 4194228504,
+   "people": 24.7
+  },
+  {
+   "nodeId": 4194228513,
+   "people": 26.37
+  },
+  {
+   "nodeId": 4195178112,
+   "people": 58.06
+  },
+  {
+   "nodeId": 4198423135,
+   "people": 4.64
+  },
+  {
+   "nodeId": 4198423137,
+   "people": 11.53
+  },
+  {
+   "nodeId": 4198423141,
+   "people": 7.24
+  },
+  {
+   "nodeId": 4198423151,
+   "people": 19.59
+  },
+  {
+   "nodeId": 4198423152,
+   "people": 0.05
+  },
+  {
+   "nodeId": 4198423156,
+   "people": 10.12
+  },
+  {
+   "nodeId": 4198423157,
+   "people": 39.25
+  },
+  {
+   "nodeId": 4198746231,
+   "people": 26.82
+  },
+  {
+   "nodeId": 4198746237,
+   "people": 6.71
+  },
+  {
+   "nodeId": 4205751611,
+   "people": 9.38
+  },
+  {
+   "nodeId": 4205751612,
+   "people": 0.48
+  },
+  {
+   "nodeId": 4210918736,
+   "people": 11.85
+  },
+  {
+   "nodeId": 4210918743,
+   "people": 71.28
+  },
+  {
+   "nodeId": 4210918747,
+   "people": 17.25
+  },
+  {
+   "nodeId": 4210918750,
+   "people": 22.4
+  },
+  {
+   "nodeId": 4210918760,
+   "people": 7.33
+  },
+  {
+   "nodeId": 4224005068,
+   "people": 290.64
+  },
+  {
+   "nodeId": 4224005074,
+   "people": 186.91
+  },
+  {
+   "nodeId": 4226755151,
+   "people": 2.81
+  },
+  {
+   "nodeId": 4226755238,
+   "people": 0.92
+  },
+  {
+   "nodeId": 4226755239,
+   "people": 2.52
+  },
+  {
+   "nodeId": 4226778882,
+   "people": 60.85
+  },
+  {
+   "nodeId": 4242527974,
+   "people": 41.9
+  },
+  {
+   "nodeId": 4242528404,
+   "people": 16.43
+  },
+  {
+   "nodeId": 4242528441,
+   "people": 2.51
+  },
+  {
+   "nodeId": 4243302608,
+   "people": 9.6
+  },
+  {
+   "nodeId": 4250025540,
+   "people": 6.74
+  },
+  {
+   "nodeId": 4250874384,
+   "people": 6.99
+  },
+  {
+   "nodeId": 4250874388,
+   "people": 2.74
+  },
+  {
+   "nodeId": 4250874398,
+   "people": 4.55
+  },
+  {
+   "nodeId": 4250874448,
+   "people": 13.25
+  },
+  {
+   "nodeId": 4250874455,
+   "people": 0.72
+  },
+  {
+   "nodeId": 4250874481,
+   "people": 2.64
+  },
+  {
+   "nodeId": 4250874592,
+   "people": 0.03
+  },
+  {
+   "nodeId": 4250874604,
+   "people": 1.66
+  },
+  {
+   "nodeId": 4250874812,
+   "people": 0.01
+  },
+  {
+   "nodeId": 4250874819,
+   "people": 35.6
+  },
+  {
+   "nodeId": 4250874824,
+   "people": 1.66
+  },
+  {
+   "nodeId": 4250874831,
+   "people": 6.73
+  },
+  {
+   "nodeId": 4250874839,
+   "people": 0.13
+  },
+  {
+   "nodeId": 4250874868,
+   "people": 3.57
+  },
+  {
+   "nodeId": 4250874871,
+   "people": 3.4
+  },
+  {
+   "nodeId": 4250874881,
+   "people": 23.63
+  },
+  {
+   "nodeId": 4250874889,
+   "people": 8.9
+  },
+  {
+   "nodeId": 4309812037,
+   "people": 70.63
+  },
+  {
+   "nodeId": 4419587835,
+   "people": 30.07
+  },
+  {
+   "nodeId": 4419596103,
+   "people": 13.72
+  },
+  {
+   "nodeId": 4464434554,
+   "people": 60.02
+  },
+  {
+   "nodeId": 4579183610,
+   "people": 0.07
+  },
+  {
+   "nodeId": 4579183665,
+   "people": 0.29
+  },
+  {
+   "nodeId": 4579183687,
+   "people": 26.13
+  },
+  {
+   "nodeId": 4579183863,
+   "people": 2.6
+  },
+  {
+   "nodeId": 4579184010,
+   "people": 0.02
+  },
+  {
+   "nodeId": 4579184012,
+   "people": 10.72
+  },
+  {
+   "nodeId": 4579184015,
+   "people": 4.56
+  },
+  {
+   "nodeId": 4581071405,
+   "people": 28.76
+  },
+  {
+   "nodeId": 4581077123,
+   "people": 29.05
+  },
+  {
+   "nodeId": 4634642347,
+   "people": 25.92
+  },
+  {
+   "nodeId": 4634642352,
+   "people": 59.51
+  },
+  {
+   "nodeId": 4634642360,
+   "people": 80.82
+  },
+  {
+   "nodeId": 4634730559,
+   "people": 1.25
+  },
+  {
+   "nodeId": 4668084785,
+   "people": 54.37
+  },
+  {
+   "nodeId": 4668089200,
+   "people": 6.99
+  },
+  {
+   "nodeId": 4668089221,
+   "people": 11.28
+  },
+  {
+   "nodeId": 4668089258,
+   "people": 39.2
+  },
+  {
+   "nodeId": 4668089264,
+   "people": 42.59
+  },
+  {
+   "nodeId": 4668089269,
+   "people": 42.18
+  },
+  {
+   "nodeId": 4668089277,
+   "people": 43.24
+  },
+  {
+   "nodeId": 4668089414,
+   "people": 23.81
+  },
+  {
+   "nodeId": 4668089420,
+   "people": 15.29
+  },
+  {
+   "nodeId": 4669262093,
+   "people": 23.51
+  },
+  {
+   "nodeId": 4669262159,
+   "people": 10.32
+  },
+  {
+   "nodeId": 4761291695,
+   "people": 117.95
+  },
+  {
+   "nodeId": 4761291697,
+   "people": 9.25
+  },
+  {
+   "nodeId": 4761291698,
+   "people": 0.01
+  },
+  {
+   "nodeId": 4761291706,
+   "people": 24.8
+  },
+  {
+   "nodeId": 4761291711,
+   "people": 36.48
+  },
+  {
+   "nodeId": 4761292225,
+   "people": 5.37
+  },
+  {
+   "nodeId": 4762217193,
+   "people": 5.76
+  },
+  {
+   "nodeId": 4762237664,
+   "people": 1.95
+  },
+  {
+   "nodeId": 4787199023,
+   "people": 8.89
+  },
+  {
+   "nodeId": 4800431864,
+   "people": 31.97
+  },
+  {
+   "nodeId": 4880811062,
+   "people": 2.85
+  },
+  {
+   "nodeId": 4881366605,
+   "people": 11.14
+  },
+  {
+   "nodeId": 4900719696,
+   "people": 5.98
+  },
+  {
+   "nodeId": 4900719700,
+   "people": 2.91
+  },
+  {
+   "nodeId": 5188547971,
+   "people": 37.66
+  },
+  {
+   "nodeId": 5188547972,
+   "people": 28.93
+  },
+  {
+   "nodeId": 5188547977,
+   "people": 7.38
+  },
+  {
+   "nodeId": 5188547978,
+   "people": 13.83
+  },
+  {
+   "nodeId": 5188547982,
+   "people": 28.76
+  },
+  {
+   "nodeId": 5188547992,
+   "people": 6.63
+  },
+  {
+   "nodeId": 5188547999,
+   "people": 5.77
+  },
+  {
+   "nodeId": 5188548000,
+   "people": 37.42
+  },
+  {
+   "nodeId": 5188548001,
+   "people": 48.31
+  },
+  {
+   "nodeId": 5188548006,
+   "people": 31.4
+  },
+  {
+   "nodeId": 5213950136,
+   "people": 58.13
+  },
+  {
+   "nodeId": 5214647058,
+   "people": 72.68
+  },
+  {
+   "nodeId": 5214647066,
+   "people": 104.65
+  },
+  {
+   "nodeId": 5214647077,
+   "people": 13.11
+  },
+  {
+   "nodeId": 5214647079,
+   "people": 39.72
+  },
+  {
+   "nodeId": 5216136150,
+   "people": 207.15
+  },
+  {
+   "nodeId": 5217858726,
+   "people": 58.82
+  },
+  {
+   "nodeId": 5219831906,
+   "people": 51.03
+  },
+  {
+   "nodeId": 5230831683,
+   "people": 26.74
+  },
+  {
+   "nodeId": 5351848550,
+   "people": 16.17
+  },
+  {
+   "nodeId": 5372336141,
+   "people": 58.5
+  },
+  {
+   "nodeId": 5372336163,
+   "people": 105.34
+  },
+  {
+   "nodeId": 5372336164,
+   "people": 69.86
+  },
+  {
+   "nodeId": 5379303817,
+   "people": 0.04
+  },
+  {
+   "nodeId": 5379484760,
+   "people": 1.13
+  },
+  {
+   "nodeId": 5387378181,
+   "people": 3.56
+  },
+  {
+   "nodeId": 5387378194,
+   "people": 35.42
+  },
+  {
+   "nodeId": 5387378202,
+   "people": 48.65
+  },
+  {
+   "nodeId": 5469615505,
+   "people": 32.32
+  },
+  {
+   "nodeId": 5469616657,
+   "people": 2.34
+  },
+  {
+   "nodeId": 5469616703,
+   "people": 34.22
+  },
+  {
+   "nodeId": 5469616753,
+   "people": 4.73
+  },
+  {
+   "nodeId": 5469616763,
+   "people": 2.53
+  },
+  {
+   "nodeId": 5469616803,
+   "people": 1.51
+  },
+  {
+   "nodeId": 5469616815,
+   "people": 0.62
+  },
+  {
+   "nodeId": 5469616822,
+   "people": 10.61
+  },
+  {
+   "nodeId": 5506296401,
+   "people": 0.06
+  },
+  {
+   "nodeId": 5506296402,
+   "people": 0.17
+  },
+  {
+   "nodeId": 5506425991,
+   "people": 2.31
+  },
+  {
+   "nodeId": 5506448858,
+   "people": 13.34
+  },
+  {
+   "nodeId": 5506514316,
+   "people": 21.39
+  },
+  {
+   "nodeId": 5753955253,
+   "people": 10.66
+  },
+  {
+   "nodeId": 5753955273,
+   "people": 12.07
+  },
+  {
+   "nodeId": 5762121179,
+   "people": 153.21
+  },
+  {
+   "nodeId": 5762164941,
+   "people": 184.58
+  },
+  {
+   "nodeId": 5762164945,
+   "people": 161.49
+  },
+  {
+   "nodeId": 5786712849,
+   "people": 15.16
+  },
+  {
+   "nodeId": 5786712850,
+   "people": 0.92
+  },
+  {
+   "nodeId": 5983791581,
+   "people": 7.72
+  },
+  {
+   "nodeId": 5983791582,
+   "people": 1.94
+  },
+  {
+   "nodeId": 5983816959,
+   "people": 0.88
+  },
+  {
+   "nodeId": 5983816961,
+   "people": 0.11
+  },
+  {
+   "nodeId": 5987208293,
+   "people": 98.6
+  },
+  {
+   "nodeId": 5987208294,
+   "people": 44.77
+  },
+  {
+   "nodeId": 5987208297,
+   "people": 228.01
+  },
+  {
+   "nodeId": 5991320894,
+   "people": 35.66
+  },
+  {
+   "nodeId": 5991320896,
+   "people": 167.06
+  },
+  {
+   "nodeId": 6107106673,
+   "people": 149.79
+  },
+  {
+   "nodeId": 6107665318,
+   "people": 265.95
+  },
+  {
+   "nodeId": 6109721288,
+   "people": 192.74
+  },
+  {
+   "nodeId": 6109721320,
+   "people": 98.44
+  },
+  {
+   "nodeId": 6110600569,
+   "people": 40.4
+  },
+  {
+   "nodeId": 6110801492,
+   "people": 19.24
+  },
+  {
+   "nodeId": 6110937766,
+   "people": 0.2
+  },
+  {
+   "nodeId": 6110937791,
+   "people": 0.15
+  },
+  {
+   "nodeId": 6110937968,
+   "people": 15.43
+  },
+  {
+   "nodeId": 6117101577,
+   "people": 263.75
+  },
+  {
+   "nodeId": 6153687018,
+   "people": 222.26
+  },
+  {
+   "nodeId": 6153687041,
+   "people": 9.73
+  },
+  {
+   "nodeId": 6153687067,
+   "people": 5.86
+  },
+  {
+   "nodeId": 6153689207,
+   "people": 2.51
+  },
+  {
+   "nodeId": 6153689259,
+   "people": 0.08
+  },
+  {
+   "nodeId": 6153689405,
+   "people": 3.63
+  },
+  {
+   "nodeId": 6153689454,
+   "people": 15.9
+  },
+  {
+   "nodeId": 6153689473,
+   "people": 0.23
+  },
+  {
+   "nodeId": 6158680588,
+   "people": 64.19
+  },
+  {
+   "nodeId": 6158988934,
+   "people": 57.33
+  },
+  {
+   "nodeId": 6240786742,
+   "people": 41.46
+  },
+  {
+   "nodeId": 6378267618,
+   "people": 66.54
+  },
+  {
+   "nodeId": 6414493941,
+   "people": 39.83
+  },
+  {
+   "nodeId": 6414493942,
+   "people": 26.39
+  },
+  {
+   "nodeId": 6424561248,
+   "people": 159.26
+  },
+  {
+   "nodeId": 6424561249,
+   "people": 48.89
+  },
+  {
+   "nodeId": 6424561251,
+   "people": 42.55
+  },
+  {
+   "nodeId": 6447414710,
+   "people": 23.48
+  },
+  {
+   "nodeId": 6448056744,
+   "people": 12.51
+  },
+  {
+   "nodeId": 6510694448,
+   "people": 51.5
+  },
+  {
+   "nodeId": 6510694449,
+   "people": 78.09
+  },
+  {
+   "nodeId": 6510694464,
+   "people": 275.18
+  },
+  {
+   "nodeId": 6511284576,
+   "people": 12.14
+  },
+  {
+   "nodeId": 6511286387,
+   "people": 33.32
+  },
+  {
+   "nodeId": 6511286388,
+   "people": 20.88
+  },
+  {
+   "nodeId": 6511286395,
+   "people": 42.23
+  },
+  {
+   "nodeId": 6511286397,
+   "people": 8.27
+  },
+  {
+   "nodeId": 6511286398,
+   "people": 46.39
+  },
+  {
+   "nodeId": 6511325565,
+   "people": 34.38
+  },
+  {
+   "nodeId": 6514937648,
+   "people": 1.3
+  },
+  {
+   "nodeId": 6514937649,
+   "people": 6.7
+  },
+  {
+   "nodeId": 6514937652,
+   "people": 0.95
+  },
+  {
+   "nodeId": 6535398253,
+   "people": 37.87
+  },
+  {
+   "nodeId": 6568970164,
+   "people": 1.61
+  },
+  {
+   "nodeId": 6716241071,
+   "people": 0.07
+  },
+  {
+   "nodeId": 6716278898,
+   "people": 5.06
+  },
+  {
+   "nodeId": 6716278902,
+   "people": 2.12
+  },
+  {
+   "nodeId": 6716278910,
+   "people": 0.3
+  },
+  {
+   "nodeId": 6716278913,
+   "people": 3.12
+  },
+  {
+   "nodeId": 6716278924,
+   "people": 1.87
+  },
+  {
+   "nodeId": 6716278942,
+   "people": 0.06
+  },
+  {
+   "nodeId": 6716278950,
+   "people": 3.52
+  },
+  {
+   "nodeId": 6716278969,
+   "people": 1.46
+  },
+  {
+   "nodeId": 6716278993,
+   "people": 4.78
+  },
+  {
+   "nodeId": 6716284902,
+   "people": 11.16
+  },
+  {
+   "nodeId": 6716284910,
+   "people": 0.85
+  },
+  {
+   "nodeId": 6716284911,
+   "people": 0.3
+  },
+  {
+   "nodeId": 6716301275,
+   "people": 1.66
+  },
+  {
+   "nodeId": 6716347086,
+   "people": 1.58
+  },
+  {
+   "nodeId": 6716347132,
+   "people": 0.07
+  },
+  {
+   "nodeId": 6716347133,
+   "people": 1.55
+  },
+  {
+   "nodeId": 6716347156,
+   "people": 3.76
+  },
+  {
+   "nodeId": 6716347220,
+   "people": 0.05
+  },
+  {
+   "nodeId": 6720033525,
+   "people": 38.04
+  },
+  {
+   "nodeId": 6720033529,
+   "people": 40.12
+  },
+  {
+   "nodeId": 6720065541,
+   "people": 14.68
+  },
+  {
+   "nodeId": 6720091738,
+   "people": 17.65
+  },
+  {
+   "nodeId": 6720091739,
+   "people": 4.55
+  },
+  {
+   "nodeId": 6720091745,
+   "people": 20.03
+  },
+  {
+   "nodeId": 6720091747,
+   "people": 12.82
+  },
+  {
+   "nodeId": 6720091750,
+   "people": 27.23
+  },
+  {
+   "nodeId": 6720091752,
+   "people": 15.87
+  },
+  {
+   "nodeId": 6750929951,
+   "people": 7.37
+  },
+  {
+   "nodeId": 6761918595,
+   "people": 61.99
+  },
+  {
+   "nodeId": 6761918602,
+   "people": 81.58
+  },
+  {
+   "nodeId": 6780686607,
+   "people": 61.01
+  },
+  {
+   "nodeId": 6781307250,
+   "people": 0.42
+  },
+  {
+   "nodeId": 6781307256,
+   "people": 0.18
+  },
+  {
+   "nodeId": 6817383230,
+   "people": 7.05
+  },
+  {
+   "nodeId": 6817383231,
+   "people": 17.38
+  },
+  {
+   "nodeId": 6827327175,
+   "people": 33.35
+  },
+  {
+   "nodeId": 6827335587,
+   "people": 47.69
+  },
+  {
+   "nodeId": 6827335632,
+   "people": 148.48
+  },
+  {
+   "nodeId": 6827335635,
+   "people": 39.87
+  },
+  {
+   "nodeId": 6830986230,
+   "people": 111.91
+  },
+  {
+   "nodeId": 6877123128,
+   "people": 7.82
+  },
+  {
+   "nodeId": 6888753503,
+   "people": 22.1
+  },
+  {
+   "nodeId": 6888753506,
+   "people": 34.9
+  },
+  {
+   "nodeId": 6905154024,
+   "people": 3.03
+  },
+  {
+   "nodeId": 7006854154,
+   "people": 50.41
+  },
+  {
+   "nodeId": 7019272053,
+   "people": 24.52
+  },
+  {
+   "nodeId": 7019272056,
+   "people": 4.54
+  },
+  {
+   "nodeId": 7019272079,
+   "people": 8.47
+  },
+  {
+   "nodeId": 7027053629,
+   "people": 319.25
+  },
+  {
+   "nodeId": 7027053683,
+   "people": 80.35
+  },
+  {
+   "nodeId": 7027057795,
+   "people": 161.22
+  },
+  {
+   "nodeId": 7027057809,
+   "people": 10.39
+  },
+  {
+   "nodeId": 7027164980,
+   "people": 53.46
+  },
+  {
+   "nodeId": 7027164982,
+   "people": 30.44
+  },
+  {
+   "nodeId": 7027176090,
+   "people": 2.69
+  },
+  {
+   "nodeId": 7045108746,
+   "people": 209.58
+  },
+  {
+   "nodeId": 7047840505,
+   "people": 219.55
+  },
+  {
+   "nodeId": 7047840511,
+   "people": 166.55
+  },
+  {
+   "nodeId": 7047840516,
+   "people": 59.77
+  },
+  {
+   "nodeId": 7047840618,
+   "people": 41.72
+  },
+  {
+   "nodeId": 7047840623,
+   "people": 30.62
+  },
+  {
+   "nodeId": 7047840724,
+   "people": 72.7
+  },
+  {
+   "nodeId": 7047840733,
+   "people": 64.71
+  },
+  {
+   "nodeId": 7047840777,
+   "people": 27.68
+  },
+  {
+   "nodeId": 7047840782,
+   "people": 46.71
+  },
+  {
+   "nodeId": 7047897515,
+   "people": 51.65
+  },
+  {
+   "nodeId": 7047897560,
+   "people": 24.46
+  },
+  {
+   "nodeId": 7047899798,
+   "people": 52.15
+  },
+  {
+   "nodeId": 7050478846,
+   "people": 23.39
+  },
+  {
+   "nodeId": 7053176985,
+   "people": 28.17
+  },
+  {
+   "nodeId": 7181101829,
+   "people": 70.02
+  },
+  {
+   "nodeId": 7296539366,
+   "people": 11.45
+  },
+  {
+   "nodeId": 7313759167,
+   "people": 2.52
+  },
+  {
+   "nodeId": 7313759170,
+   "people": 2.96
+  },
+  {
+   "nodeId": 7313788593,
+   "people": 2.99
+  },
+  {
+   "nodeId": 7313788609,
+   "people": 100.31
+  },
+  {
+   "nodeId": 7345423662,
+   "people": 16.41
+  },
+  {
+   "nodeId": 7345423664,
+   "people": 22.17
+  },
+  {
+   "nodeId": 7345423679,
+   "people": 56.91
+  },
+  {
+   "nodeId": 7480264929,
+   "people": 10.61
+  },
+  {
+   "nodeId": 7480264935,
+   "people": 0.05
+  },
+  {
+   "nodeId": 7663511786,
+   "people": 28.96
+  },
+  {
+   "nodeId": 7663511788,
+   "people": 55.53
+  },
+  {
+   "nodeId": 7663511802,
+   "people": 33.57
+  },
+  {
+   "nodeId": 7663511810,
+   "people": 5.17
+  },
+  {
+   "nodeId": 7663511821,
+   "people": 48.25
+  },
+  {
+   "nodeId": 7788002810,
+   "people": 44.28
+  },
+  {
+   "nodeId": 7788002811,
+   "people": 43.17
+  },
+  {
+   "nodeId": 7788002812,
+   "people": 1.59
+  },
+  {
+   "nodeId": 8066578576,
+   "people": 0.12
+  },
+  {
+   "nodeId": 8066585023,
+   "people": 1.76
+  },
+  {
+   "nodeId": 8085905523,
+   "people": 156.22
+  },
+  {
+   "nodeId": 8085905659,
+   "people": 36.52
+  },
+  {
+   "nodeId": 8085905670,
+   "people": 222.32
+  },
+  {
+   "nodeId": 8085905698,
+   "people": 55.43
+  },
+  {
+   "nodeId": 8085905737,
+   "people": 18.77
+  },
+  {
+   "nodeId": 8375571637,
+   "people": 0.41
+  },
+  {
+   "nodeId": 8435600025,
+   "people": 104.07
+  },
+  {
+   "nodeId": 8494691871,
+   "people": 3.73
+  },
+  {
+   "nodeId": 8494691882,
+   "people": 16.92
+  },
+  {
+   "nodeId": 8494691887,
+   "people": 1.24
+  },
+  {
+   "nodeId": 8545253253,
+   "people": 6.47
+  },
+  {
+   "nodeId": 8545385574,
+   "people": 3.21
+  },
+  {
+   "nodeId": 8545385585,
+   "people": 6.81
+  },
+  {
+   "nodeId": 8545385588,
+   "people": 7.7
+  },
+  {
+   "nodeId": 8909525163,
+   "people": 10.71
+  },
+  {
+   "nodeId": 8909525164,
+   "people": 15.24
+  },
+  {
+   "nodeId": 8913969673,
+   "people": 112.94
+  },
+  {
+   "nodeId": 8913969675,
+   "people": 117.01
+  },
+  {
+   "nodeId": 8914015253,
+   "people": 151.75
+  },
+  {
+   "nodeId": 8914365241,
+   "people": 3.02
+  },
+  {
+   "nodeId": 8914365251,
+   "people": 0.58
+  },
+  {
+   "nodeId": 8914365259,
+   "people": 0.06
+  },
+  {
+   "nodeId": 8921726748,
+   "people": 39.19
+  },
+  {
+   "nodeId": 8921726753,
+   "people": 68.29
+  },
+  {
+   "nodeId": 8933027361,
+   "people": 63.07
+  },
+  {
+   "nodeId": 8933027373,
+   "people": 64.59
+  },
+  {
+   "nodeId": 8933027394,
+   "people": 146.0
+  },
+  {
+   "nodeId": 8977367494,
+   "people": 20.7
+  },
+  {
+   "nodeId": 8977367500,
+   "people": 29.93
+  },
+  {
+   "nodeId": 8982647935,
+   "people": 46.23
+  },
+  {
+   "nodeId": 8982647940,
+   "people": 40.32
+  },
+  {
+   "nodeId": 9007598473,
+   "people": 1.82
+  },
+  {
+   "nodeId": 9007598480,
+   "people": 1.58
+  },
+  {
+   "nodeId": 9146779540,
+   "people": 80.98
+  },
+  {
+   "nodeId": 9146779563,
+   "people": 2.62
+  },
+  {
+   "nodeId": 9277533502,
+   "people": 149.53
+  },
+  {
+   "nodeId": 9277533513,
+   "people": 78.52
+  },
+  {
+   "nodeId": 9277538121,
+   "people": 97.61
+  },
+  {
+   "nodeId": 9277538124,
+   "people": 77.77
+  },
+  {
+   "nodeId": 9278042321,
+   "people": 61.07
+  },
+  {
+   "nodeId": 9278042330,
+   "people": 17.45
+  },
+  {
+   "nodeId": 9278042454,
+   "people": 72.02
+  },
+  {
+   "nodeId": 9278042456,
+   "people": 22.52
+  },
+  {
+   "nodeId": 9278127569,
+   "people": 58.82
+  },
+  {
+   "nodeId": 9278143790,
+   "people": 73.36
+  },
+  {
+   "nodeId": 9278143801,
+   "people": 56.88
+  },
+  {
+   "nodeId": 9278151674,
+   "people": 21.17
+  },
+  {
+   "nodeId": 9278151683,
+   "people": 49.93
+  },
+  {
+   "nodeId": 9278771763,
+   "people": 94.98
+  },
+  {
+   "nodeId": 9278777532,
+   "people": 39.26
+  },
+  {
+   "nodeId": 9278777782,
+   "people": 0.04
+  },
+  {
+   "nodeId": 9278777791,
+   "people": 119.43
+  },
+  {
+   "nodeId": 9278777796,
+   "people": 15.47
+  },
+  {
+   "nodeId": 9278777832,
+   "people": 82.24
+  },
+  {
+   "nodeId": 9280183881,
+   "people": 142.84
+  },
+  {
+   "nodeId": 9280296389,
+   "people": 40.29
+  },
+  {
+   "nodeId": 9280296390,
+   "people": 124.11
+  },
+  {
+   "nodeId": 9280650584,
+   "people": 39.12
+  },
+  {
+   "nodeId": 9280655747,
+   "people": 64.34
+  },
+  {
+   "nodeId": 9280655857,
+   "people": 68.61
+  },
+  {
+   "nodeId": 9280655867,
+   "people": 13.32
+  },
+  {
+   "nodeId": 9280655869,
+   "people": 19.2
+  },
+  {
+   "nodeId": 9280655909,
+   "people": 65.93
+  },
+  {
+   "nodeId": 9280980516,
+   "people": 26.85
+  },
+  {
+   "nodeId": 9282627074,
+   "people": 2.48
+  },
+  {
+   "nodeId": 9293267674,
+   "people": 197.23
+  },
+  {
+   "nodeId": 9452326382,
+   "people": 74.28
+  },
+  {
+   "nodeId": 9461618553,
+   "people": 0.15
+  },
+  {
+   "nodeId": 9487232239,
+   "people": 86.54
+  },
+  {
+   "nodeId": 9487247532,
+   "people": 39.04
+  },
+  {
+   "nodeId": 9487247569,
+   "people": 25.99
+  },
+  {
+   "nodeId": 9489355080,
+   "people": 199.28
+  },
+  {
+   "nodeId": 9544966613,
+   "people": 11.09
+  },
+  {
+   "nodeId": 9552031876,
+   "people": 31.04
+  },
+  {
+   "nodeId": 9552031879,
+   "people": 80.35
+  },
+  {
+   "nodeId": 9552031884,
+   "people": 133.37
+  },
+  {
+   "nodeId": 9552031910,
+   "people": 53.74
+  },
+  {
+   "nodeId": 9552067321,
+   "people": 75.75
+  },
+  {
+   "nodeId": 9560013978,
+   "people": 58.83
+  },
+  {
+   "nodeId": 9560013980,
+   "people": 132.16
+  },
+  {
+   "nodeId": 9560013984,
+   "people": 112.06
+  },
+  {
+   "nodeId": 9560013986,
+   "people": 86.69
+  },
+  {
+   "nodeId": 9654479989,
+   "people": 5.22
+  },
+  {
+   "nodeId": 9779962355,
+   "people": 64.02
+  },
+  {
+   "nodeId": 9779962358,
+   "people": 109.49
+  },
+  {
+   "nodeId": 9868459903,
+   "people": 2.21
+  },
+  {
+   "nodeId": 9912583554,
+   "people": 16.29
+  },
+  {
+   "nodeId": 9943815131,
+   "people": 31.52
+  },
+  {
+   "nodeId": 9943815133,
+   "people": 4.44
+  },
+  {
+   "nodeId": 9943815142,
+   "people": 35.96
+  },
+  {
+   "nodeId": 10013529365,
+   "people": 8.54
+  },
+  {
+   "nodeId": 10015003965,
+   "people": 35.81
+  },
+  {
+   "nodeId": 10033864403,
+   "people": 22.32
+  },
+  {
+   "nodeId": 10084977295,
+   "people": 2.82
+  },
+  {
+   "nodeId": 10084977296,
+   "people": 1.55
+  },
+  {
+   "nodeId": 10228856809,
+   "people": 76.07
+  },
+  {
+   "nodeId": 10228875569,
+   "people": 1.96
+  },
+  {
+   "nodeId": 10228886564,
+   "people": 12.63
+  },
+  {
+   "nodeId": 10229099433,
+   "people": 45.14
+  },
+  {
+   "nodeId": 10242238645,
+   "people": 221.91
+  },
+  {
+   "nodeId": 10247584380,
+   "people": 5.79
+  },
+  {
+   "nodeId": 10266455458,
+   "people": 65.63
+  },
+  {
+   "nodeId": 10290379417,
+   "people": 2.16
+  },
+  {
+   "nodeId": 10290379421,
+   "people": 0.47
+  },
+  {
+   "nodeId": 10311011833,
+   "people": 2.86
+  },
+  {
+   "nodeId": 10311011897,
+   "people": 15.37
+  },
+  {
+   "nodeId": 10311011911,
+   "people": 59.27
+  },
+  {
+   "nodeId": 10311011925,
+   "people": 20.59
+  },
+  {
+   "nodeId": 10311011977,
+   "people": 0.75
+  },
+  {
+   "nodeId": 10313848748,
+   "people": 1.29
+  },
+  {
+   "nodeId": 10313848749,
+   "people": 2.94
+  },
+  {
+   "nodeId": 10313848751,
+   "people": 13.84
+  },
+  {
+   "nodeId": 10313848755,
+   "people": 5.88
+  },
+  {
+   "nodeId": 10313864359,
+   "people": 3.32
+  },
+  {
+   "nodeId": 10313864363,
+   "people": 1.58
+  },
+  {
+   "nodeId": 10313878413,
+   "people": 1.58
+  },
+  {
+   "nodeId": 10313878419,
+   "people": 0.27
+  },
+  {
+   "nodeId": 10313887465,
+   "people": 1.04
+  },
+  {
+   "nodeId": 10314663117,
+   "people": 1.63
+  },
+  {
+   "nodeId": 10315011921,
+   "people": 3.37
+  },
+  {
+   "nodeId": 10315366848,
+   "people": 1.86
+  },
+  {
+   "nodeId": 10315366854,
+   "people": 4.68
+  },
+  {
+   "nodeId": 10315366876,
+   "people": 0.89
+  },
+  {
+   "nodeId": 10648565730,
+   "people": 16.99
+  },
+  {
+   "nodeId": 10648565747,
+   "people": 3.41
+  },
+  {
+   "nodeId": 10688343735,
+   "people": 35.32
+  },
+  {
+   "nodeId": 10688398321,
+   "people": 3.53
+  },
+  {
+   "nodeId": 10688706945,
+   "people": 146.75
+  },
+  {
+   "nodeId": 10696061428,
+   "people": 9.48
+  },
+  {
+   "nodeId": 10897538136,
+   "people": 0.39
+  },
+  {
+   "nodeId": 10897538164,
+   "people": 0.84
+  },
+  {
+   "nodeId": 10897585419,
+   "people": 0.26
+  },
+  {
+   "nodeId": 10897585498,
+   "people": 2.07
+  },
+  {
+   "nodeId": 11188881917,
+   "people": 19.12
+  },
+  {
+   "nodeId": 11331179347,
+   "people": 0.15
+  },
+  {
+   "nodeId": 11343657815,
+   "people": 143.77
+  },
+  {
+   "nodeId": 11351251134,
+   "people": 17.8
+  },
+  {
+   "nodeId": 11351279619,
+   "people": 2.44
+  },
+  {
+   "nodeId": 11351279631,
+   "people": 5.47
+  },
+  {
+   "nodeId": 11352302898,
+   "people": 0.05
+  },
+  {
+   "nodeId": 11352302899,
+   "people": 13.1
+  },
+  {
+   "nodeId": 11355913770,
+   "people": 32.63
+  },
+  {
+   "nodeId": 11357073598,
+   "people": 16.02
+  },
+  {
+   "nodeId": 11357073654,
+   "people": 8.0
+  },
+  {
+   "nodeId": 11362165636,
+   "people": 25.58
+  },
+  {
+   "nodeId": 11362603199,
+   "people": 6.04
+  },
+  {
+   "nodeId": 11362603238,
+   "people": 19.93
+  },
+  {
+   "nodeId": 11362603252,
+   "people": 0.39
+  },
+  {
+   "nodeId": 11362603255,
+   "people": 2.3
+  },
+  {
+   "nodeId": 11362692300,
+   "people": 4.85
+  },
+  {
+   "nodeId": 11362692359,
+   "people": 0.14
+  },
+  {
+   "nodeId": 11364540735,
+   "people": 1.59
+  },
+  {
+   "nodeId": 11364540780,
+   "people": 1.18
+  },
+  {
+   "nodeId": 11377835589,
+   "people": 64.49
+  },
+  {
+   "nodeId": 11384459399,
+   "people": 8.51
+  },
+  {
+   "nodeId": 11388459540,
+   "people": 12.71
+  },
+  {
+   "nodeId": 11394240123,
+   "people": 87.68
+  },
+  {
+   "nodeId": 11398075896,
+   "people": 10.01
+  },
+  {
+   "nodeId": 11398075953,
+   "people": 2.36
+  },
+  {
+   "nodeId": 11398075954,
+   "people": 11.94
+  },
+  {
+   "nodeId": 11400205490,
+   "people": 4.35
+  },
+  {
+   "nodeId": 11400205491,
+   "people": 0.3
+  },
+  {
+   "nodeId": 11400205515,
+   "people": 10.03
+  },
+  {
+   "nodeId": 11400205625,
+   "people": 14.26
+  },
+  {
+   "nodeId": 11400205787,
+   "people": 24.52
+  },
+  {
+   "nodeId": 11400205790,
+   "people": 0.39
+  },
+  {
+   "nodeId": 11400205793,
+   "people": 34.62
+  },
+  {
+   "nodeId": 11406166336,
+   "people": 0.73
+  },
+  {
+   "nodeId": 11406166350,
+   "people": 2.75
+  },
+  {
+   "nodeId": 11414818358,
+   "people": 7.36
+  },
+  {
+   "nodeId": 11414818359,
+   "people": 0.55
+  },
+  {
+   "nodeId": 11414818361,
+   "people": 0.55
+  },
+  {
+   "nodeId": 11414862470,
+   "people": 1.05
+  },
+  {
+   "nodeId": 11414862477,
+   "people": 0.89
+  },
+  {
+   "nodeId": 11414862481,
+   "people": 1.05
+  },
+  {
+   "nodeId": 11414862488,
+   "people": 0.15
+  },
+  {
+   "nodeId": 11414862495,
+   "people": 0.02
+  },
+  {
+   "nodeId": 11414862497,
+   "people": 0.05
+  },
+  {
+   "nodeId": 11414862499,
+   "people": 0.18
+  },
+  {
+   "nodeId": 11414862503,
+   "people": 0.83
+  },
+  {
+   "nodeId": 11414862505,
+   "people": 0.01
+  },
+  {
+   "nodeId": 11414862529,
+   "people": 2.4
+  },
+  {
+   "nodeId": 11414862533,
+   "people": 0.1
+  },
+  {
+   "nodeId": 11414862548,
+   "people": 2.67
+  },
+  {
+   "nodeId": 11416877718,
+   "people": 0.59
+  },
+  {
+   "nodeId": 11417834934,
+   "people": 11.05
+  },
+  {
+   "nodeId": 11417834937,
+   "people": 1.56
+  },
+  {
+   "nodeId": 11417834955,
+   "people": 4.04
+  },
+  {
+   "nodeId": 11420992692,
+   "people": 3.62
+  },
+  {
+   "nodeId": 11425401258,
+   "people": 5.85
+  },
+  {
+   "nodeId": 11426658618,
+   "people": 6.17
+  },
+  {
+   "nodeId": 11432185083,
+   "people": 3.07
+  },
+  {
+   "nodeId": 11432185175,
+   "people": 1.58
+  },
+  {
+   "nodeId": 11432185415,
+   "people": 4.83
+  },
+  {
+   "nodeId": 11432185433,
+   "people": 2.65
+  },
+  {
+   "nodeId": 11432841501,
+   "people": 4.53
+  },
+  {
+   "nodeId": 11432841619,
+   "people": 14.9
+  },
+  {
+   "nodeId": 11435338051,
+   "people": 67.24
+  },
+  {
+   "nodeId": 11435340193,
+   "people": 72.13
+  },
+  {
+   "nodeId": 11435340237,
+   "people": 33.9
+  },
+  {
+   "nodeId": 11435340243,
+   "people": 2.93
+  },
+  {
+   "nodeId": 11435340255,
+   "people": 32.25
+  },
+  {
+   "nodeId": 11435340300,
+   "people": 39.64
+  },
+  {
+   "nodeId": 11435340332,
+   "people": 1.54
+  },
+  {
+   "nodeId": 11435340350,
+   "people": 71.84
+  },
+  {
+   "nodeId": 11435340392,
+   "people": 7.01
+  },
+  {
+   "nodeId": 11435340407,
+   "people": 33.58
+  },
+  {
+   "nodeId": 11435340428,
+   "people": 3.92
+  },
+  {
+   "nodeId": 11435340487,
+   "people": 9.06
+  },
+  {
+   "nodeId": 11435513038,
+   "people": 73.24
+  },
+  {
+   "nodeId": 11435539069,
+   "people": 103.41
+  },
+  {
+   "nodeId": 11435539130,
+   "people": 63.14
+  },
+  {
+   "nodeId": 11435539176,
+   "people": 144.78
+  },
+  {
+   "nodeId": 11435570687,
+   "people": 91.76
+  },
+  {
+   "nodeId": 11443766381,
+   "people": 46.17
+  },
+  {
+   "nodeId": 11443766394,
+   "people": 48.26
+  },
+  {
+   "nodeId": 11443766492,
+   "people": 40.42
+  },
+  {
+   "nodeId": 11443766515,
+   "people": 82.98
+  },
+  {
+   "nodeId": 11443786656,
+   "people": 36.47
+  },
+  {
+   "nodeId": 11443793774,
+   "people": 58.03
+  },
+  {
+   "nodeId": 11449720416,
+   "people": 12.04
+  },
+  {
+   "nodeId": 11449720433,
+   "people": 17.45
+  },
+  {
+   "nodeId": 11449720439,
+   "people": 66.12
+  },
+  {
+   "nodeId": 11521246743,
+   "people": 23.98
+  },
+  {
+   "nodeId": 11521246744,
+   "people": 8.56
+  },
+  {
+   "nodeId": 11521246746,
+   "people": 1.13
+  },
+  {
+   "nodeId": 11581630186,
+   "people": 1.53
+  },
+  {
+   "nodeId": 11581630191,
+   "people": 17.65
+  },
+  {
+   "nodeId": 11581630197,
+   "people": 1.33
+  },
+  {
+   "nodeId": 11581658884,
+   "people": 97.95
+  },
+  {
+   "nodeId": 11581658887,
+   "people": 36.46
+  },
+  {
+   "nodeId": 11581658900,
+   "people": 5.02
+  },
+  {
+   "nodeId": 11582635512,
+   "people": 69.0
+  },
+  {
+   "nodeId": 11584556678,
+   "people": 21.09
+  },
+  {
+   "nodeId": 11584556760,
+   "people": 30.85
+  },
+  {
+   "nodeId": 11585459992,
+   "people": 9.14
+  },
+  {
+   "nodeId": 11585459994,
+   "people": 47.72
+  },
+  {
+   "nodeId": 11585460006,
+   "people": 14.48
+  },
+  {
+   "nodeId": 11585460014,
+   "people": 36.0
+  },
+  {
+   "nodeId": 11585460025,
+   "people": 51.77
+  },
+  {
+   "nodeId": 11585460029,
+   "people": 15.14
+  },
+  {
+   "nodeId": 11585460033,
+   "people": 38.59
+  },
+  {
+   "nodeId": 11585460052,
+   "people": 26.56
+  },
+  {
+   "nodeId": 11585460057,
+   "people": 19.29
+  },
+  {
+   "nodeId": 11585460062,
+   "people": 38.16
+  },
+  {
+   "nodeId": 11585460090,
+   "people": 42.07
+  },
+  {
+   "nodeId": 11585460101,
+   "people": 19.64
+  },
+  {
+   "nodeId": 11585460105,
+   "people": 29.09
+  },
+  {
+   "nodeId": 11585460122,
+   "people": 4.36
+  },
+  {
+   "nodeId": 11592793991,
+   "people": 7.75
+  },
+  {
+   "nodeId": 11592793999,
+   "people": 9.75
+  },
+  {
+   "nodeId": 11592794037,
+   "people": 40.16
+  },
+  {
+   "nodeId": 11592794038,
+   "people": 20.22
+  },
+  {
+   "nodeId": 11592794056,
+   "people": 19.76
+  },
+  {
+   "nodeId": 11592794082,
+   "people": 31.58
+  },
+  {
+   "nodeId": 11592794103,
+   "people": 15.0
+  },
+  {
+   "nodeId": 11592794115,
+   "people": 11.83
+  },
+  {
+   "nodeId": 11592794126,
+   "people": 13.57
+  },
+  {
+   "nodeId": 11592794144,
+   "people": 37.4
+  },
+  {
+   "nodeId": 11595146569,
+   "people": 5.34
+  },
+  {
+   "nodeId": 11595146644,
+   "people": 43.39
+  },
+  {
+   "nodeId": 11595146672,
+   "people": 11.15
+  },
+  {
+   "nodeId": 11595146695,
+   "people": 35.5
+  },
+  {
+   "nodeId": 11597810774,
+   "people": 50.32
+  },
+  {
+   "nodeId": 11597810803,
+   "people": 21.84
+  },
+  {
+   "nodeId": 11599143466,
+   "people": 20.71
+  },
+  {
+   "nodeId": 11599152708,
+   "people": 8.15
+  },
+  {
+   "nodeId": 11599152788,
+   "people": 38.07
+  },
+  {
+   "nodeId": 11599152810,
+   "people": 32.84
+  },
+  {
+   "nodeId": 11603533484,
+   "people": 54.44
+  },
+  {
+   "nodeId": 11603533523,
+   "people": 60.58
+  },
+  {
+   "nodeId": 11603612083,
+   "people": 26.36
+  },
+  {
+   "nodeId": 11607917174,
+   "people": 4.85
+  },
+  {
+   "nodeId": 11607917176,
+   "people": 1.52
+  },
+  {
+   "nodeId": 11607929152,
+   "people": 4.12
+  },
+  {
+   "nodeId": 11616264605,
+   "people": 8.61
+  },
+  {
+   "nodeId": 11616264657,
+   "people": 19.14
+  },
+  {
+   "nodeId": 11616264730,
+   "people": 24.14
+  },
+  {
+   "nodeId": 11618748655,
+   "people": 104.31
+  },
+  {
+   "nodeId": 11618764191,
+   "people": 111.69
+  },
+  {
+   "nodeId": 11618764201,
+   "people": 76.03
+  },
+  {
+   "nodeId": 11618846996,
+   "people": 142.04
+  },
+  {
+   "nodeId": 11627306223,
+   "people": 53.81
+  },
+  {
+   "nodeId": 11627306778,
+   "people": 33.75
+  },
+  {
+   "nodeId": 11630538746,
+   "people": 83.69
+  },
+  {
+   "nodeId": 11630570680,
+   "people": 17.87
+  },
+  {
+   "nodeId": 11630570709,
+   "people": 156.4
+  },
+  {
+   "nodeId": 11630570781,
+   "people": 159.04
+  },
+  {
+   "nodeId": 11630570785,
+   "people": 73.04
+  },
+  {
+   "nodeId": 11631721164,
+   "people": 18.26
+  },
+  {
+   "nodeId": 11631777891,
+   "people": 18.1
+  },
+  {
+   "nodeId": 11634876699,
+   "people": 170.37
+  },
+  {
+   "nodeId": 11634876756,
+   "people": 120.36
+  },
+  {
+   "nodeId": 11634876790,
+   "people": 208.05
+  },
+  {
+   "nodeId": 11634876816,
+   "people": 201.05
+  },
+  {
+   "nodeId": 11634876830,
+   "people": 175.56
+  },
+  {
+   "nodeId": 11634955882,
+   "people": 160.8
+  },
+  {
+   "nodeId": 11638727837,
+   "people": 67.23
+  },
+  {
+   "nodeId": 11638727858,
+   "people": 135.78
+  },
+  {
+   "nodeId": 11638742983,
+   "people": 76.24
+  },
+  {
+   "nodeId": 11638743096,
+   "people": 89.48
+  },
+  {
+   "nodeId": 11638743099,
+   "people": 80.13
+  },
+  {
+   "nodeId": 11646569910,
+   "people": 200.05
+  },
+  {
+   "nodeId": 11653117218,
+   "people": 172.75
+  },
+  {
+   "nodeId": 11653117322,
+   "people": 114.89
+  },
+  {
+   "nodeId": 11656129598,
+   "people": 6.11
+  },
+  {
+   "nodeId": 11657922317,
+   "people": 1.17
+  },
+  {
+   "nodeId": 11657922318,
+   "people": 0.07
+  },
+  {
+   "nodeId": 11657922319,
+   "people": 0.04
+  },
+  {
+   "nodeId": 11659477595,
+   "people": 26.99
+  },
+  {
+   "nodeId": 11659477793,
+   "people": 79.53
+  },
+  {
+   "nodeId": 11659561468,
+   "people": 25.04
+  },
+  {
+   "nodeId": 11660065565,
+   "people": 17.77
+  },
+  {
+   "nodeId": 11663101167,
+   "people": 179.49
+  },
+  {
+   "nodeId": 11677751467,
+   "people": 29.4
+  },
+  {
+   "nodeId": 11708587640,
+   "people": 8.65
+  },
+  {
+   "nodeId": 11708587648,
+   "people": 65.89
+  },
+  {
+   "nodeId": 11708587650,
+   "people": 104.51
+  },
+  {
+   "nodeId": 11748340992,
+   "people": 123.48
+  },
+  {
+   "nodeId": 11883160713,
+   "people": 2.79
+  },
+  {
+   "nodeId": 11883160724,
+   "people": 1.08
+  },
+  {
+   "nodeId": 11883160730,
+   "people": 1.42
+  },
+  {
+   "nodeId": 11883160731,
+   "people": 5.85
+  },
+  {
+   "nodeId": 11883160742,
+   "people": 4.26
+  },
+  {
+   "nodeId": 11883160743,
+   "people": 2.71
+  },
+  {
+   "nodeId": 11883160744,
+   "people": 1.64
+  },
+  {
+   "nodeId": 11883160753,
+   "people": 2.43
+  },
+  {
+   "nodeId": 11883160760,
+   "people": 5.34
+  },
+  {
+   "nodeId": 11883160764,
+   "people": 32.28
+  },
+  {
+   "nodeId": 11883160767,
+   "people": 1.14
+  },
+  {
+   "nodeId": 11883169672,
+   "people": 5.12
+  },
+  {
+   "nodeId": 11883169680,
+   "people": 0.59
+  },
+  {
+   "nodeId": 11883169682,
+   "people": 4.75
+  },
+  {
+   "nodeId": 11918911625,
+   "people": 78.1
+  },
+  {
+   "nodeId": 11918911629,
+   "people": 20.29
+  },
+  {
+   "nodeId": 11918911638,
+   "people": 51.23
+  },
+  {
+   "nodeId": 11918911641,
+   "people": 56.67
+  },
+  {
+   "nodeId": 11918911653,
+   "people": 12.72
+  },
+  {
+   "nodeId": 11918933118,
+   "people": 7.97
+  },
+  {
+   "nodeId": 11922088329,
+   "people": 3.41
+  },
+  {
+   "nodeId": 11922088346,
+   "people": 2.16
+  },
+  {
+   "nodeId": 11982720132,
+   "people": 64.08
+  },
+  {
+   "nodeId": 11992185317,
+   "people": 19.78
+  },
+  {
+   "nodeId": 11992185322,
+   "people": 42.7
+  },
+  {
+   "nodeId": 11992185329,
+   "people": 40.78
+  },
+  {
+   "nodeId": 11992185341,
+   "people": 22.94
+  },
+  {
+   "nodeId": 12026648697,
+   "people": 6.72
+  },
+  {
+   "nodeId": 12033867433,
+   "people": 8.33
+  },
+  {
+   "nodeId": 12084990808,
+   "people": 18.83
+  },
+  {
+   "nodeId": 12084990812,
+   "people": 1.35
+  },
+  {
+   "nodeId": 12084990816,
+   "people": 0.28
+  },
+  {
+   "nodeId": 12084990838,
+   "people": 6.58
+  },
+  {
+   "nodeId": 12098982552,
+   "people": 117.98
+  },
+  {
+   "nodeId": 12099028409,
+   "people": 98.03
+  },
+  {
+   "nodeId": 12100419642,
+   "people": 3.1
+  },
+  {
+   "nodeId": 12100419643,
+   "people": 0.63
+  },
+  {
+   "nodeId": 12100846387,
+   "people": 96.92
+  },
+  {
+   "nodeId": 12100892060,
+   "people": 76.39
+  },
+  {
+   "nodeId": 12100938514,
+   "people": 72.88
+  },
+  {
+   "nodeId": 12101086943,
+   "people": 53.49
+  },
+  {
+   "nodeId": 12120174893,
+   "people": 0.8
+  },
+  {
+   "nodeId": 12120204101,
+   "people": 8.59
+  },
+  {
+   "nodeId": 12150219415,
+   "people": 0.59
+  },
+  {
+   "nodeId": 12150227996,
+   "people": 9.5
+  },
+  {
+   "nodeId": 12150236601,
+   "people": 33.06
+  },
+  {
+   "nodeId": 12154162727,
+   "people": 192.32
+  },
+  {
+   "nodeId": 12159918073,
+   "people": 12.43
+  },
+  {
+   "nodeId": 12159922119,
+   "people": 89.86
+  },
+  {
+   "nodeId": 12165704341,
+   "people": 0.05
+  },
+  {
+   "nodeId": 12174830243,
+   "people": 1.11
+  },
+  {
+   "nodeId": 12176315384,
+   "people": 1.14
+  },
+  {
+   "nodeId": 12180830255,
+   "people": 8.28
+  },
+  {
+   "nodeId": 12187035307,
+   "people": 216.39
+  },
+  {
+   "nodeId": 12190696621,
+   "people": 1.16
+  },
+  {
+   "nodeId": 12199252537,
+   "people": 0.9
+  },
+  {
+   "nodeId": 12216682849,
+   "people": 18.56
+  },
+  {
+   "nodeId": 12216682854,
+   "people": 0.82
+  },
+  {
+   "nodeId": 12250536020,
+   "people": 32.16
+  },
+  {
+   "nodeId": 12291829063,
+   "people": 4.18
+  },
+  {
+   "nodeId": 12304054630,
+   "people": 163.11
+  },
+  {
+   "nodeId": 12304612510,
+   "people": 3.09
+  },
+  {
+   "nodeId": 12304649632,
+   "people": 9.09
+  },
+  {
+   "nodeId": 12304649633,
+   "people": 1.69
+  },
+  {
+   "nodeId": 12304649643,
+   "people": 17.69
+  },
+  {
+   "nodeId": 12304783604,
+   "people": 97.26
+  },
+  {
+   "nodeId": 12304783607,
+   "people": 42.51
+  },
+  {
+   "nodeId": 12304783611,
+   "people": 68.65
+  },
+  {
+   "nodeId": 12304858412,
+   "people": 25.93
+  },
+  {
+   "nodeId": 12304931822,
+   "people": 5.8
+  },
+  {
+   "nodeId": 12304931832,
+   "people": 2.83
+  },
+  {
+   "nodeId": 12304942524,
+   "people": 6.32
+  },
+  {
+   "nodeId": 12304942525,
+   "people": 56.54
+  },
+  {
+   "nodeId": 12304965666,
+   "people": 11.28
+  },
+  {
+   "nodeId": 12305244818,
+   "people": 18.18
+  },
+  {
+   "nodeId": 12305247114,
+   "people": 156.94
+  },
+  {
+   "nodeId": 12305247167,
+   "people": 28.05
+  },
+  {
+   "nodeId": 12305483872,
+   "people": 119.78
+  },
+  {
+   "nodeId": 12305483881,
+   "people": 137.87
+  },
+  {
+   "nodeId": 12305483887,
+   "people": 63.68
+  },
+  {
+   "nodeId": 12305542255,
+   "people": 9.58
+  },
+  {
+   "nodeId": 12305694216,
+   "people": 8.76
+  },
+  {
+   "nodeId": 12305694220,
+   "people": 8.58
+  },
+  {
+   "nodeId": 12305694590,
+   "people": 102.63
+  },
+  {
+   "nodeId": 12305702893,
+   "people": 3.61
+  },
+  {
+   "nodeId": 12305702899,
+   "people": 3.59
+  },
+  {
+   "nodeId": 12305703828,
+   "people": 58.62
+  },
+  {
+   "nodeId": 12305717349,
+   "people": 4.37
+  },
+  {
+   "nodeId": 12305717360,
+   "people": 0.65
+  },
+  {
+   "nodeId": 12305894076,
+   "people": 0.18
+  },
+  {
+   "nodeId": 12305894079,
+   "people": 16.85
+  },
+  {
+   "nodeId": 12305894222,
+   "people": 63.11
+  },
+  {
+   "nodeId": 12305980375,
+   "people": 90.88
+  },
+  {
+   "nodeId": 12305980378,
+   "people": 16.18
+  },
+  {
+   "nodeId": 12305980380,
+   "people": 4.2
+  },
+  {
+   "nodeId": 12305981252,
+   "people": 0.97
+  },
+  {
+   "nodeId": 12305981257,
+   "people": 8.42
+  },
+  {
+   "nodeId": 12305983505,
+   "people": 19.88
+  },
+  {
+   "nodeId": 12305992961,
+   "people": 44.91
+  },
+  {
+   "nodeId": 12305992966,
+   "people": 14.0
+  },
+  {
+   "nodeId": 12305992978,
+   "people": 9.23
+  },
+  {
+   "nodeId": 12305992979,
+   "people": 0.02
+  },
+  {
+   "nodeId": 12305997546,
+   "people": 7.12
+  },
+  {
+   "nodeId": 12305997548,
+   "people": 63.2
+  },
+  {
+   "nodeId": 12305997551,
+   "people": 0.82
+  },
+  {
+   "nodeId": 12305997553,
+   "people": 0.32
+  },
+  {
+   "nodeId": 12306007439,
+   "people": 28.57
+  },
+  {
+   "nodeId": 12306007443,
+   "people": 13.74
+  },
+  {
+   "nodeId": 12306479578,
+   "people": 66.45
+  },
+  {
+   "nodeId": 12306480093,
+   "people": 26.69
+  },
+  {
+   "nodeId": 12306480098,
+   "people": 15.93
+  },
+  {
+   "nodeId": 12306480111,
+   "people": 19.66
+  },
+  {
+   "nodeId": 12306480117,
+   "people": 4.99
+  },
+  {
+   "nodeId": 12306480122,
+   "people": 7.03
+  },
+  {
+   "nodeId": 12306480139,
+   "people": 40.5
+  },
+  {
+   "nodeId": 12306480151,
+   "people": 7.94
+  },
+  {
+   "nodeId": 12306480153,
+   "people": 17.45
+  },
+  {
+   "nodeId": 12306480155,
+   "people": 21.79
+  },
+  {
+   "nodeId": 12306480163,
+   "people": 21.92
+  },
+  {
+   "nodeId": 12306480172,
+   "people": 5.31
+  },
+  {
+   "nodeId": 12306480204,
+   "people": 0.94
+  },
+  {
+   "nodeId": 12306480208,
+   "people": 15.09
+  },
+  {
+   "nodeId": 12306480217,
+   "people": 1.43
+  },
+  {
+   "nodeId": 12306480219,
+   "people": 23.27
+  },
+  {
+   "nodeId": 12306480222,
+   "people": 20.3
+  },
+  {
+   "nodeId": 12306480225,
+   "people": 24.3
+  },
+  {
+   "nodeId": 12306709991,
+   "people": 0.42
+  },
+  {
+   "nodeId": 12306711882,
+   "people": 4.72
+  },
+  {
+   "nodeId": 12306762166,
+   "people": 9.91
+  },
+  {
+   "nodeId": 12306783328,
+   "people": 3.8
+  },
+  {
+   "nodeId": 12306857695,
+   "people": 9.63
+  },
+  {
+   "nodeId": 12306860969,
+   "people": 15.39
+  },
+  {
+   "nodeId": 12306860988,
+   "people": 11.65
+  },
+  {
+   "nodeId": 12306862611,
+   "people": 3.8
+  },
+  {
+   "nodeId": 12306862713,
+   "people": 3.63
+  },
+  {
+   "nodeId": 12306862715,
+   "people": 0.74
+  },
+  {
+   "nodeId": 12306873933,
+   "people": 13.22
+  },
+  {
+   "nodeId": 12306873935,
+   "people": 0.22
+  },
+  {
+   "nodeId": 12306873948,
+   "people": 7.5
+  },
+  {
+   "nodeId": 12306873949,
+   "people": 6.44
+  },
+  {
+   "nodeId": 12306873957,
+   "people": 0.07
+  },
+  {
+   "nodeId": 12306873972,
+   "people": 28.23
+  },
+  {
+   "nodeId": 12306877973,
+   "people": 0.5
+  },
+  {
+   "nodeId": 12306877975,
+   "people": 5.96
+  },
+  {
+   "nodeId": 12306877976,
+   "people": 3.41
+  },
+  {
+   "nodeId": 12306880051,
+   "people": 1.31
+  },
+  {
+   "nodeId": 12306880100,
+   "people": 1.26
+  },
+  {
+   "nodeId": 12306880102,
+   "people": 26.22
+  },
+  {
+   "nodeId": 12306882605,
+   "people": 0.22
+  },
+  {
+   "nodeId": 12306883079,
+   "people": 15.24
+  },
+  {
+   "nodeId": 12306885442,
+   "people": 5.13
+  },
+  {
+   "nodeId": 12306885456,
+   "people": 8.4
+  },
+  {
+   "nodeId": 12306887248,
+   "people": 0.47
+  },
+  {
+   "nodeId": 12306887259,
+   "people": 9.93
+  },
+  {
+   "nodeId": 12306887265,
+   "people": 5.01
+  },
+  {
+   "nodeId": 12306894638,
+   "people": 7.3
+  },
+  {
+   "nodeId": 12306894643,
+   "people": 17.86
+  },
+  {
+   "nodeId": 12306898093,
+   "people": 3.87
+  },
+  {
+   "nodeId": 12306899470,
+   "people": 0.14
+  },
+  {
+   "nodeId": 12306900287,
+   "people": 15.96
+  },
+  {
+   "nodeId": 12306900288,
+   "people": 5.67
+  },
+  {
+   "nodeId": 12306900317,
+   "people": 4.58
+  },
+  {
+   "nodeId": 12306913188,
+   "people": 2.37
+  },
+  {
+   "nodeId": 12306917024,
+   "people": 0.57
+  },
+  {
+   "nodeId": 12306917031,
+   "people": 11.39
+  },
+  {
+   "nodeId": 12306917033,
+   "people": 0.05
+  },
+  {
+   "nodeId": 12306917058,
+   "people": 1.38
+  },
+  {
+   "nodeId": 12306923280,
+   "people": 11.53
+  },
+  {
+   "nodeId": 12306923289,
+   "people": 14.5
+  },
+  {
+   "nodeId": 12306923296,
+   "people": 3.12
+  },
+  {
+   "nodeId": 12306938699,
+   "people": 99.71
+  },
+  {
+   "nodeId": 12306938700,
+   "people": 57.8
+  },
+  {
+   "nodeId": 12306954068,
+   "people": 0.58
+  },
+  {
+   "nodeId": 12306978431,
+   "people": 0.46
+  },
+  {
+   "nodeId": 12306978432,
+   "people": 3.85
+  },
+  {
+   "nodeId": 12306978447,
+   "people": 3.52
+  },
+  {
+   "nodeId": 12306978451,
+   "people": 17.67
+  },
+  {
+   "nodeId": 12306978457,
+   "people": 33.2
+  },
+  {
+   "nodeId": 12306978458,
+   "people": 8.3
+  },
+  {
+   "nodeId": 12306978464,
+   "people": 55.94
+  },
+  {
+   "nodeId": 12306987873,
+   "people": 1.88
+  },
+  {
+   "nodeId": 12306987878,
+   "people": 4.76
+  },
+  {
+   "nodeId": 12306987880,
+   "people": 17.33
+  },
+  {
+   "nodeId": 12306987885,
+   "people": 6.71
+  },
+  {
+   "nodeId": 12306989393,
+   "people": 53.23
+  },
+  {
+   "nodeId": 12306989503,
+   "people": 20.03
+  },
+  {
+   "nodeId": 12306989504,
+   "people": 51.55
+  },
+  {
+   "nodeId": 12306989509,
+   "people": 22.15
+  },
+  {
+   "nodeId": 12306989517,
+   "people": 27.74
+  },
+  {
+   "nodeId": 12306989523,
+   "people": 41.98
+  },
+  {
+   "nodeId": 12306989528,
+   "people": 21.41
+  },
+  {
+   "nodeId": 12306989544,
+   "people": 13.01
+  },
+  {
+   "nodeId": 12306989555,
+   "people": 29.42
+  },
+  {
+   "nodeId": 12306989571,
+   "people": 8.72
+  },
+  {
+   "nodeId": 12306989574,
+   "people": 6.07
+  },
+  {
+   "nodeId": 12306989579,
+   "people": 1.56
+  },
+  {
+   "nodeId": 12306989583,
+   "people": 10.29
+  },
+  {
+   "nodeId": 12306989585,
+   "people": 0.23
+  },
+  {
+   "nodeId": 12306989586,
+   "people": 12.08
+  },
+  {
+   "nodeId": 12306989593,
+   "people": 4.88
+  },
+  {
+   "nodeId": 12306989599,
+   "people": 30.38
+  },
+  {
+   "nodeId": 12306989603,
+   "people": 20.83
+  },
+  {
+   "nodeId": 12306989604,
+   "people": 8.7
+  },
+  {
+   "nodeId": 12306989617,
+   "people": 12.76
+  },
+  {
+   "nodeId": 12306989619,
+   "people": 0.6
+  },
+  {
+   "nodeId": 12306989625,
+   "people": 2.87
+  },
+  {
+   "nodeId": 12307006307,
+   "people": 13.38
+  },
+  {
+   "nodeId": 12307006315,
+   "people": 19.01
+  },
+  {
+   "nodeId": 12307012152,
+   "people": 0.61
+  },
+  {
+   "nodeId": 12307012177,
+   "people": 33.4
+  },
+  {
+   "nodeId": 12307012189,
+   "people": 4.79
+  },
+  {
+   "nodeId": 12307013135,
+   "people": 9.76
+  },
+  {
+   "nodeId": 12307014403,
+   "people": 8.36
+  },
+  {
+   "nodeId": 12307014406,
+   "people": 17.62
+  },
+  {
+   "nodeId": 12307014411,
+   "people": 5.47
+  },
+  {
+   "nodeId": 12307020422,
+   "people": 9.82
+  },
+  {
+   "nodeId": 12307020432,
+   "people": 60.0
+  },
+  {
+   "nodeId": 12307020434,
+   "people": 138.24
+  },
+  {
+   "nodeId": 12307020445,
+   "people": 118.76
+  },
+  {
+   "nodeId": 12307034336,
+   "people": 0.13
+  },
+  {
+   "nodeId": 12307034339,
+   "people": 0.67
+  },
+  {
+   "nodeId": 12307034377,
+   "people": 23.74
+  },
+  {
+   "nodeId": 12307034383,
+   "people": 38.05
+  },
+  {
+   "nodeId": 12307034385,
+   "people": 0.99
+  },
+  {
+   "nodeId": 12307034394,
+   "people": 8.68
+  },
+  {
+   "nodeId": 12307051859,
+   "people": 2.48
+  },
+  {
+   "nodeId": 12307074290,
+   "people": 53.48
+  },
+  {
+   "nodeId": 12307079730,
+   "people": 26.98
+  },
+  {
+   "nodeId": 12307095858,
+   "people": 20.89
+  },
+  {
+   "nodeId": 12307101530,
+   "people": 27.47
+  },
+  {
+   "nodeId": 12307101562,
+   "people": 104.45
+  },
+  {
+   "nodeId": 12307101566,
+   "people": 17.37
+  },
+  {
+   "nodeId": 12307101584,
+   "people": 14.72
+  },
+  {
+   "nodeId": 12307108284,
+   "people": 14.88
+  },
+  {
+   "nodeId": 12307120535,
+   "people": 7.11
+  },
+  {
+   "nodeId": 12307120538,
+   "people": 2.77
+  },
+  {
+   "nodeId": 12307120542,
+   "people": 0.05
+  },
+  {
+   "nodeId": 12307120543,
+   "people": 46.47
+  },
+  {
+   "nodeId": 12307120546,
+   "people": 44.51
+  },
+  {
+   "nodeId": 12307130409,
+   "people": 4.55
+  },
+  {
+   "nodeId": 12307130414,
+   "people": 21.7
+  },
+  {
+   "nodeId": 12307135409,
+   "people": 0.09
+  },
+  {
+   "nodeId": 12307135445,
+   "people": 2.15
+  },
+  {
+   "nodeId": 12307135450,
+   "people": 3.4
+  },
+  {
+   "nodeId": 12307135528,
+   "people": 1.79
+  },
+  {
+   "nodeId": 12307150807,
+   "people": 13.23
+  },
+  {
+   "nodeId": 12307152944,
+   "people": 78.34
+  },
+  {
+   "nodeId": 12307152949,
+   "people": 36.04
+  },
+  {
+   "nodeId": 12307152951,
+   "people": 18.86
+  },
+  {
+   "nodeId": 12307152953,
+   "people": 16.26
+  },
+  {
+   "nodeId": 12307152954,
+   "people": 66.53
+  },
+  {
+   "nodeId": 12307152959,
+   "people": 58.26
+  },
+  {
+   "nodeId": 12307180964,
+   "people": 4.89
+  },
+  {
+   "nodeId": 12307184805,
+   "people": 9.19
+  },
+  {
+   "nodeId": 12307184818,
+   "people": 0.38
+  },
+  {
+   "nodeId": 12307187932,
+   "people": 4.53
+  },
+  {
+   "nodeId": 12307204874,
+   "people": 15.03
+  },
+  {
+   "nodeId": 12307224238,
+   "people": 27.26
+  },
+  {
+   "nodeId": 12307224240,
+   "people": 4.1
+  },
+  {
+   "nodeId": 12307225162,
+   "people": 5.8
+  },
+  {
+   "nodeId": 12307225170,
+   "people": 142.87
+  },
+  {
+   "nodeId": 12307225172,
+   "people": 32.5
+  },
+  {
+   "nodeId": 12307242012,
+   "people": 9.71
+  },
+  {
+   "nodeId": 12307245181,
+   "people": 17.47
+  },
+  {
+   "nodeId": 12307245182,
+   "people": 0.03
+  },
+  {
+   "nodeId": 12307245198,
+   "people": 2.97
+  },
+  {
+   "nodeId": 12307247270,
+   "people": 0.34
+  },
+  {
+   "nodeId": 12307247271,
+   "people": 7.21
+  },
+  {
+   "nodeId": 12307247273,
+   "people": 1.01
+  },
+  {
+   "nodeId": 12307247274,
+   "people": 0.5
+  },
+  {
+   "nodeId": 12307249163,
+   "people": 12.5
+  },
+  {
+   "nodeId": 12307249164,
+   "people": 3.49
+  },
+  {
+   "nodeId": 12307249172,
+   "people": 0.34
+  },
+  {
+   "nodeId": 12307252533,
+   "people": 9.37
+  },
+  {
+   "nodeId": 12307254113,
+   "people": 1.31
+  },
+  {
+   "nodeId": 12307270052,
+   "people": 75.59
+  },
+  {
+   "nodeId": 12307270055,
+   "people": 11.38
+  },
+  {
+   "nodeId": 12307270644,
+   "people": 5.31
+  },
+  {
+   "nodeId": 12307275032,
+   "people": 7.59
+  },
+  {
+   "nodeId": 12307275035,
+   "people": 60.26
+  },
+  {
+   "nodeId": 12307283736,
+   "people": 17.76
+  },
+  {
+   "nodeId": 12307283757,
+   "people": 1.78
+  },
+  {
+   "nodeId": 12307283759,
+   "people": 27.92
+  },
+  {
+   "nodeId": 12307285902,
+   "people": 8.6
+  },
+  {
+   "nodeId": 12307285917,
+   "people": 12.12
+  },
+  {
+   "nodeId": 12307285919,
+   "people": 0.25
+  },
+  {
+   "nodeId": 12307285926,
+   "people": 2.43
+  },
+  {
+   "nodeId": 12307285927,
+   "people": 4.63
+  },
+  {
+   "nodeId": 12307289423,
+   "people": 82.66
+  },
+  {
+   "nodeId": 12307290276,
+   "people": 1.43
+  },
+  {
+   "nodeId": 12307290277,
+   "people": 3.36
+  },
+  {
+   "nodeId": 12307290278,
+   "people": 2.01
+  },
+  {
+   "nodeId": 12307290279,
+   "people": 12.56
+  },
+  {
+   "nodeId": 12307302355,
+   "people": 3.42
+  },
+  {
+   "nodeId": 12307317904,
+   "people": 1.09
+  },
+  {
+   "nodeId": 12307317906,
+   "people": 4.72
+  },
+  {
+   "nodeId": 12307323415,
+   "people": 19.5
+  },
+  {
+   "nodeId": 12307323423,
+   "people": 6.45
+  },
+  {
+   "nodeId": 12307323431,
+   "people": 4.72
+  },
+  {
+   "nodeId": 12307330356,
+   "people": 242.19
+  },
+  {
+   "nodeId": 12307334105,
+   "people": 1.98
+  },
+  {
+   "nodeId": 12307334117,
+   "people": 16.34
+  },
+  {
+   "nodeId": 12307334119,
+   "people": 6.45
+  },
+  {
+   "nodeId": 12307335654,
+   "people": 226.64
+  },
+  {
+   "nodeId": 12307353990,
+   "people": 21.49
+  },
+  {
+   "nodeId": 12307354060,
+   "people": 166.45
+  },
+  {
+   "nodeId": 12307354270,
+   "people": 7.95
+  },
+  {
+   "nodeId": 12307356124,
+   "people": 4.16
+  },
+  {
+   "nodeId": 12307356128,
+   "people": 0.67
+  },
+  {
+   "nodeId": 12307368789,
+   "people": 5.92
+  },
+  {
+   "nodeId": 12307368798,
+   "people": 0.08
+  },
+  {
+   "nodeId": 12307379524,
+   "people": 55.07
+  },
+  {
+   "nodeId": 12307379742,
+   "people": 0.42
+  },
+  {
+   "nodeId": 12307379744,
+   "people": 5.08
+  },
+  {
+   "nodeId": 12307379747,
+   "people": 8.67
+  },
+  {
+   "nodeId": 12307379748,
+   "people": 7.21
+  },
+  {
+   "nodeId": 12307379762,
+   "people": 8.67
+  },
+  {
+   "nodeId": 12307379768,
+   "people": 5.35
+  },
+  {
+   "nodeId": 12307384440,
+   "people": 0.57
+  },
+  {
+   "nodeId": 12307384452,
+   "people": 0.23
+  },
+  {
+   "nodeId": 12307384479,
+   "people": 12.22
+  },
+  {
+   "nodeId": 12307384485,
+   "people": 2.98
+  },
+  {
+   "nodeId": 12307384659,
+   "people": 7.5
+  },
+  {
+   "nodeId": 12307384677,
+   "people": 0.69
+  },
+  {
+   "nodeId": 12307384688,
+   "people": 1.25
+  },
+  {
+   "nodeId": 12307385094,
+   "people": 6.71
+  },
+  {
+   "nodeId": 12307385097,
+   "people": 19.69
+  },
+  {
+   "nodeId": 12307389950,
+   "people": 1.62
+  },
+  {
+   "nodeId": 12307396206,
+   "people": 0.06
+  },
+  {
+   "nodeId": 12307399321,
+   "people": 1.09
+  },
+  {
+   "nodeId": 12307403706,
+   "people": 135.19
+  },
+  {
+   "nodeId": 12307411899,
+   "people": 23.17
+  },
+  {
+   "nodeId": 12307414818,
+   "people": 4.02
+  },
+  {
+   "nodeId": 12307414826,
+   "people": 0.51
+  },
+  {
+   "nodeId": 12307416518,
+   "people": 5.18
+  },
+  {
+   "nodeId": 12307416520,
+   "people": 0.22
+  },
+  {
+   "nodeId": 12307416521,
+   "people": 0.09
+  },
+  {
+   "nodeId": 12307416526,
+   "people": 42.73
+  },
+  {
+   "nodeId": 12307416533,
+   "people": 49.96
+  },
+  {
+   "nodeId": 12307416534,
+   "people": 0.34
+  },
+  {
+   "nodeId": 12307416547,
+   "people": 4.97
+  },
+  {
+   "nodeId": 12307417255,
+   "people": 3.35
+  },
+  {
+   "nodeId": 12307417803,
+   "people": 11.69
+  },
+  {
+   "nodeId": 12307419142,
+   "people": 2.71
+  },
+  {
+   "nodeId": 12307419148,
+   "people": 8.06
+  },
+  {
+   "nodeId": 12307419149,
+   "people": 0.29
+  },
+  {
+   "nodeId": 12307435329,
+   "people": 44.02
+  },
+  {
+   "nodeId": 12307435332,
+   "people": 33.46
+  },
+  {
+   "nodeId": 12307435333,
+   "people": 1.78
+  },
+  {
+   "nodeId": 12307435336,
+   "people": 1.62
+  },
+  {
+   "nodeId": 12307435339,
+   "people": 2.01
+  },
+  {
+   "nodeId": 12307435341,
+   "people": 2.95
+  },
+  {
+   "nodeId": 12307435352,
+   "people": 4.35
+  },
+  {
+   "nodeId": 12307435356,
+   "people": 2.0
+  },
+  {
+   "nodeId": 12307435359,
+   "people": 6.47
+  },
+  {
+   "nodeId": 12307441502,
+   "people": 15.69
+  },
+  {
+   "nodeId": 12307441508,
+   "people": 16.38
+  },
+  {
+   "nodeId": 12307441509,
+   "people": 9.09
+  },
+  {
+   "nodeId": 12307441513,
+   "people": 19.99
+  },
+  {
+   "nodeId": 12307457110,
+   "people": 6.91
+  },
+  {
+   "nodeId": 12307457112,
+   "people": 17.09
+  },
+  {
+   "nodeId": 12307457113,
+   "people": 10.15
+  },
+  {
+   "nodeId": 12307466429,
+   "people": 1.93
+  },
+  {
+   "nodeId": 12307481842,
+   "people": 3.24
+  },
+  {
+   "nodeId": 12307482301,
+   "people": 16.48
+  },
+  {
+   "nodeId": 12307485110,
+   "people": 6.0
+  },
+  {
+   "nodeId": 12307485111,
+   "people": 8.46
+  },
+  {
+   "nodeId": 12307501644,
+   "people": 19.45
+  },
+  {
+   "nodeId": 12307501645,
+   "people": 3.61
+  },
+  {
+   "nodeId": 12307506282,
+   "people": 2.81
+  },
+  {
+   "nodeId": 12307506283,
+   "people": 1.97
+  },
+  {
+   "nodeId": 12307514252,
+   "people": 44.83
+  },
+  {
+   "nodeId": 12307514268,
+   "people": 2.8
+  },
+  {
+   "nodeId": 12307567906,
+   "people": 30.26
+  },
+  {
+   "nodeId": 12307567915,
+   "people": 0.05
+  },
+  {
+   "nodeId": 12307567916,
+   "people": 7.96
+  },
+  {
+   "nodeId": 12307567917,
+   "people": 111.76
+  },
+  {
+   "nodeId": 12307567923,
+   "people": 16.0
+  },
+  {
+   "nodeId": 12307571146,
+   "people": 4.53
+  },
+  {
+   "nodeId": 12307576893,
+   "people": 34.4
+  },
+  {
+   "nodeId": 12307576895,
+   "people": 2.24
+  },
+  {
+   "nodeId": 12307576896,
+   "people": 0.19
+  },
+  {
+   "nodeId": 12307583602,
+   "people": 19.11
+  },
+  {
+   "nodeId": 12307607119,
+   "people": 16.25
+  },
+  {
+   "nodeId": 12307651795,
+   "people": 0.74
+  },
+  {
+   "nodeId": 12307661885,
+   "people": 0.04
+  },
+  {
+   "nodeId": 12307661887,
+   "people": 0.97
+  },
+  {
+   "nodeId": 12307682803,
+   "people": 0.14
+  },
+  {
+   "nodeId": 12307682805,
+   "people": 16.23
+  },
+  {
+   "nodeId": 12307700004,
+   "people": 0.1
+  },
+  {
+   "nodeId": 12307707404,
+   "people": 18.16
+  },
+  {
+   "nodeId": 12307716279,
+   "people": 14.9
+  },
+  {
+   "nodeId": 12307716281,
+   "people": 31.24
+  },
+  {
+   "nodeId": 12307719747,
+   "people": 52.6
+  },
+  {
+   "nodeId": 12307719749,
+   "people": 192.07
+  },
+  {
+   "nodeId": 12307850995,
+   "people": 0.16
+  },
+  {
+   "nodeId": 12307850998,
+   "people": 6.29
+  },
+  {
+   "nodeId": 12307885029,
+   "people": 13.76
+  },
+  {
+   "nodeId": 12307885033,
+   "people": 17.14
+  },
+  {
+   "nodeId": 12307932042,
+   "people": 17.01
+  },
+  {
+   "nodeId": 12307932046,
+   "people": 22.79
+  },
+  {
+   "nodeId": 12307960617,
+   "people": 4.57
+  },
+  {
+   "nodeId": 12307960621,
+   "people": 18.15
+  },
+  {
+   "nodeId": 12307960638,
+   "people": 10.54
+  },
+  {
+   "nodeId": 12308095183,
+   "people": 4.09
+  },
+  {
+   "nodeId": 12308201937,
+   "people": 0.06
+  },
+  {
+   "nodeId": 12308201941,
+   "people": 7.53
+  },
+  {
+   "nodeId": 12308201945,
+   "people": 0.19
+  },
+  {
+   "nodeId": 12308201961,
+   "people": 2.44
+  },
+  {
+   "nodeId": 12308203483,
+   "people": 9.62
+  },
+  {
+   "nodeId": 12308203496,
+   "people": 4.24
+  },
+  {
+   "nodeId": 12308203500,
+   "people": 9.12
+  },
+  {
+   "nodeId": 12308209917,
+   "people": 0.02
+  },
+  {
+   "nodeId": 12308209921,
+   "people": 5.3
+  },
+  {
+   "nodeId": 12308209923,
+   "people": 15.84
+  },
+  {
+   "nodeId": 12308232729,
+   "people": 8.37
+  },
+  {
+   "nodeId": 12308232730,
+   "people": 0.64
+  },
+  {
+   "nodeId": 12308232733,
+   "people": 15.06
+  },
+  {
+   "nodeId": 12308232740,
+   "people": 0.6
+  },
+  {
+   "nodeId": 12308234719,
+   "people": 8.76
+  },
+  {
+   "nodeId": 12308234720,
+   "people": 0.59
+  },
+  {
+   "nodeId": 12308234722,
+   "people": 0.05
+  },
+  {
+   "nodeId": 12308235393,
+   "people": 0.81
+  },
+  {
+   "nodeId": 12308235395,
+   "people": 0.33
+  },
+  {
+   "nodeId": 12308247202,
+   "people": 0.17
+  },
+  {
+   "nodeId": 12308247210,
+   "people": 15.45
+  },
+  {
+   "nodeId": 12308253022,
+   "people": 0.21
+  },
+  {
+   "nodeId": 12308253024,
+   "people": 3.71
+  },
+  {
+   "nodeId": 12308253028,
+   "people": 35.59
+  },
+  {
+   "nodeId": 12308271852,
+   "people": 51.02
+  },
+  {
+   "nodeId": 12308353181,
+   "people": 12.8
+  },
+  {
+   "nodeId": 12308353182,
+   "people": 4.56
+  },
+  {
+   "nodeId": 12308377245,
+   "people": 16.95
+  },
+  {
+   "nodeId": 12308377246,
+   "people": 4.99
+  },
+  {
+   "nodeId": 12308377253,
+   "people": 7.64
+  },
+  {
+   "nodeId": 12308378327,
+   "people": 1.29
+  },
+  {
+   "nodeId": 12308378328,
+   "people": 8.74
+  },
+  {
+   "nodeId": 12308378352,
+   "people": 9.0
+  },
+  {
+   "nodeId": 12308378362,
+   "people": 5.93
+  },
+  {
+   "nodeId": 12308378363,
+   "people": 11.68
+  },
+  {
+   "nodeId": 12308378370,
+   "people": 0.04
+  },
+  {
+   "nodeId": 12308378381,
+   "people": 18.47
+  },
+  {
+   "nodeId": 12308378385,
+   "people": 1.03
+  },
+  {
+   "nodeId": 12308378391,
+   "people": 5.38
+  },
+  {
+   "nodeId": 12308378397,
+   "people": 11.03
+  },
+  {
+   "nodeId": 12308950950,
+   "people": 3.25
+  },
+  {
+   "nodeId": 12308980547,
+   "people": 0.06
+  },
+  {
+   "nodeId": 12308980568,
+   "people": 5.29
+  },
+  {
+   "nodeId": 12308980577,
+   "people": 9.35
+  },
+  {
+   "nodeId": 12308980580,
+   "people": 4.06
+  },
+  {
+   "nodeId": 12308980596,
+   "people": 7.7
+  },
+  {
+   "nodeId": 12309024002,
+   "people": 7.18
+  },
+  {
+   "nodeId": 12309024003,
+   "people": 2.46
+  },
+  {
+   "nodeId": 12309024015,
+   "people": 18.65
+  },
+  {
+   "nodeId": 12309025525,
+   "people": 66.85
+  },
+  {
+   "nodeId": 12309025532,
+   "people": 33.87
+  },
+  {
+   "nodeId": 12309025533,
+   "people": 2.83
+  },
+  {
+   "nodeId": 12309030779,
+   "people": 0.02
+  },
+  {
+   "nodeId": 12309030784,
+   "people": 7.7
+  },
+  {
+   "nodeId": 12309030785,
+   "people": 3.06
+  },
+  {
+   "nodeId": 12309119972,
+   "people": 7.98
+  },
+  {
+   "nodeId": 12309119977,
+   "people": 1.51
+  },
+  {
+   "nodeId": 12309119980,
+   "people": 10.34
+  },
+  {
+   "nodeId": 12309119982,
+   "people": 2.21
+  },
+  {
+   "nodeId": 12309119988,
+   "people": 0.1
+  },
+  {
+   "nodeId": 12309119992,
+   "people": 5.39
+  },
+  {
+   "nodeId": 12309132717,
+   "people": 122.44
+  },
+  {
+   "nodeId": 12309132718,
+   "people": 183.9
+  },
+  {
+   "nodeId": 12309168795,
+   "people": 32.49
+  },
+  {
+   "nodeId": 12309180864,
+   "people": 32.47
+  },
+  {
+   "nodeId": 12309180865,
+   "people": 7.48
+  },
+  {
+   "nodeId": 12309180874,
+   "people": 43.78
+  },
+  {
+   "nodeId": 12309180890,
+   "people": 33.86
+  },
+  {
+   "nodeId": 12309205402,
+   "people": 0.08
+  },
+  {
+   "nodeId": 12309205405,
+   "people": 59.21
+  },
+  {
+   "nodeId": 12309205412,
+   "people": 48.61
+  },
+  {
+   "nodeId": 12309336982,
+   "people": 250.15
+  },
+  {
+   "nodeId": 12309517985,
+   "people": 53.1
+  },
+  {
+   "nodeId": 12309594404,
+   "people": 55.06
+  },
+  {
+   "nodeId": 12309594407,
+   "people": 1.19
+  },
+  {
+   "nodeId": 12309594409,
+   "people": 0.5
+  },
+  {
+   "nodeId": 12309795758,
+   "people": 9.89
+  },
+  {
+   "nodeId": 12309795761,
+   "people": 0.09
+  },
+  {
+   "nodeId": 12309795766,
+   "people": 10.27
+  },
+  {
+   "nodeId": 12309795770,
+   "people": 2.64
+  },
+  {
+   "nodeId": 12309795780,
+   "people": 0.58
+  },
+  {
+   "nodeId": 12309795795,
+   "people": 0.37
+  },
+  {
+   "nodeId": 12309852146,
+   "people": 8.94
+  },
+  {
+   "nodeId": 12309852165,
+   "people": 5.68
+  },
+  {
+   "nodeId": 12310140570,
+   "people": 0.16
+  },
+  {
+   "nodeId": 12310220188,
+   "people": 16.23
+  },
+  {
+   "nodeId": 12310220189,
+   "people": 13.87
+  },
+  {
+   "nodeId": 12310242471,
+   "people": 64.34
+  },
+  {
+   "nodeId": 12310242940,
+   "people": 106.67
+  },
+  {
+   "nodeId": 12310242943,
+   "people": 96.01
+  },
+  {
+   "nodeId": 12310283081,
+   "people": 22.81
+  },
+  {
+   "nodeId": 12310283084,
+   "people": 0.03
+  },
+  {
+   "nodeId": 12310283085,
+   "people": 0.14
+  },
+  {
+   "nodeId": 12310283096,
+   "people": 2.58
+  },
+  {
+   "nodeId": 12310296561,
+   "people": 148.22
+  },
+  {
+   "nodeId": 12310331260,
+   "people": 32.58
+  },
+  {
+   "nodeId": 12310331265,
+   "people": 8.18
+  },
+  {
+   "nodeId": 12310331272,
+   "people": 14.43
+  },
+  {
+   "nodeId": 12310331295,
+   "people": 37.63
+  },
+  {
+   "nodeId": 12310333870,
+   "people": 23.3
+  },
+  {
+   "nodeId": 12310333872,
+   "people": 3.29
+  },
+  {
+   "nodeId": 12310333888,
+   "people": 33.24
+  },
+  {
+   "nodeId": 12310333913,
+   "people": 0.23
+  },
+  {
+   "nodeId": 12310333943,
+   "people": 0.04
+  },
+  {
+   "nodeId": 12310334009,
+   "people": 29.03
+  },
+  {
+   "nodeId": 12310364706,
+   "people": 11.21
+  },
+  {
+   "nodeId": 12310634176,
+   "people": 23.67
+  },
+  {
+   "nodeId": 12311684757,
+   "people": 0.15
+  },
+  {
+   "nodeId": 12311766180,
+   "people": 1.49
+  },
+  {
+   "nodeId": 12312090369,
+   "people": 41.46
+  },
+  {
+   "nodeId": 12312090381,
+   "people": 9.18
+  },
+  {
+   "nodeId": 12312090383,
+   "people": 24.78
+  },
+  {
+   "nodeId": 12312109098,
+   "people": 3.69
+  },
+  {
+   "nodeId": 12312436645,
+   "people": 193.32
+  },
+  {
+   "nodeId": 12312515133,
+   "people": 44.66
+  },
+  {
+   "nodeId": 12312526139,
+   "people": 3.59
+  },
+  {
+   "nodeId": 12312526150,
+   "people": 13.29
+  },
+  {
+   "nodeId": 12312526151,
+   "people": 8.64
+  },
+  {
+   "nodeId": 12312526160,
+   "people": 5.35
+  },
+  {
+   "nodeId": 12312642921,
+   "people": 5.57
+  },
+  {
+   "nodeId": 12312642925,
+   "people": 23.92
+  },
+  {
+   "nodeId": 12312670017,
+   "people": 4.2
+  },
+  {
+   "nodeId": 12312670021,
+   "people": 65.96
+  },
+  {
+   "nodeId": 12312695074,
+   "people": 118.08
+  },
+  {
+   "nodeId": 12312857320,
+   "people": 9.55
+  },
+  {
+   "nodeId": 12312857322,
+   "people": 7.6
+  },
+  {
+   "nodeId": 12312857332,
+   "people": 7.44
+  },
+  {
+   "nodeId": 12312857335,
+   "people": 5.92
+  },
+  {
+   "nodeId": 12312857341,
+   "people": 7.96
+  },
+  {
+   "nodeId": 12312857353,
+   "people": 1.85
+  },
+  {
+   "nodeId": 12312921256,
+   "people": 5.0
+  },
+  {
+   "nodeId": 12312921261,
+   "people": 13.06
+  },
+  {
+   "nodeId": 12312948067,
+   "people": 22.43
+  },
+  {
+   "nodeId": 12312948655,
+   "people": 3.62
+  },
+  {
+   "nodeId": 12312951755,
+   "people": 5.54
+  },
+  {
+   "nodeId": 12312953743,
+   "people": 0.88
+  },
+  {
+   "nodeId": 12312960929,
+   "people": 0.08
+  },
+  {
+   "nodeId": 12312964417,
+   "people": 12.17
+  },
+  {
+   "nodeId": 12312969313,
+   "people": 0.49
+  },
+  {
+   "nodeId": 12312976762,
+   "people": 0.69
+  },
+  {
+   "nodeId": 12312977851,
+   "people": 8.87
+  },
+  {
+   "nodeId": 12312977857,
+   "people": 0.05
+  },
+  {
+   "nodeId": 12313162157,
+   "people": 12.58
+  },
+  {
+   "nodeId": 12313162163,
+   "people": 1.12
+  },
+  {
+   "nodeId": 12313162181,
+   "people": 0.98
+  },
+  {
+   "nodeId": 12313520027,
+   "people": 0.04
+  },
+  {
+   "nodeId": 12313520030,
+   "people": 19.36
+  },
+  {
+   "nodeId": 12313532767,
+   "people": 4.17
+  },
+  {
+   "nodeId": 12313760511,
+   "people": 31.68
+  },
+  {
+   "nodeId": 12313760512,
+   "people": 18.07
+  },
+  {
+   "nodeId": 12313760513,
+   "people": 0.62
+  },
+  {
+   "nodeId": 12313763023,
+   "people": 0.24
+  },
+  {
+   "nodeId": 12313763025,
+   "people": 2.15
+  },
+  {
+   "nodeId": 12313763026,
+   "people": 20.09
+  },
+  {
+   "nodeId": 12313763027,
+   "people": 0.47
+  },
+  {
+   "nodeId": 12313786207,
+   "people": 232.74
+  },
+  {
+   "nodeId": 12313786215,
+   "people": 10.09
+  },
+  {
+   "nodeId": 12313786222,
+   "people": 84.64
+  },
+  {
+   "nodeId": 12313812052,
+   "people": 89.09
+  },
+  {
+   "nodeId": 12313812067,
+   "people": 94.45
+  },
+  {
+   "nodeId": 12313849414,
+   "people": 3.33
+  },
+  {
+   "nodeId": 12313849415,
+   "people": 20.48
+  },
+  {
+   "nodeId": 12313849416,
+   "people": 12.39
+  },
+  {
+   "nodeId": 12313849418,
+   "people": 4.91
+  },
+  {
+   "nodeId": 12313855316,
+   "people": 5.51
+  },
+  {
+   "nodeId": 12313855317,
+   "people": 3.75
+  },
+  {
+   "nodeId": 12313925174,
+   "people": 3.59
+  },
+  {
+   "nodeId": 12313925175,
+   "people": 6.43
+  },
+  {
+   "nodeId": 12313925199,
+   "people": 4.91
+  },
+  {
+   "nodeId": 12313925200,
+   "people": 4.27
+  },
+  {
+   "nodeId": 12313948082,
+   "people": 139.7
+  },
+  {
+   "nodeId": 12313949520,
+   "people": 30.38
+  },
+  {
+   "nodeId": 12313949524,
+   "people": 3.77
+  },
+  {
+   "nodeId": 12313949905,
+   "people": 21.31
+  },
+  {
+   "nodeId": 12313979876,
+   "people": 0.64
+  },
+  {
+   "nodeId": 12313979890,
+   "people": 1.19
+  },
+  {
+   "nodeId": 12313979893,
+   "people": 2.32
+  },
+  {
+   "nodeId": 12314033913,
+   "people": 6.94
+  },
+  {
+   "nodeId": 12314033917,
+   "people": 1.19
+  },
+  {
+   "nodeId": 12314033920,
+   "people": 1.76
+  },
+  {
+   "nodeId": 12314033927,
+   "people": 13.21
+  },
+  {
+   "nodeId": 12314034065,
+   "people": 3.43
+  },
+  {
+   "nodeId": 12314034068,
+   "people": 8.59
+  },
+  {
+   "nodeId": 12314034069,
+   "people": 0.17
+  },
+  {
+   "nodeId": 12314034070,
+   "people": 1.85
+  },
+  {
+   "nodeId": 12314044116,
+   "people": 23.98
+  },
+  {
+   "nodeId": 12314044191,
+   "people": 12.76
+  },
+  {
+   "nodeId": 12314069113,
+   "people": 7.93
+  },
+  {
+   "nodeId": 12314069119,
+   "people": 3.45
+  },
+  {
+   "nodeId": 12314069128,
+   "people": 0.48
+  },
+  {
+   "nodeId": 12314069131,
+   "people": 0.02
+  },
+  {
+   "nodeId": 12314069132,
+   "people": 11.87
+  },
+  {
+   "nodeId": 12314111927,
+   "people": 0.48
+  },
+  {
+   "nodeId": 12314111928,
+   "people": 6.38
+  },
+  {
+   "nodeId": 12314111929,
+   "people": 22.13
+  },
+  {
+   "nodeId": 12314111930,
+   "people": 3.84
+  },
+  {
+   "nodeId": 12314111937,
+   "people": 12.28
+  },
+  {
+   "nodeId": 12314113148,
+   "people": 61.37
+  },
+  {
+   "nodeId": 12314113153,
+   "people": 18.58
+  },
+  {
+   "nodeId": 12314113158,
+   "people": 3.26
+  },
+  {
+   "nodeId": 12314113160,
+   "people": 5.65
+  },
+  {
+   "nodeId": 12314121106,
+   "people": 5.16
+  },
+  {
+   "nodeId": 12314121107,
+   "people": 12.49
+  },
+  {
+   "nodeId": 12314121110,
+   "people": 1.56
+  },
+  {
+   "nodeId": 12314121117,
+   "people": 4.52
+  },
+  {
+   "nodeId": 12314121118,
+   "people": 10.41
+  },
+  {
+   "nodeId": 12314121121,
+   "people": 4.57
+  },
+  {
+   "nodeId": 12314121122,
+   "people": 19.47
+  },
+  {
+   "nodeId": 12314121123,
+   "people": 67.37
+  },
+  {
+   "nodeId": 12314121143,
+   "people": 3.95
+  },
+  {
+   "nodeId": 12314121941,
+   "people": 12.93
+  },
+  {
+   "nodeId": 12314121948,
+   "people": 3.72
+  },
+  {
+   "nodeId": 12314121958,
+   "people": 0.07
+  },
+  {
+   "nodeId": 12314121963,
+   "people": 0.04
+  },
+  {
+   "nodeId": 12314121965,
+   "people": 13.55
+  },
+  {
+   "nodeId": 12314123293,
+   "people": 0.69
+  },
+  {
+   "nodeId": 12314123295,
+   "people": 9.58
+  },
+  {
+   "nodeId": 12314123296,
+   "people": 25.53
+  },
+  {
+   "nodeId": 12314150821,
+   "people": 0.15
+  },
+  {
+   "nodeId": 12314150830,
+   "people": 17.06
+  },
+  {
+   "nodeId": 12314154101,
+   "people": 2.32
+  },
+  {
+   "nodeId": 12314154102,
+   "people": 6.9
+  },
+  {
+   "nodeId": 12314155744,
+   "people": 24.87
+  },
+  {
+   "nodeId": 12314155745,
+   "people": 7.67
+  },
+  {
+   "nodeId": 12314168023,
+   "people": 1.3
+  },
+  {
+   "nodeId": 12314168024,
+   "people": 5.53
+  },
+  {
+   "nodeId": 12314169308,
+   "people": 1.94
+  },
+  {
+   "nodeId": 12314372013,
+   "people": 12.2
+  },
+  {
+   "nodeId": 12314926506,
+   "people": 155.69
+  },
+  {
+   "nodeId": 12314926547,
+   "people": 88.07
+  },
+  {
+   "nodeId": 12315302619,
+   "people": 222.15
+  },
+  {
+   "nodeId": 12315871815,
+   "people": 0.11
+  },
+  {
+   "nodeId": 12316034185,
+   "people": 2.52
+  },
+  {
+   "nodeId": 12316034191,
+   "people": 7.33
+  },
+  {
+   "nodeId": 12318922071,
+   "people": 200.7
+  },
+  {
+   "nodeId": 12319340804,
+   "people": 114.28
+  },
+  {
+   "nodeId": 12319492183,
+   "people": 13.56
+  },
+  {
+   "nodeId": 12319498088,
+   "people": 10.0
+  },
+  {
+   "nodeId": 12319500115,
+   "people": 17.01
+  },
+  {
+   "nodeId": 12320065847,
+   "people": 5.71
+  },
+  {
+   "nodeId": 12320065851,
+   "people": 3.84
+  },
+  {
+   "nodeId": 12320065861,
+   "people": 3.84
+  },
+  {
+   "nodeId": 12320065869,
+   "people": 5.42
+  },
+  {
+   "nodeId": 12320065878,
+   "people": 2.92
+  },
+  {
+   "nodeId": 12320127411,
+   "people": 15.84
+  },
+  {
+   "nodeId": 12320127414,
+   "people": 0.07
+  },
+  {
+   "nodeId": 12320265369,
+   "people": 2.35
+  },
+  {
+   "nodeId": 12320265370,
+   "people": 12.22
+  },
+  {
+   "nodeId": 12320455966,
+   "people": 29.34
+  },
+  {
+   "nodeId": 12320535209,
+   "people": 213.38
+  },
+  {
+   "nodeId": 12321088872,
+   "people": 37.6
+  },
+  {
+   "nodeId": 12323093779,
+   "people": 1.17
+  },
+  {
+   "nodeId": 12323093789,
+   "people": 19.5
+  },
+  {
+   "nodeId": 12323093791,
+   "people": 2.3
+  },
+  {
+   "nodeId": 12323202865,
+   "people": 2.09
+  },
+  {
+   "nodeId": 12323235278,
+   "people": 69.62
+  },
+  {
+   "nodeId": 12323247723,
+   "people": 51.24
+  },
+  {
+   "nodeId": 12323247724,
+   "people": 26.06
+  },
+  {
+   "nodeId": 12323313771,
+   "people": 81.85
+  },
+  {
+   "nodeId": 12323313779,
+   "people": 109.34
+  },
+  {
+   "nodeId": 12323313790,
+   "people": 103.9
+  },
+  {
+   "nodeId": 12323313799,
+   "people": 62.18
+  },
+  {
+   "nodeId": 12323313822,
+   "people": 86.33
+  },
+  {
+   "nodeId": 12323313854,
+   "people": 116.93
+  },
+  {
+   "nodeId": 12323313869,
+   "people": 27.47
+  },
+  {
+   "nodeId": 12323362640,
+   "people": 61.99
+  },
+  {
+   "nodeId": 12323362661,
+   "people": 78.97
+  },
+  {
+   "nodeId": 12323426183,
+   "people": 23.63
+  },
+  {
+   "nodeId": 12323426198,
+   "people": 62.66
+  },
+  {
+   "nodeId": 12323450304,
+   "people": 34.24
+  },
+  {
+   "nodeId": 12323450305,
+   "people": 60.34
+  },
+  {
+   "nodeId": 12323450308,
+   "people": 117.88
+  },
+  {
+   "nodeId": 12323535313,
+   "people": 9.07
+  },
+  {
+   "nodeId": 12323535319,
+   "people": 26.79
+  },
+  {
+   "nodeId": 12323535338,
+   "people": 0.79
+  },
+  {
+   "nodeId": 12323535340,
+   "people": 18.44
+  },
+  {
+   "nodeId": 12323550470,
+   "people": 0.88
+  },
+  {
+   "nodeId": 12324465887,
+   "people": 3.92
+  },
+  {
+   "nodeId": 12324505618,
+   "people": 67.78
+  },
+  {
+   "nodeId": 12324505637,
+   "people": 57.31
+  },
+  {
+   "nodeId": 12324505654,
+   "people": 53.81
+  },
+  {
+   "nodeId": 12324505661,
+   "people": 12.81
+  },
+  {
+   "nodeId": 12324540509,
+   "people": 48.83
+  },
+  {
+   "nodeId": 12325423578,
+   "people": 10.13
+  },
+  {
+   "nodeId": 12325451918,
+   "people": 1.08
+  },
+  {
+   "nodeId": 12325451931,
+   "people": 5.8
+  },
+  {
+   "nodeId": 12325451935,
+   "people": 76.07
+  },
+  {
+   "nodeId": 12325548618,
+   "people": 73.75
+  },
+  {
+   "nodeId": 12327382720,
+   "people": 5.67
+  },
+  {
+   "nodeId": 12327382742,
+   "people": 10.67
+  },
+  {
+   "nodeId": 12327382749,
+   "people": 4.16
+  },
+  {
+   "nodeId": 12327382808,
+   "people": 1.08
+  },
+  {
+   "nodeId": 12327382817,
+   "people": 1.51
+  },
+  {
+   "nodeId": 12327382851,
+   "people": 6.42
+  },
+  {
+   "nodeId": 12327382856,
+   "people": 16.5
+  },
+  {
+   "nodeId": 12327412674,
+   "people": 1.48
+  },
+  {
+   "nodeId": 12327563045,
+   "people": 20.64
+  },
+  {
+   "nodeId": 12327623811,
+   "people": 16.69
+  },
+  {
+   "nodeId": 12327645209,
+   "people": 15.09
+  },
+  {
+   "nodeId": 12327662335,
+   "people": 25.26
+  },
+  {
+   "nodeId": 12327662346,
+   "people": 21.32
+  },
+  {
+   "nodeId": 12328293243,
+   "people": 68.4
+  },
+  {
+   "nodeId": 12328340150,
+   "people": 4.37
+  },
+  {
+   "nodeId": 12328340153,
+   "people": 73.42
+  },
+  {
+   "nodeId": 12328340154,
+   "people": 35.98
+  },
+  {
+   "nodeId": 12328351708,
+   "people": 1.28
+  },
+  {
+   "nodeId": 12328351720,
+   "people": 4.66
+  },
+  {
+   "nodeId": 12328351729,
+   "people": 46.19
+  },
+  {
+   "nodeId": 12328351734,
+   "people": 68.21
+  },
+  {
+   "nodeId": 12328381161,
+   "people": 77.19
+  },
+  {
+   "nodeId": 12328381173,
+   "people": 168.21
+  },
+  {
+   "nodeId": 12328386247,
+   "people": 1.66
+  },
+  {
+   "nodeId": 12328386254,
+   "people": 8.21
+  },
+  {
+   "nodeId": 12328386261,
+   "people": 95.46
+  },
+  {
+   "nodeId": 12328386262,
+   "people": 87.98
+  },
+  {
+   "nodeId": 12328398579,
+   "people": 44.09
+  },
+  {
+   "nodeId": 12328406091,
+   "people": 79.32
+  },
+  {
+   "nodeId": 12328411402,
+   "people": 57.31
+  },
+  {
+   "nodeId": 12329067390,
+   "people": 2.0
+  },
+  {
+   "nodeId": 12329179565,
+   "people": 23.13
+  },
+  {
+   "nodeId": 12329179575,
+   "people": 19.65
+  },
+  {
+   "nodeId": 12329179580,
+   "people": 30.73
+  },
+  {
+   "nodeId": 12329179583,
+   "people": 23.28
+  },
+  {
+   "nodeId": 12329179588,
+   "people": 26.51
+  },
+  {
+   "nodeId": 12329179591,
+   "people": 19.51
+  },
+  {
+   "nodeId": 12329182247,
+   "people": 6.65
+  },
+  {
+   "nodeId": 12329182269,
+   "people": 4.34
+  },
+  {
+   "nodeId": 12329182290,
+   "people": 36.05
+  },
+  {
+   "nodeId": 12329182291,
+   "people": 8.91
+  },
+  {
+   "nodeId": 12329228128,
+   "people": 2.82
+  },
+  {
+   "nodeId": 12331285453,
+   "people": 0.12
+  },
+  {
+   "nodeId": 12331285470,
+   "people": 18.63
+  },
+  {
+   "nodeId": 12331285473,
+   "people": 7.12
+  },
+  {
+   "nodeId": 12334034392,
+   "people": 23.09
+  },
+  {
+   "nodeId": 12334034393,
+   "people": 13.6
+  },
+  {
+   "nodeId": 12334034397,
+   "people": 0.67
+  },
+  {
+   "nodeId": 12334034708,
+   "people": 68.96
+  },
+  {
+   "nodeId": 12334034717,
+   "people": 6.53
+  },
+  {
+   "nodeId": 12334034728,
+   "people": 19.56
+  },
+  {
+   "nodeId": 12334034740,
+   "people": 168.17
+  },
+  {
+   "nodeId": 12334034742,
+   "people": 110.82
+  },
+  {
+   "nodeId": 12334316921,
+   "people": 64.25
+  },
+  {
+   "nodeId": 12334317225,
+   "people": 143.73
+  },
+  {
+   "nodeId": 12334317229,
+   "people": 177.31
+  },
+  {
+   "nodeId": 12336575196,
+   "people": 9.47
+  },
+  {
+   "nodeId": 12336575200,
+   "people": 0.64
+  },
+  {
+   "nodeId": 12336590802,
+   "people": 21.41
+  },
+  {
+   "nodeId": 12336596107,
+   "people": 15.31
+  },
+  {
+   "nodeId": 12336600825,
+   "people": 36.35
+  },
+  {
+   "nodeId": 12336600831,
+   "people": 17.75
+  },
+  {
+   "nodeId": 12336600833,
+   "people": 0.03
+  },
+  {
+   "nodeId": 12336600834,
+   "people": 0.12
+  },
+  {
+   "nodeId": 12338161541,
+   "people": 226.71
+  },
+  {
+   "nodeId": 12346741856,
+   "people": 3.25
+  },
+  {
+   "nodeId": 12348555569,
+   "people": 76.26
+  },
+  {
+   "nodeId": 12348555577,
+   "people": 25.02
+  },
+  {
+   "nodeId": 12348741225,
+   "people": 68.63
+  },
+  {
+   "nodeId": 12349533719,
+   "people": 146.9
+  },
+  {
+   "nodeId": 12349533724,
+   "people": 304.42
+  },
+  {
+   "nodeId": 12352440398,
+   "people": 10.76
+  },
+  {
+   "nodeId": 12352440400,
+   "people": 3.18
+  },
+  {
+   "nodeId": 12352491368,
+   "people": 0.04
+  },
+  {
+   "nodeId": 12352492734,
+   "people": 4.22
+  },
+  {
+   "nodeId": 12354749241,
+   "people": 6.11
+  },
+  {
+   "nodeId": 12355357425,
+   "people": 50.74
+  },
+  {
+   "nodeId": 12357704847,
+   "people": 6.51
+  },
+  {
+   "nodeId": 12361621113,
+   "people": 75.53
+  },
+  {
+   "nodeId": 12362286303,
+   "people": 14.58
+  },
+  {
+   "nodeId": 12362286307,
+   "people": 1.67
+  },
+  {
+   "nodeId": 12363644348,
+   "people": 0.1
+  },
+  {
+   "nodeId": 12363644349,
+   "people": 15.01
+  },
+  {
+   "nodeId": 12365436466,
+   "people": 0.33
+  },
+  {
+   "nodeId": 12365808699,
+   "people": 40.66
+  },
+  {
+   "nodeId": 12365808824,
+   "people": 6.28
+  },
+  {
+   "nodeId": 12373623294,
+   "people": 2.18
+  },
+  {
+   "nodeId": 12375967100,
+   "people": 44.15
+  },
+  {
+   "nodeId": 12397972020,
+   "people": 5.28
+  },
+  {
+   "nodeId": 12397972096,
+   "people": 7.65
+  },
+  {
+   "nodeId": 12397976811,
+   "people": 86.39
+  },
+  {
+   "nodeId": 12422153145,
+   "people": 3.05
+  },
+  {
+   "nodeId": 12453253005,
+   "people": 2.54
+  },
+  {
+   "nodeId": 12466298717,
+   "people": 22.71
+  },
+  {
+   "nodeId": 12466298718,
+   "people": 14.45
+  },
+  {
+   "nodeId": 12505249813,
+   "people": 51.2
+  },
+  {
+   "nodeId": 12506871040,
+   "people": 20.31
+  },
+  {
+   "nodeId": 12506871056,
+   "people": 8.54
+  },
+  {
+   "nodeId": 12522769771,
+   "people": 11.28
+  },
+  {
+   "nodeId": 12598918180,
+   "people": 112.55
+  },
+  {
+   "nodeId": 12638993093,
+   "people": 79.48
+  },
+  {
+   "nodeId": 12805855354,
+   "people": 19.63
+  },
+  {
+   "nodeId": 12805855357,
+   "people": 212.96
+  },
+  {
+   "nodeId": 12805855457,
+   "people": 127.29
+  },
+  {
+   "nodeId": 12837496587,
+   "people": 234.41
+  },
+  {
+   "nodeId": 12869225927,
+   "people": 29.05
+  },
+  {
+   "nodeId": 12869242607,
+   "people": 38.32
+  },
+  {
+   "nodeId": 12902350501,
+   "people": 135.42
+  },
+  {
+   "nodeId": 12912660094,
+   "people": 90.94
+  },
+  {
+   "nodeId": 12914873727,
+   "people": 76.33
+  },
+  {
+   "nodeId": 12966119640,
+   "people": 54.41
+  },
+  {
+   "nodeId": 12966966659,
+   "people": 90.48
+  },
+  {
+   "nodeId": 12966966735,
+   "people": 112.27
+  },
+  {
+   "nodeId": 12973848584,
+   "people": 47.79
+  },
+  {
+   "nodeId": 13015270570,
+   "people": 59.65
+  },
+  {
+   "nodeId": 13015270576,
+   "people": 20.91
+  },
+  {
+   "nodeId": 13015338273,
+   "people": 57.65
+  },
+  {
+   "nodeId": 13021137502,
+   "people": 65.47
+  },
+  {
+   "nodeId": 13022541401,
+   "people": 174.08
+  },
+  {
+   "nodeId": 13022655339,
+   "people": 87.66
+  },
+  {
+   "nodeId": 13026750501,
+   "people": 100.07
+  },
+  {
+   "nodeId": 13026750506,
+   "people": 72.86
+  },
+  {
+   "nodeId": 13026996361,
+   "people": 173.79
+  },
+  {
+   "nodeId": 13028140115,
+   "people": 63.49
+  },
+  {
+   "nodeId": 13028473387,
+   "people": 69.56
+  },
+  {
+   "nodeId": 13031234506,
+   "people": 48.5
+  },
+  {
+   "nodeId": 13045774277,
+   "people": 193.07
+  },
+  {
+   "nodeId": 13048564103,
+   "people": 129.68
+  },
+  {
+   "nodeId": 13049771361,
+   "people": 151.31
+  },
+  {
+   "nodeId": 13056334831,
+   "people": 219.31
+  },
+  {
+   "nodeId": 13056334929,
+   "people": 100.71
+  },
+  {
+   "nodeId": 13057840382,
+   "people": 203.62
+  },
+  {
+   "nodeId": 13059752886,
+   "people": 107.45
+  },
+  {
+   "nodeId": 13061642652,
+   "people": 137.82
+  },
+  {
+   "nodeId": 13072704787,
+   "people": 99.94
+  },
+  {
+   "nodeId": 13074148791,
+   "people": 104.99
+  },
+  {
+   "nodeId": 13076237720,
+   "people": 171.37
+  },
+  {
+   "nodeId": 13076237724,
+   "people": 190.63
+  },
+  {
+   "nodeId": 13078108646,
+   "people": 71.95
+  },
+  {
+   "nodeId": 13082248499,
+   "people": 31.66
+  },
+  {
+   "nodeId": 13082248546,
+   "people": 103.11
+  },
+  {
+   "nodeId": 13124862061,
+   "people": 2.59
+  },
+  {
+   "nodeId": 13151157473,
+   "people": 21.1
+  },
+  {
+   "nodeId": 13155867481,
+   "people": 29.27
+  },
+  {
+   "nodeId": 13166310485,
+   "people": 69.46
+  },
+  {
+   "nodeId": 13169511816,
+   "people": 177.77
+  },
+  {
+   "nodeId": 13169511818,
+   "people": 129.66
+  },
+  {
+   "nodeId": 13184851332,
+   "people": 6.26
+  },
+  {
+   "nodeId": 13190434991,
+   "people": 104.41
+  },
+  {
+   "nodeId": 13190871472,
+   "people": 159.02
+  },
+  {
+   "nodeId": 13190871486,
+   "people": 229.14
+  },
+  {
+   "nodeId": 13190871497,
+   "people": 75.42
+  },
+  {
+   "nodeId": 13190871521,
+   "people": 26.96
+  },
+  {
+   "nodeId": 13192283993,
+   "people": 184.74
+  },
+  {
+   "nodeId": 13196332321,
+   "people": 228.95
+  },
+  {
+   "nodeId": 13205561990,
+   "people": 13.94
+  },
+  {
+   "nodeId": 13208911541,
+   "people": 275.41
+  },
+  {
+   "nodeId": 13233666824,
+   "people": 163.28
+  },
+  {
+   "nodeId": 13234916545,
+   "people": 225.72
+  },
+  {
+   "nodeId": 13236172944,
+   "people": 172.18
+  },
+  {
+   "nodeId": 13243889272,
+   "people": 221.78
+  },
+  {
+   "nodeId": 13245429341,
+   "people": 146.64
+  },
+  {
+   "nodeId": 13245429476,
+   "people": 261.9
+  },
+  {
+   "nodeId": 13248732998,
+   "people": 79.55
+  },
+  {
+   "nodeId": 13249965799,
+   "people": 151.6
+  },
+  {
+   "nodeId": 13249965837,
+   "people": 214.29
+  },
+  {
+   "nodeId": 13250735591,
+   "people": 58.35
+  },
+  {
+   "nodeId": 13250735597,
+   "people": 104.06
+  },
+  {
+   "nodeId": 13250778476,
+   "people": 34.51
+  },
+  {
+   "nodeId": 13251486369,
+   "people": 46.32
+  },
+  {
+   "nodeId": 13251486484,
+   "people": 65.76
+  },
+  {
+   "nodeId": 13255655183,
+   "people": 100.97
+  },
+  {
+   "nodeId": 13255812543,
+   "people": 42.43
+  },
+  {
+   "nodeId": 13257839370,
+   "people": 85.56
+  },
+  {
+   "nodeId": 13263857067,
+   "people": 23.21
+  },
+  {
+   "nodeId": 13263934924,
+   "people": 15.15
+  },
+  {
+   "nodeId": 13263934957,
+   "people": 38.45
+  },
+  {
+   "nodeId": 13263934984,
+   "people": 66.04
+  },
+  {
+   "nodeId": 13264004576,
+   "people": 68.23
+  },
+  {
+   "nodeId": 13264004595,
+   "people": 153.47
+  },
+  {
+   "nodeId": 13264004602,
+   "people": 174.73
+  },
+  {
+   "nodeId": 13266920298,
+   "people": 199.85
+  },
+  {
+   "nodeId": 13266920302,
+   "people": 175.39
+  },
+  {
+   "nodeId": 13266920335,
+   "people": 64.97
+  },
+  {
+   "nodeId": 13290598333,
+   "people": 79.62
+  },
+  {
+   "nodeId": 13294270815,
+   "people": 114.91
+  },
+  {
+   "nodeId": 13294270859,
+   "people": 100.0
+  },
+  {
+   "nodeId": 13294529672,
+   "people": 111.76
+  },
+  {
+   "nodeId": 13295353654,
+   "people": 94.82
+  },
+  {
+   "nodeId": 13295353657,
+   "people": 125.37
+  },
+  {
+   "nodeId": 13299232002,
+   "people": 59.87
+  },
+  {
+   "nodeId": 13301184486,
+   "people": 124.54
+  },
+  {
+   "nodeId": 13301337972,
+   "people": 37.63
+  },
+  {
+   "nodeId": 13301457515,
+   "people": 160.87
+  },
+  {
+   "nodeId": 13306020271,
+   "people": 104.97
+  },
+  {
+   "nodeId": 13306371276,
+   "people": 1.85
+  },
+  {
+   "nodeId": 13307904851,
+   "people": 59.95
+  },
+  {
+   "nodeId": 13315382109,
+   "people": 3.49
+  },
+  {
+   "nodeId": 13327023373,
+   "people": 52.48
+  },
+  {
+   "nodeId": 13366856101,
+   "people": 16.7
+  },
+  {
+   "nodeId": 13366856111,
+   "people": 10.03
+  },
+  {
+   "nodeId": 13366856116,
+   "people": 28.7
+  },
+  {
+   "nodeId": 13389471883,
+   "people": 0.46
+  },
+  {
+   "nodeId": 13389472241,
+   "people": 1.6
+  },
+  {
+   "nodeId": 13397628851,
+   "people": 2.73
+  },
+  {
+   "nodeId": 13433364444,
+   "people": 16.26
+  },
+  {
+   "nodeId": 13448077990,
+   "people": 50.49
+  },
+  {
+   "nodeId": 13448077997,
+   "people": 22.69
+  },
+  {
+   "nodeId": 13460876157,
+   "people": 50.35
+  },
+  {
+   "nodeId": 13460876174,
+   "people": 25.69
+  },
+  {
+   "nodeId": 13470765171,
+   "people": 42.05
+  },
+  {
+   "nodeId": 13470765177,
+   "people": 20.91
+  },
+  {
+   "nodeId": 13470765389,
+   "people": 6.86
+  },
+  {
+   "nodeId": 13470765392,
+   "people": 17.17
+  },
+  {
+   "nodeId": 13474426184,
+   "people": 87.22
+  },
+  {
+   "nodeId": 13479353832,
+   "people": 118.71
+  },
+  {
+   "nodeId": 13481553318,
+   "people": 116.44
+  },
+  {
+   "nodeId": 13483345485,
+   "people": 169.76
+  },
+  {
+   "nodeId": 13508719808,
+   "people": 0.07
+  },
+  {
+   "nodeId": 13508719809,
+   "people": 5.85
+  },
+  {
+   "nodeId": 13508719810,
+   "people": 12.32
+  },
+  {
+   "nodeId": 13508719816,
+   "people": 0.09
+  },
+  {
+   "nodeId": 13516774933,
+   "people": 64.55
+  },
+  {
+   "nodeId": 13516774934,
+   "people": 61.05
+  },
+  {
+   "nodeId": 13516774935,
+   "people": 36.97
+  },
+  {
+   "nodeId": 13516774936,
+   "people": 61.53
+  },
+  {
+   "nodeId": 13516835321,
+   "people": 7.71
+  },
+  {
+   "nodeId": 13516903896,
+   "people": 28.82
+  },
+  {
+   "nodeId": 13516903918,
+   "people": 17.05
+  },
+  {
+   "nodeId": 13516903920,
+   "people": 65.39
+  },
+  {
+   "nodeId": 13519969272,
+   "people": 1.09
+  },
+  {
+   "nodeId": 13606703520,
+   "people": 7.04
+  },
+  {
+   "nodeId": 13639974619,
+   "people": 10.05
+  },
+  {
+   "nodeId": 13679207434,
+   "people": 303.27
+  },
+  {
+   "nodeId": 13679207464,
+   "people": 298.19
+  },
+  {
+   "nodeId": 13679207480,
+   "people": 197.95
+  },
+  {
+   "nodeId": 13710731932,
+   "people": 10.88
+  },
+  {
+   "nodeId": 13713847331,
+   "people": 52.07
+  },
+  {
+   "nodeId": 13777702848,
+   "people": 5.43
+  },
+  {
+   "nodeId": 13777702851,
+   "people": 3.54
+  },
+  {
+   "nodeId": 13791345488,
+   "people": 40.55
+  },
+  {
+   "nodeId": 13791345516,
+   "people": 19.49
+  },
+  {
+   "nodeId": 13791345538,
+   "people": 54.29
+  },
+  {
+   "nodeId": 13831122171,
+   "people": 7.24
+  },
+  {
+   "nodeId": 13831122185,
+   "people": 33.63
+  },
+  {
+   "nodeId": 13831122186,
+   "people": 50.68
+  },
+  {
+   "nodeId": 13831122200,
+   "people": 21.95
+  },
+  {
+   "nodeId": 13831241931,
+   "people": 113.73
+  },
+  {
+   "nodeId": 13846653804,
+   "people": 52.89
+  },
+  {
+   "nodeId": 13846653806,
+   "people": 44.7
+  },
+  {
+   "nodeId": 13846653845,
+   "people": 11.26
+  },
+  {
+   "nodeId": 13846654146,
+   "people": 26.68
+  },
+  {
+   "nodeId": 13849310732,
+   "people": 16.03
+  },
+  {
+   "nodeId": 13849310742,
+   "people": 17.58
+  },
+  {
+   "nodeId": 13849743077,
+   "people": 11.91
+  },
+  {
+   "nodeId": 13849743092,
+   "people": 16.85
+  },
+  {
+   "nodeId": 13849743144,
+   "people": 25.08
+  },
+  {
+   "nodeId": 13850095048,
+   "people": 38.23
+  },
+  {
+   "nodeId": 13850095214,
+   "people": 14.56
+  },
+  {
+   "nodeId": 13850095292,
+   "people": 13.75
+  },
+  {
+   "nodeId": 13850095462,
+   "people": 20.27
+  },
+  {
+   "nodeId": 13851842715,
+   "people": 96.9
+  },
+  {
+   "nodeId": 13854373773,
+   "people": 15.39
+  },
+  {
+   "nodeId": 13858157189,
+   "people": 1.67
+  },
+  {
+   "nodeId": 13875877865,
+   "people": 142.45
+  },
+  {
+   "nodeId": 13875877869,
+   "people": 117.03
+  },
+  {
+   "nodeId": 13893908191,
+   "people": 5.65
+  },
+  {
+   "nodeId": 13893908200,
+   "people": 2.79
+  },
+  {
+   "nodeId": 13911790320,
+   "people": 11.24
+  },
+  {
+   "nodeId": 13911790325,
+   "people": 103.76
+  },
+  {
+   "nodeId": 13930617946,
+   "people": 97.53
+  },
+  {
+   "nodeId": 13931019184,
+   "people": 38.08
+  },
+  {
+   "nodeId": 13931019195,
+   "people": 139.57
+  },
+  {
+   "nodeId": 13931036905,
+   "people": 115.05
+  },
+  {
+   "nodeId": 14019961534,
+   "people": 32.14
+  },
+  {
+   "nodeId": 14051465258,
+   "people": 224.24
+  },
+  {
+   "nodeId": 14055939774,
+   "people": 33.81
+  },
+  {
+   "nodeId": 14055951839,
+   "people": 30.78
+  },
+  {
+   "nodeId": 14055951952,
+   "people": 24.58
+  },
+  {
+   "nodeId": 14055951986,
+   "people": 40.88
+  },
+  {
+   "nodeId": 14055952014,
+   "people": 56.74
+  },
+  {
+   "nodeId": 14056548193,
+   "people": 9.21
+  },
+  {
+   "nodeId": 14058050851,
+   "people": 18.35
+  },
+  {
+   "nodeId": 14058050852,
+   "people": 37.61
+  },
+  {
+   "nodeId": 14058109528,
+   "people": 0.9
+  },
+  {
+   "nodeId": 14059828042,
+   "people": 34.86
+  },
+  {
+   "nodeId": 14064518194,
+   "people": 2.84
+  },
+  {
+   "nodeId": 14064518213,
+   "people": 14.26
+  },
+  {
+   "nodeId": 14064518218,
+   "people": 0.06
+  },
+  {
+   "nodeId": 14064518219,
+   "people": 7.77
+  },
+  {
+   "nodeId": 14064608101,
+   "people": 7.37
+  },
+  {
+   "nodeId": 14064682282,
+   "people": 0.15
+  },
+  {
+   "nodeId": 14064688034,
+   "people": 10.32
+  },
+  {
+   "nodeId": 14064702283,
+   "people": 6.62
+  },
+  {
+   "nodeId": 14066034699,
+   "people": 1.33
+  },
+  {
+   "nodeId": 14066077388,
+   "people": 0.3
+  },
+  {
+   "nodeId": 14066279387,
+   "people": 4.46
+  },
+  {
+   "nodeId": 14066279405,
+   "people": 8.62
+  },
+  {
+   "nodeId": 14066279407,
+   "people": 11.6
+  },
+  {
+   "nodeId": 14066279437,
+   "people": 3.37
+  },
+  {
+   "nodeId": 14067019115,
+   "people": 17.67
+  },
+  {
+   "nodeId": 14067039639,
+   "people": 233.1
+  },
+  {
+   "nodeId": 14067071106,
+   "people": 123.29
+  },
+  {
+   "nodeId": 14067071107,
+   "people": 176.27
+  },
+  {
+   "nodeId": 14067071128,
+   "people": 91.06
+  },
+  {
+   "nodeId": 14067964666,
+   "people": 202.95
+  },
+  {
+   "nodeId": 14067964667,
+   "people": 6.7
+  },
+  {
+   "nodeId": 14068027771,
+   "people": 220.66
+  },
+  {
+   "nodeId": 14068027784,
+   "people": 38.04
+  },
+  {
+   "nodeId": 14068042405,
+   "people": 18.37
+  },
+  {
+   "nodeId": 14068042410,
+   "people": 9.93
+  },
+  {
+   "nodeId": 14068042564,
+   "people": 78.37
+  },
+  {
+   "nodeId": 14068042620,
+   "people": 174.99
+  },
+  {
+   "nodeId": 14068042731,
+   "people": 95.14
+  },
+  {
+   "nodeId": 14068042743,
+   "people": 33.3
+  },
+  {
+   "nodeId": 14068042746,
+   "people": 107.01
+  },
+  {
+   "nodeId": 14068042780,
+   "people": 248.1
+  },
+  {
+   "nodeId": 14068108531,
+   "people": 72.97
+  },
+  {
+   "nodeId": 14068108541,
+   "people": 151.5
+  },
+  {
+   "nodeId": 14068108572,
+   "people": 219.49
+  },
+  {
+   "nodeId": 14068108580,
+   "people": 244.23
+  },
+  {
+   "nodeId": 14068108592,
+   "people": 90.44
+  },
+  {
+   "nodeId": 14068108604,
+   "people": 6.97
+  },
+  {
+   "nodeId": 14068108607,
+   "people": 167.03
+  },
+  {
+   "nodeId": 14068108644,
+   "people": 4.9
+  },
+  {
+   "nodeId": 14068108656,
+   "people": 5.87
+  },
+  {
+   "nodeId": 14068108740,
+   "people": 155.86
+  },
+  {
+   "nodeId": 14068108745,
+   "people": 65.77
+  },
+  {
+   "nodeId": 14068668070,
+   "people": 1.76
+  },
+  {
+   "nodeId": 14068765001,
+   "people": 5.83
+  },
+  {
+   "nodeId": 14068765005,
+   "people": 13.99
+  },
+  {
+   "nodeId": 14068765009,
+   "people": 12.83
+  },
+  {
+   "nodeId": 14068765028,
+   "people": 51.54
+  },
+  {
+   "nodeId": 14070190136,
+   "people": 194.47
+  },
+  {
+   "nodeId": 14070374903,
+   "people": 131.96
+  },
+  {
+   "nodeId": 14070563824,
+   "people": 187.25
+  },
+  {
+   "nodeId": 14074531183,
+   "people": 149.5
+  },
+  {
+   "nodeId": 14084302430,
+   "people": 8.29
+  },
+  {
+   "nodeId": 14084302437,
+   "people": 14.41
+  },
+  {
+   "nodeId": 14135439364,
+   "people": 114.65
+  },
+  {
+   "nodeId": 14135439368,
+   "people": 1.7
+  },
+  {
+   "nodeId": 14170689615,
+   "people": 19.89
+  },
+  {
+   "nodeId": 14170689616,
+   "people": 63.36
+  },
+  {
+   "nodeId": 14170689637,
+   "people": 4.04
+  },
+  {
+   "nodeId": 14170689645,
+   "people": 2.14
+  },
+  {
+   "nodeId": 14170689664,
+   "people": 112.64
+  },
+  {
+   "nodeId": 14170689666,
+   "people": 56.42
+  },
+  {
+   "nodeId": 14252091970,
+   "people": 0.33
+  },
+  {
+   "nodeId": 14252091971,
+   "people": 3.68
+  },
+  {
+   "nodeId": 14252187006,
+   "people": 0.81
+  },
+  {
+   "nodeId": 14318665894,
+   "people": 26.63
+  }
+ ]
+}

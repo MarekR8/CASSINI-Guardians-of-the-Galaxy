@@ -268,6 +268,57 @@ function polygons(geometry) {
   return [];
 }
 
+function mapProjection([west, south, east, north]) {
+  const ratio = Math.cos((south + north) * Math.PI / 360);
+  const scale = Math.min(680 / ((east - west) * ratio), 360 / (north - south));
+  return (lon, lat) => [380 + (lon - (west + east) / 2) * ratio * scale,
+    210 + ((south + north) / 2 - lat) * scale];
+}
+
+function polygonPath(polygon, project) {
+  return polygon.map(ring => 'M ' + ring.map(([lon, lat]) => project(lon, lat).join(',')).join(' L ') + ' Z').join(' ');
+}
+
+const integrationButtons = $('integration-preview').querySelectorAll('[data-integration]');
+const integrationSummaries = {
+  'integration-copernicus': result => `${result.productId} · ${formatObservation.format(new Date(result.observedAt))} UTC`,
+  'integration-flypix': result => `${result.geoJson.features.length} detekcji do weryfikacji · raster ${result.imageProductId}`,
+  'city-data': result => result.zones.map(zone => `${zone.zoneId} · liczba osób: ${zone.people}`).join(', '),
+  'city-map': result => `${result.datasetId} · ${result.geoJson.features.length} obszarów w GeoJSON`,
+};
+for (const control of integrationButtons) {
+  control.addEventListener('click', async () => {
+    for (const button of integrationButtons) button.disabled = true;
+    const map = $('integration-map');
+    const response = $('integration-response');
+    map.setAttribute('hidden', '');
+    map.replaceChildren();
+    response.hidden = true;
+    text('integration-status', 'Pobieranie przykładu…');
+    try {
+      const operation = control.dataset.integration;
+      const result = await api('situation', 'queries/' + operation);
+      if (result.geoJson) {
+        const project = mapProjection(result.bounds);
+        for (const feature of result.geoJson.features) {
+          for (const polygon of polygons(feature.geometry)) {
+            map.append(svg('path', { d: polygonPath(polygon, project), fill: '#285b6d',
+              stroke: '#8df0ce', 'stroke-width': 3, 'fill-rule': 'evenodd' }));
+          }
+        }
+        map.removeAttribute('hidden');
+      }
+      text('integration-json', JSON.stringify(result, null, 2));
+      response.hidden = false;
+      text('integration-status', 'Dane syntetyczne · ' + integrationSummaries[operation](result));
+    } catch {
+      text('integration-status', 'Nie udało się pobrać podglądu integracji.');
+    } finally {
+      for (const button of integrationButtons) button.disabled = false;
+    }
+  });
+}
+
 function updateMapDetail() {
   const map = $('map');
   const { x, y, width, height } = map.viewBox.baseVal;
@@ -299,12 +350,8 @@ function renderMap(route) {
   const bounds = valencia ? state.cityImagery.scenes.event.bounds : scene?.viewBounds;
   map.classList.toggle('map-city', valencia);
   const [west, south, east, north] = bounds || [16.646, 50.431, 16.660, 50.442];
-  const ratio = Math.cos((south + north) * Math.PI / 360);
-  const scale = Math.min(680 / ((east - west) * ratio), 360 / (north - south));
-  const project = (lon, lat) => [380 + (lon - (west + east) / 2) * ratio * scale,
-    210 + ((south + north) / 2 - lat) * scale];
+  const project = mapProjection([west, south, east, north]);
   const pointsOnMap = line => line.map(([lon, lat]) => project(lon, lat).join(',')).join(' ');
-  const shape = polygon => polygon.map(ring => 'M ' + pointsOnMap(ring).split(' ').join(' L ') + ' Z').join(' ');
   const mapImage = ([left, bottom, right, top], href, opacity) => {
     const [x, y] = project(left, top);
     const [x2, y2] = project(right, bottom);
@@ -358,7 +405,7 @@ function renderMap(route) {
   for (const hazard of hazards) {
     const observed = Boolean(hazard.productId);
     for (const polygon of polygons(hazard.geometry)) {
-      canvas.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd',
+      canvas.append(svg('path', { d: polygonPath(polygon, project), 'fill-rule': 'evenodd',
         fill: observed ? (valencia ? '#bb392f' : '#2372b0') : '#285b6d',
         'fill-opacity': observed ? (valencia ? .36 : .45) : .6,
         stroke: observed ? (valencia ? '#ff7663' : '#79c4ff') : '#5c9fb1', 'stroke-dasharray': observed ? 'none' : '5 4',
@@ -378,7 +425,7 @@ function renderMap(route) {
   if (archive) {
     const group = svg('g', { id: 'archive-flood-layer' });
     for (const polygon of polygons(archive.geometry)) {
-      group.append(svg('path', { class: 'archive-flood', d: shape(polygon), 'fill-rule': 'evenodd',
+      group.append(svg('path', { class: 'archive-flood', d: polygonPath(polygon, project), 'fill-rule': 'evenodd',
         fill: '#eead83', 'fill-opacity': .5, stroke: '#ffe0cb', 'stroke-width': 1.5 }));
     }
     map.append(group);

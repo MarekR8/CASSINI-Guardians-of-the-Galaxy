@@ -85,6 +85,11 @@ initial = call("/api/situation/queries/snapshot")
 assert initial["revision"] == 0 and not initial["closedSegments"]
 assert initial["hazards"][0]["productId"] == "EMSR773_AOI01_DEL_PRODUCT_v1"
 assert initial["hazards"][0]["source"] == "copernicus-ems-archive"
+ems_preview = call("/api/situation/queries/integration-copernicus")
+assert ems_preview["mode"] == "mock" and ems_preview["activationCode"] == "EMSR773" and ems_preview["aoiNumber"] == 1
+city_preview = call("/api/situation/queries/city-map")
+assert city_preview["datasetId"] == "mock-valencia-city-v1"
+assert call("/api/situation/queries/snapshot") == initial
 baseline = route()["route"]
 assert baseline and baseline["segments"]
 edge = call("/api/routing/queries/city-edge/" + baseline["segments"][0])
