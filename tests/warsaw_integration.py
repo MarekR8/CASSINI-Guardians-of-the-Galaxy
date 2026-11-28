@@ -47,6 +47,7 @@ bridge = next(segment for segment in network["segments"] if segment["id"] == "br
 assert len(bridge["geometry"]) > 5 and bridge["drivingGeometry"] != bridge["reverseDrivingGeometry"]
 
 initial = snapshot()
+assert initial["populationEstimate"]["value"] == 65
 feature = initial["reviewFeatures"][0]
 assert feature["mode"] == "synthetic" and feature["status"] == "Pending"
 assert feature["segmentIds"] == ["bridge-2"], feature["segmentIds"]
@@ -61,6 +62,7 @@ draw = request("/api/routing/commands/draw",
                 "revision": 0, "seed": 1})
 assert "bridge-2" in draw["route"]["segments"]
 
+estimate = {"value": 23, "method": "cell centres", "source": "test GHS-POP", "year": 2025}
 with tempfile.TemporaryDirectory() as directory:
     package = Path(directory)
     polygon = {"type": "FeatureCollection", "features": [
@@ -71,7 +73,7 @@ with tempfile.TemporaryDirectory() as directory:
     manifest.write_text(json.dumps({
         "hazards": [{"source": "sentinel-1", "sourceUrl": "https://browser.dataspace.copernicus.eu/",
                      "productId": "test-sentinel-1", "observedAt": "2026-11-27T18:00:00Z",
-                     "geoJson": "evidence.geojson"}],
+                     "geoJson": "evidence.geojson", "populationEstimate": estimate}],
         "flypix": {"mode": "synthetic", "imageProductId": "test-raster", "layerId": "test-export",
                    "observedAt": "2026-11-27T18:00:00Z", "geoJson": "evidence.geojson"},
     }))
@@ -85,6 +87,7 @@ with tempfile.TemporaryDirectory() as directory:
 recorded = next(item for item in first_import["reviewFeatures"] if item["layerId"] == "test-export")
 assert recorded["segmentIds"] == ["bridge-2"] and recorded["confidence"] == 0.84
 assert first_import["hazards"][-1]["source"] == "copernicus-sentinel-1-operator-import"
+assert first_import["hazards"][-1]["populationEstimate"] == first_import["populationEstimate"] == estimate
 assert distribution()["options"] == baseline
 assert request("/api/routing/queries/draws/warsaw-draw")["state"] == "Active"
 

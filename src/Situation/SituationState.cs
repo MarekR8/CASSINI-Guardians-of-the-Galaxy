@@ -4,11 +4,20 @@ using Cassini.Demo;
 namespace Situation;
 
 internal sealed record HazardLayer(string Id, string Source, string? ProductId, DateTimeOffset ObservedAt,
-    JsonElement Geometry, string? SourceUrl = null);
+    JsonElement Geometry, string? SourceUrl = null, PopulationEstimate? PopulationEstimate = null)
+{
+    public HazardProvenance Provenance => new(Source, ProductId is null ? "mock" : "recorded", ObservedAt, ProductId);
+}
+
+internal sealed record HazardProvenance(string Source, string Mode, DateTimeOffset ObservedAt, string? ProductId);
 
 internal sealed record SituationSnapshot(
     int Revision, int Stage, string[] ClosedSegments, HazardLayer[] Hazards, Dictionary<string, int> SegmentRevisions,
-    ReviewFeature[]? ReviewFeatures = null, Dictionary<string, ClosureEvidence>? ClosureEvidence = null);
+    ReviewFeature[]? ReviewFeatures = null, Dictionary<string, ClosureEvidence>? ClosureEvidence = null)
+{
+    public PopulationEstimate? PopulationEstimate =>
+        (Hazards.LastOrDefault(layer => layer.ProductId is not null) ?? Hazards.FirstOrDefault())?.PopulationEstimate;
+}
 
 internal sealed class SituationError(int status, string code, string message) : Exception(message)
 {
@@ -26,7 +35,7 @@ internal sealed class SituationStore
     private readonly string? file;
     private State state;
 
-    internal SituationStore(string? stateFile, DemoNetwork? network)
+    internal SituationStore(string? stateFile, DemoNetwork? network, IPopulationEstimator population)
     {
         file = string.IsNullOrWhiteSpace(stateFile) ? null : Path.GetFullPath(stateFile);
         state = file is not null && File.Exists(file)
@@ -35,6 +44,15 @@ internal sealed class SituationStore
             : new State(InitialSnapshot(network), new Dictionary<string, Receipt>(), network is null ? null : "warsaw");
         if ((state.Scenario == "warsaw") != (network is not null))
             throw new InvalidDataException("The situation state belongs to a different scenario. Use a separate state directory.");
+        state = state with
+        {
+            Current = state.Current with
+            {
+                Hazards = state.Current.Hazards.Select(layer => layer.ProductId is null
+                    ? layer with { PopulationEstimate = population.Estimate(layer.Id) }
+                    : layer).ToArray()
+            }
+        };
     }
 
     internal SituationSnapshot Read()

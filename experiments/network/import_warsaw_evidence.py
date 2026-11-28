@@ -255,6 +255,7 @@ def main():
             hazards.append({
                 "source": hazard["source"], "sourceUrl": hazard["sourceUrl"], "productId": hazard["productId"],
                 "observedAt": timestamp(hazard["observedAt"]), "geoJson": geojson,
+                "populationEstimate": hazard.get("populationEstimate"),
             })
 
         review = None

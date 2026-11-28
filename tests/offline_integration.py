@@ -42,6 +42,8 @@ assert "commands/draw" in request("/app.js")
 initial = get("situation", "snapshot")
 assert initial["revision"] == 0 and initial["closedSegments"] == []
 assert initial["hazards"][0]["source"] == "synthetic"
+assert initial["hazards"][0]["provenance"]["mode"] == "mock"
+assert initial["populationEstimate"]["value"] == 4872
 
 alert_cmd = {"commandId": "alert-retry"}
 first_alert = post("management", "alert", alert_cmd)
@@ -152,8 +154,11 @@ after_import = post("situation", "import-copernicus", {
     "commandId": "import-test", "expectedRevision": 2, "productId": "TEST-PRODUCT",
     "observedAt": "2026-11-27T18:00:00Z", "geoJson": sample,
 })
-assert any(h["source"] == "copernicus-ems-operator-import" and h["productId"] == "TEST-PRODUCT"
-           for h in after_import["hazards"])
+imported = after_import["hazards"][-1]
+assert imported["source"] == "copernicus-ems-operator-import" and imported["productId"] == "TEST-PRODUCT"
+assert imported["provenance"]["mode"] == "recorded"
+assert imported["provenance"]["observedAt"] == imported["observedAt"]
+assert after_import["populationEstimate"] is None
 assert get("routing", "distribution?node=pickup")["options"] == []
 
 print("Offline integration passed: gateway, alert retry, weighted routes, withdrawal, dispatch booking and pickup, blocked exits, local import.")

@@ -176,6 +176,7 @@ def import_hazards(base, manifest, directory):
         import_layer(base, "import-copernicus", {
             "source": hazard["source"], "sourceUrl": hazard["sourceUrl"], "productId": hazard["productId"],
             "observedAt": timestamp(hazard["observedAt"]), "geoJson": geojson,
+            "populationEstimate": hazard.get("populationEstimate"),
         })
 
 

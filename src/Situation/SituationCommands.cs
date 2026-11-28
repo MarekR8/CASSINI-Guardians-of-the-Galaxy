@@ -6,7 +6,7 @@ namespace Situation;
 internal sealed record ClosureCommand(string? CommandId, string? SegmentId, bool? Closed, int? ExpectedRevision);
 internal sealed record ImportCopernicusCommand(
     string? CommandId, int? ExpectedRevision, string? ProductId, DateTimeOffset? ObservedAt, JsonElement GeoJson,
-    string? SourceUrl = null, string? Source = null);
+    string? SourceUrl = null, string? Source = null, PopulationEstimate? PopulationEstimate = null);
 
 internal sealed class SituationCommands(SituationStore store, ReviewNetwork reviewNetwork)
 {
@@ -122,16 +122,25 @@ internal sealed class SituationCommands(SituationStore store, ReviewNetwork revi
             "sentinel-1" => "copernicus-sentinel-1-operator-import",
             _ => throw Invalid("Specify ems or sentinel-1 as the Copernicus source.")
         };
+        var estimate = command.PopulationEstimate;
+        if (estimate is not null && (estimate.Value < 0 || estimate.Year is < 1900 or > 2100 ||
+            string.IsNullOrWhiteSpace(estimate.Method) || estimate.Method.Length > 120 ||
+            string.IsNullOrWhiteSpace(estimate.Source) || estimate.Source.Length > 120))
+            throw Invalid("A population estimate requires a non-negative value, year, method and source.");
         var layer = new HazardLayer((command.Source == "sentinel-1" ? "sentinel-1:" : "copernicus:") + product, source,
-            product, observedAt.ToUniversalTime(), geometry, CheckSourceUrl(command.SourceUrl));
-        var fingerprint = command.Source is null && command.SourceUrl is null
-            ? Fingerprint("copernicus", new { command.CommandId, command.ExpectedRevision, command.ProductId,
-                command.ObservedAt, command.GeoJson })
+            product, observedAt.ToUniversalTime(), geometry, CheckSourceUrl(command.SourceUrl), estimate);
+        var fingerprint = estimate is null
+            ? (command.Source is null && command.SourceUrl is null
+                ? Fingerprint("copernicus", new { command.CommandId, command.ExpectedRevision, command.ProductId,
+                    command.ObservedAt, command.GeoJson })
+                : Fingerprint("copernicus", new { command.CommandId, command.ExpectedRevision, command.ProductId,
+                    command.ObservedAt, command.GeoJson, command.SourceUrl, command.Source }))
             : Fingerprint("copernicus", command);
         return store.Apply(id, revision, fingerprint, snapshot =>
         {
             var existing = snapshot.Hazards.FirstOrDefault(item => item.Id == layer.Id);
             if (existing is not null && existing.ObservedAt == layer.ObservedAt && existing.SourceUrl == layer.SourceUrl &&
+                existing.PopulationEstimate == layer.PopulationEstimate &&
                 JsonElement.DeepEquals(existing.Geometry, layer.Geometry))
                 return snapshot;
             return snapshot with

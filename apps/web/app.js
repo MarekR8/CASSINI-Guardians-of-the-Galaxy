@@ -142,6 +142,14 @@ async function refresh(epoch) {
     state.sourcesSignature = sources;
     state.lastSourceRevision = situation.revision;
   }
+  const estimate = situation.populationEstimate;
+  $('population-estimate').hidden = !estimate;
+  if (estimate) {
+    const zone = hazards.some(h => h.productId) ? 'strefie' : 'strefie ćwiczeniowej';
+    text('population-estimate',
+      'Szacunek ludności w ' + zone + ' · ' + new Intl.NumberFormat('pl-PL').format(estimate.value) +
+      ' osób · ' + estimate.source + ' ' + estimate.year);
+  }
   const reviews = situation.reviewFeatures || [];
   const reviewSignature = JSON.stringify(reviews);
   if (reviewSignature !== state.reviewSignature) {
@@ -477,7 +485,8 @@ function renderSources(hazards) {
   const imported = hazards.filter(h => h.productId);
   text('sources', imported.length
     ? imported.map(h => (h.source.includes('sentinel-1') ? 'Sentinel-1' : 'Copernicus EMS') +
-      ' · ' + h.productId + ' · ' + h.observedAt).join(' | ')
+      ' · ' + h.productId + ' · ' + h.observedAt +
+      (h.provenance?.mode === 'recorded' ? ' · Dane zapisane' : '')).join(' | ')
     : 'Zaimportuj warstwę Copernicus EMS lub maskę Sentinel-1.');
   const existing = $('evidence-map');
   if (!imported.length) {
