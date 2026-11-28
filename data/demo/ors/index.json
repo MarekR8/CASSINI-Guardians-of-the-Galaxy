@@ -1,0 +1,288 @@
+{
+  "a5169410b48364727cf0ba1f3e3a3f7344900b6180a39e1f2d7bd5358562a9dc": {
+    "scenario": "sample",
+    "bridgeClosed": false,
+    "leg": "approach",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          16.659,
+          50.435
+        ],
+        [
+          16.652,
+          50.435
+        ]
+      ]
+    }
+  },
+  "beb965d2d61d81dddaffbb818960b57e5898794ff7be4db5ff1f72bdd9d91050": {
+    "scenario": "sample",
+    "bridgeClosed": false,
+    "leg": "outbound",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          16.652,
+          50.435
+        ],
+        [
+          16.659,
+          50.435
+        ]
+      ]
+    }
+  },
+  "add43feb6c416f45d5d77cfd60f1039a0fb8544d889f3f4bb47fe3824164b8ac": {
+    "scenario": "sample",
+    "bridgeClosed": true,
+    "leg": "approach",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          16.659,
+          50.435
+        ],
+        [
+          16.652,
+          50.435
+        ]
+      ],
+      "options": {
+        "avoid_polygons": {
+          "type": "MultiPolygon",
+          "coordinates": [
+            [
+              [
+                [
+                  16.656609,
+                  50.43491
+                ],
+                [
+                  16.658391,
+                  50.43491
+                ],
+                [
+                  16.658391,
+                  50.43509
+                ],
+                [
+                  16.656609,
+                  50.43509
+                ],
+                [
+                  16.656609,
+                  50.43491
+                ]
+              ]
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "ac7cff415ef1088c49a3c877031a922504e50d7bc00683648745622d5befe4f6": {
+    "scenario": "sample",
+    "bridgeClosed": true,
+    "leg": "outbound",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          16.652,
+          50.435
+        ],
+        [
+          16.65554,
+          50.440838
+        ]
+      ],
+      "options": {
+        "avoid_polygons": {
+          "type": "MultiPolygon",
+          "coordinates": [
+            [
+              [
+                [
+                  16.656609,
+                  50.43491
+                ],
+                [
+                  16.658391,
+                  50.43491
+                ],
+                [
+                  16.658391,
+                  50.43509
+                ],
+                [
+                  16.656609,
+                  50.43509
+                ],
+                [
+                  16.656609,
+                  50.43491
+                ]
+              ]
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "d36e099dfd3840b4f196cc20eb4b00f59606b09f38182f433101a8dc3772d860": {
+    "scenario": "warsaw",
+    "bridgeClosed": false,
+    "leg": "approach",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          21.030511,
+          52.240904
+        ],
+        [
+          21.03886,
+          52.243139
+        ]
+      ]
+    }
+  },
+  "ce3649fb8a08de6b95f8b21047f6a7e98180298714b760f34853e7139fcfb526": {
+    "scenario": "warsaw",
+    "bridgeClosed": false,
+    "leg": "outbound",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          21.03886,
+          52.243139
+        ],
+        [
+          21.030511,
+          52.240904
+        ]
+      ]
+    }
+  },
+  "bff806ac5510ae3b1029c79fc88649156a7705c013410a21d135dbdd2d8b8c03": {
+    "scenario": "warsaw",
+    "bridgeClosed": true,
+    "leg": "approach",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          21.030511,
+          52.240904
+        ],
+        [
+          21.03886,
+          52.243139
+        ]
+      ],
+      "options": {
+        "avoid_polygons": {
+          "type": "MultiPolygon",
+          "coordinates": [
+            [
+              [
+                [
+                  21.032351,
+                  52.241027
+                ],
+                [
+                  21.035838,
+                  52.241027
+                ],
+                [
+                  21.035838,
+                  52.242687
+                ],
+                [
+                  21.032351,
+                  52.242687
+                ],
+                [
+                  21.032351,
+                  52.241027
+                ]
+              ]
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "1d0b878436460070f84e0c0aa9d70478fb7b3364947096dfeeb2b4183a19a4d7": {
+    "scenario": "warsaw",
+    "bridgeClosed": true,
+    "leg": "outbound",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          21.03886,
+          52.243139
+        ],
+        [
+          21.04363,
+          52.248171
+        ]
+      ],
+      "options": {
+        "avoid_polygons": {
+          "type": "MultiPolygon",
+          "coordinates": [
+            [
+              [
+                [
+                  21.032351,
+                  52.241027
+                ],
+                [
+                  21.035838,
+                  52.241027
+                ],
+                [
+                  21.035838,
+                  52.242687
+                ],
+                [
+                  21.032351,
+                  52.242687
+                ],
+                [
+                  21.032351,
+                  52.241027
+                ]
+              ]
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "905f87b914d813385e60ee1c3dafb8f2e805811f59238aba9485507b8b05440e": {
+    "scenario": "warsaw",
+    "bridgeClosed": false,
+    "leg": "outbound",
+    "profile": "driving-car",
+    "request": {
+      "coordinates": [
+        [
+          21.03886,
+          52.243139
+        ],
+        [
+          21.04363,
+          52.248171
+        ]
+      ]
+    }
+  }
+}

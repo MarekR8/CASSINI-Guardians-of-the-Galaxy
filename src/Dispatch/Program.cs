@@ -4,9 +4,25 @@ var builder = WebApplication.CreateBuilder(args);
 if (string.IsNullOrEmpty(builder.Configuration["urls"]))
     builder.WebHost.UseUrls("http://127.0.0.1:5084");
 
-builder.Services.AddSingleton(new DispatchStore(builder.Configuration["Demo:DataDirectory"]));
+var dataDirectory = builder.Configuration["Demo:DataDirectory"];
+var connectionString = builder.Configuration.GetConnectionString("Dispatch");
+if (string.IsNullOrWhiteSpace(connectionString))
+    builder.Services.AddSingleton<IDispatchPersistence>(_ => new FileDispatchPersistence(dataDirectory));
+else
+{
+#if DISPATCH_POSTGRES
+    builder.Services.AddSingleton<IDispatchPersistence>(_ => new PostgresDispatchPersistence(connectionString, dataDirectory));
+#else
+    throw new InvalidOperationException("Build Dispatch with EnableDispatchPostgres=true to use a PostgreSQL connection.");
+#endif
+}
+builder.Services.AddSingleton<DispatchStore>();
+builder.Services.AddSingleton(new UnitPositionPolicy(
+    builder.Configuration["Integrations:Egnos:FixtureFile"] ?? Path.Combine(AppContext.BaseDirectory, "unit-positions.json"),
+    builder.Configuration.GetValue("Integrations:Egnos:MaxHpl", 25d)));
 builder.Services.AddSingleton<DispatchQueries>();
 builder.Services.AddSingleton<DispatchCommands>();
+builder.Services.AddSingleton<RouteReview>();
 builder.Services.AddHttpClient<ManagementClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Management:BaseUrl"] ?? "http://127.0.0.1:5081");
@@ -15,7 +31,7 @@ builder.Services.AddHttpClient<ManagementClient>(client =>
 builder.Services.AddHttpClient<RoutingClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Routing:BaseUrl"] ?? "http://127.0.0.1:5083");
-    client.Timeout = TimeSpan.FromSeconds(3);
+    client.Timeout = TimeSpan.FromSeconds(5);
 });
 builder.Services.AddHttpClient<SituationClient>(client =>
 {
@@ -24,8 +40,24 @@ builder.Services.AddHttpClient<SituationClient>(client =>
 });
 
 var app = builder.Build();
+_ = app.Services.GetRequiredService<DispatchStore>();
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (DispatchPersistenceException)
+    {
+        await DispatchStore.Error("StateUnavailable", "Dispatch could not access its state.", 503).ExecuteAsync(context);
+    }
+});
 app.MapGet("/health/live", () => Results.Ok(new { status = "live" }));
-app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
+app.MapGet("/health/ready", (DispatchStore store) =>
+{
+    _ = store.Read();
+    return Results.Ok(new { status = "ready" });
+});
 
 var queries = app.MapGroup("/queries");
 queries.MapGet("/assignments", (DispatchQueries handler, CancellationToken cancellation) =>

@@ -20,6 +20,33 @@ builder.Services.AddSingleton(_ => new DrawJournal(
     Path.Combine(builder.Environment.ContentRootPath, "artifacts", "routing-draws.json")));
 builder.Services.AddTransient<RoutingQueries>();
 builder.Services.AddTransient<RoutingCommands>();
+var ors = builder.Configuration.GetSection("Integrations:Ors");
+var providerMode = ors["Mode"] ?? "graph";
+switch (providerMode)
+{
+    case "graph":
+        break;
+    case "mock":
+    case "recorded":
+        builder.Services.AddSingleton<IRouteProvider>(new RecordedRouteProvider(
+            ors["FixtureDirectory"] ?? Path.Combine(AppContext.BaseDirectory, "ors", "recorded")));
+        break;
+    case "live":
+        var apiKey = ors["ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException("Configure Integrations:Ors:ApiKey for live routing.");
+        builder.Services.AddHttpClient("openrouteservice", client =>
+        {
+            client.BaseAddress = new Uri((ors["BaseUrl"] ?? "https://api.heigit.org/openrouteservice").TrimEnd('/') + "/");
+            client.Timeout = TimeSpan.FromSeconds(1.5);
+        }).AddTypedClient<IRouteProvider>(client => new OrsRouteProvider(client, apiKey))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        break;
+    default:
+        throw new InvalidOperationException($"Unknown Integrations:Ors:Mode '{providerMode}'.");
+}
+if (providerMode != "graph")
+    builder.Services.AddTransient<AssistanceRouteProvider>();
 
 var app = builder.Build();
 _ = app.Services.GetRequiredService<DrawJournal>();
@@ -67,6 +94,9 @@ if (!valencia)
     queries.MapGet("/assistance-route",
         (string from, string pickup, RoutingQueries handlers, CancellationToken cancellationToken) =>
             handlers.AssistanceAsync(from, pickup, cancellationToken));
+queries.MapGet("/assistance-restrictions",
+    (long since, RoutingQueries handlers, CancellationToken cancellationToken) =>
+        handlers.AssistanceRestrictionsAsync(since, cancellationToken));
     queries.MapGet("/draws/{commandId}",
         (string commandId, RoutingQueries handlers, CancellationToken cancellationToken) =>
             handlers.DrawStatusAsync(commandId, cancellationToken));

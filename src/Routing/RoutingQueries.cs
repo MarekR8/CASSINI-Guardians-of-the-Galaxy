@@ -1,4 +1,5 @@
 using System.Globalization;
+using Cassini.Demo;
 
 namespace Cassini.Routing;
 
@@ -8,10 +9,13 @@ internal sealed record RouteOption(
 internal sealed record Distribution(string Node, long Revision, DateTimeOffset At, RouteOption[] Options);
 internal sealed record AssistanceRoute(
     long Revision, string Exit, string[] ApproachSegments, string[] OutboundSegments,
-    int ApproachSeconds, int OutboundSeconds);
+    int ApproachSeconds, int OutboundSeconds, double[][]? ApproachGeometry = null,
+    double[][]? OutboundGeometry = null, RouteProvenance? Provenance = null);
 internal sealed record DrawStatus(string State, RouteOption? Route, long Revision);
+internal sealed record RoadRestriction(string Id, bool Closed, long? Revision, RoadBounds? Bounds, DateTimeOffset? ClosedAt);
 
-internal sealed class RoutingQueries(SituationGateway situation, DrawJournal journal)
+internal sealed class RoutingQueries(SituationGateway situation, DrawJournal journal,
+    AssistanceRouteProvider? routeProvider = null)
 {
     internal static readonly DateTimeOffset StartTime = new(2026, 11, 27, 19, 20, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset ScheduleCloses = StartTime.AddMinutes(40);
@@ -37,12 +41,31 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
         var outbound = Network.Exits
             .Select(exit => Network.FindPath(pickup, exit, driving: true, closed))
             .OfType<GraphPath>().OrderBy(path => path.Seconds).ThenBy(path => path.Nodes[^1], StringComparer.Ordinal)
-            .FirstOrDefault();
-        if (approach is null || outbound is null)
+            .ToArray();
+        if (approach is null || outbound.Length == 0)
             throw new RoutingException(422, "NoEligibleRoute", "Brak zweryfikowanego dojazdu lub wyjazdu dla pojazdu.");
 
-        return new(snapshot.Revision, outbound.Nodes[^1], approach.Segments, outbound.Segments,
-            approach.Seconds, outbound.Seconds);
+        if (routeProvider is not null)
+            return await routeProvider.FindAsync(from, pickup, outbound.Select(path => path.Nodes[^1]).ToArray(),
+                snapshot, cancellationToken);
+
+        var preferred = outbound[0];
+        return new(snapshot.Revision, preferred.Nodes[^1], approach.Segments, preferred.Segments,
+            approach.Seconds, preferred.Seconds);
+    }
+
+    internal async Task<object> AssistanceRestrictionsAsync(long since, CancellationToken cancellationToken)
+    {
+        if (since < 0)
+            throw new RoutingException(400, "InvalidRevision", "Provide a non-negative revision.");
+        var snapshot = await situation.ReadAsync(cancellationToken);
+        var revisions = snapshot.SegmentRevisions;
+        var closed = snapshot.ClosedSegments.ToHashSet(StringComparer.Ordinal);
+        var updated = revisions?.Where(pair => pair.Value > since).Select(pair => pair.Key) ?? [];
+        var roads = since >= snapshot.Revision ? [] : closed.Union(updated).Order(StringComparer.Ordinal)
+            .Select(id => new RoadRestriction(id, closed.Contains(id), revisions?.GetValueOrDefault(id),
+                ClosedRoadArea.ForSegment(id)?.RoadBounds, snapshot.ClosureEvidence?.GetValueOrDefault(id)?.DecidedAt)).ToArray();
+        return new { snapshot.Revision, hasHistory = revisions is not null, roads };
     }
 
     internal async Task<DrawStatus> DrawStatusAsync(string commandId, CancellationToken cancellationToken)

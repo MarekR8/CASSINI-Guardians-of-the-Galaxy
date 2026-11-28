@@ -8,10 +8,11 @@ const companionConfig = fetch('/ui/companion')
   .then(response => response.ok ? response.json() : null)
   .catch(() => null);
 const state = {
-  network: null, situation: null, distribution: null, draw: null, readAvailable: false,
+  network: null, situation: null, incident: null, dispatch: null, distribution: null, draw: null, readAvailable: false,
   cityImagery: null, closedRoads: [],
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null, reviewSignature: null,
+  dispatchSelections: new Map(), dispatchErrors: new Map(),
   cityPicking: false, cityPoints: [], cityPath: null,
   satelliteScene: null, satelliteDetail: false,
 };
@@ -112,6 +113,14 @@ function invalidateRead() {
   if (state.draw) state.draw = { id: state.draw.id, state: 'Unknown', route: null };
   if (state.network?.scenario === 'valencia') redrawMap();
   else renderDistribution();
+  if (state.incident && state.dispatch) {
+    const assignments = state.dispatch.assignments.map(assignment => assignment.active
+      ? { ...assignment, routeCurrent: null,
+        routeStatus: { state: 'Unverified', code: 'SituationUnavailable' } }
+      : assignment);
+    renderOperations(state.incident, { ...state.dispatch, assignments });
+    state.operationsSignature = null;
+  }
 }
 
 async function refresh(epoch) {
@@ -147,6 +156,8 @@ async function refresh(epoch) {
   state.readAvailable = true;
   state.network = network;
   state.situation = situation;
+  state.incident = incident;
+  state.dispatch = dispatch;
   state.cityImagery = cityImagery;
   if (closureLayer) state.closedRoads = closureLayer.roads;
   document.body.classList.toggle('valencia', valencia);
@@ -250,6 +261,8 @@ function syncControls() {
   $('alert').disabled = state.busy || !state.situation;
   for (const control of $('reviews').querySelectorAll('button'))
     control.disabled = state.busy || !state.situation;
+  for (const control of $('requests').querySelectorAll('button, select'))
+    control.disabled = state.busy || !state.readAvailable;
 }
 
 function renderDistribution() {
@@ -471,6 +484,17 @@ function renderMap(route) {
     routes.push({ points: pointsOnMap(state.cityPath.route.geometry), fill: 'none',
       stroke: '#8df0ce', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
   }
+  for (const assignment of state.dispatch?.assignments ?? []) {
+    const verifiedRevision = assignment.routeStatus?.revision ?? assignment.route.revision;
+    if (!state.distribution || assignment.routeCurrent !== true || verifiedRevision !== state.situation.revision)
+      continue;
+    for (const [geometry, dashed] of [[assignment.route.approachGeometry, true], [assignment.route.outboundGeometry, false]]) {
+      if (!geometry?.length) continue;
+      if (dashed && ['AtPickup', 'PickupConfirmed'].includes(assignment.state)) continue;
+      routes.push({ points: pointsOnMap(geometry), fill: 'none', stroke: '#fbd47e', 'stroke-width': 4,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': dashed ? '7 5' : 'none' });
+    }
+  }
   for (const line of routes) {
     map.append(svg('polyline', { ...line, stroke: '#102026', 'stroke-width': 7 }));
     map.append(svg('polyline', { ...line, class: 'map-route' }));
@@ -659,9 +683,8 @@ function renderOperations(incident, dispatch) {
     return row;
   }));
 
-  const unit = dispatch.units.find(item => item.unitId === 'unit-3');
-  const occupied = dispatch.assignments.some(a => a.unitId === 'unit-3' && !['Completed', 'Cancelled'].includes(a.state));
-  text('unit-status', unit ? unit.name + ' · ' + (occupied ? 'w zadaniu' : 'gotowa') : 'Brak jednostki');
+  const available = dispatch.units.filter(unit => unit.state === 'Available');
+  text('unit-status', 'Dostępne jednostki: ' + available.length + ' z ' + dispatch.units.length);
   $('requests').replaceChildren(...dispatch.requests.map(item => {
     const row = element('li');
     const info = element('div');
@@ -670,27 +693,133 @@ function renderOperations(incident, dispatch) {
       (statuses[assignment?.state] || assignment?.state || 'Oczekuje na jednostkę') + ' · ' + label(item.pickupNode)));
     row.append(info);
     const actions = element('div', null, 'buttons');
-    if (!assignment && !occupied && unit) actions.append(button('Przydziel', () =>
-      api('dispatch', 'commands/assign', { commandId: commandId(), requestId: item.requestId, unitId: unit.unitId,
-        expectedVersion: item.version }).then(() => 'Zarezerwowano jednostkę.')));
+    const change = (op, fields, message) => dispatchAction(item.requestId,
+      () => api('dispatch', 'commands/' + op, { commandId: commandId(), ...fields }), message);
+    const problem = state.dispatchErrors.get(item.requestId);
+    if (problem) info.append(element('p', problem, 'dispatch-problem'));
+    if (!assignment && available.length) {
+      const select = element('select');
+      select.setAttribute('aria-label', 'Jednostka dla ' + item.caseId);
+      for (const unit of available) {
+        const option = element('option', unit.name + ' · ' + unitPositionLabel(unit));
+        option.value = unit.unitId;
+        select.append(option);
+      }
+      const saved = state.dispatchSelections.get(item.requestId);
+      if (available.some(unit => unit.unitId === saved)) select.value = saved;
+      select.addEventListener('change', () => state.dispatchSelections.set(item.requestId, select.value));
+      actions.append(select, button('Przydziel', () => {
+        const unit = available.find(unit => unit.unitId === select.value);
+        return withConfirmedUnitPosition(unit, confirmed => change('assign', {
+          requestId: item.requestId, unitId: unit.unitId, expectedVersion: item.version, ...confirmed,
+        }, 'Zarezerwowano jednostkę.'));
+      }));
+    } else if (!assignment) {
+      info.append(element('p', 'Wszystkie jednostki są zajęte.'));
+    }
     if (assignment?.route) {
+      const unit = dispatch.units.find(unit => unit.unitId === assignment.unitId);
+      if (unit) info.append(element('p', unit.name + ' · ' + unitPositionLabel(unit)));
       const route = assignment.route;
       const active = !['Completed', 'Cancelled'].includes(assignment.state);
       const routeText = assignment.routeCurrent === true
         ? label(route.exit) + ' · dojazd ' + minutes(route.approachSeconds) + ' · wyjazd ' + minutes(route.outboundSeconds)
-        : active ? 'Trasa jednostki wymaga ponownej weryfikacji.' : null;
+        : active ? dispatchRouteLabel(assignment.routeStatus) : null;
       if (routeText) info.append(element('p', routeText));
-      const change = (op, extra) => api('dispatch', 'commands/' + op, { commandId: commandId(),
-        assignmentId: assignment.assignmentId, expectedVersion: assignment.version, ...extra })
-        .then(() => 'Zapisano stan zadania.');
-      if (active && assignment.routeCurrent !== true) actions.append(button('Przelicz trasę jednostki', () => change('replan')));
+      if (route.provenance) info.append(element('p', route.provenance.mode === 'synthetic'
+        ? 'Trasa jednostki · symulacja' : 'Trasa jednostki · OpenRouteService'
+          + (route.provenance.mode === 'recorded' ? ' · zapis' : '')));
+      const changeAssignment = (op, extra) => change(op, {
+        assignmentId: assignment.assignmentId, expectedVersion: assignment.version, ...extra,
+      }, 'Zapisano stan zadania.');
+      if (active && unit && assignment.routeCurrent !== true &&
+        !['SituationUnavailable', 'RoutingUnavailable', 'SituationRevisionUnavailable'].includes(assignment.routeStatus?.code))
+        actions.append(button('Przelicz trasę jednostki', () =>
+          withConfirmedUnitPosition(unit, confirmed => changeAssignment('replan', confirmed))));
       const step = { Assigned: ['acknowledge', 'Potwierdź zadanie'], Acknowledged: ['arrive', 'Zgłoś przyjazd'],
         AtPickup: ['pickup', 'Potwierdź odbiór'], PickupConfirmed: ['complete', 'Zakończ zadanie'] }[assignment.state];
-      if (step && assignment.routeCurrent === true) actions.append(button(step[1], () => change('progress', { step: step[0] })));
+      if (step && assignment.routeCurrent === true)
+        actions.append(button(step[1], () => changeAssignment('progress', { step: step[0] })));
     }
+    const history = dispatch.assignments.filter(entry => entry.requestId === item.requestId)
+      .flatMap(entry => (entry.history ?? []).map(decision => ({ ...decision, unitId: entry.unitId })));
+    if (history.length) info.append(dispatchHistory(item.requestId, history));
     if (actions.childElementCount) row.append(actions);
     return row;
   }));
+}
+
+const dispatchMessages = {
+  NoEligibleRoute: 'Brak dostępnego objazdu. Sprawdź zamknięcia lub wybierz inną jednostkę.',
+  FixtureMissing: 'Brakuje nagrania ORS dla tego przebiegu.',
+  PositionUnverified: 'Potwierdź punkt startu jednostki.',
+  SituationUnavailable: 'Brak połączenia z serwisem sytuacji. Trasa oczekuje na weryfikację.',
+  SituationRevisionUnavailable: 'Brakuje aktualnej rewizji sytuacji.',
+  RoutingUnavailable: 'Serwis tras jest niedostępny.',
+  RouteEvidenceUnavailable: 'Brakuje danych do ponownej weryfikacji trasy.',
+  RouteRequiresReview: 'Warunki przejazdu się zmieniły. Przelicz trasę jednostki.',
+  SituationChanged: 'Sytuacja zmieniła się podczas sprawdzania trasy. Spróbuj ponownie.',
+  UnitUnavailable: 'Ta jednostka została już przydzielona.',
+  BookingConflict: 'Jednostka lub zgłoszenie ma już aktywną rezerwację.',
+};
+
+function dispatchRouteLabel(status) {
+  const roads = status?.segments?.map(label).join(', ');
+  if (status?.state === 'Blocked') {
+    const closedAt = status.observedAt ? ' Zamknięcie: ' + new Date(status.observedAt).toLocaleString('pl-PL') + '.' : '';
+    return 'Trasa wycofana. Zamknięte odcinki: ' + roads + '.' + closedAt;
+  }
+  if (status?.state === 'ReviewRequired') return 'Dostępność odcinka się zmieniła. Przelicz trasę: ' + roads + '.';
+  return dispatchMessages[status?.code] ?? 'Trasa jednostki oczekuje na weryfikację.';
+}
+
+const dispatchHistoryOpen = new Set();
+function dispatchHistory(requestId, history) {
+  const details = element('details');
+  details.open = dispatchHistoryOpen.has(requestId);
+  details.addEventListener('toggle', () => {
+    if (details.open) dispatchHistoryOpen.add(requestId); else dispatchHistoryOpen.delete(requestId);
+  });
+  const labels = { Assigned: 'Przydział', PositionConfirmed: 'Ręczne potwierdzenie pozycji',
+    RouteWithdrawn: 'Wycofanie trasy', Replanned: 'Przeliczenie trasy' };
+  const list = element('ul');
+  for (const item of [...history].reverse()) {
+    const reason = item.segments?.map(label).join(', ');
+    list.append(element('li', [new Date(item.at).toLocaleString('pl-PL'), item.unitId,
+      labels[item.kind] ?? statuses[item.kind] ?? item.kind, 'rewizja ' + item.revision, reason].filter(Boolean).join(' · ')));
+  }
+  details.append(element('summary', 'Historia zadania'), list);
+  return details;
+}
+
+async function dispatchAction(requestId, action, message) {
+  try {
+    await action();
+    state.dispatchErrors.delete(requestId);
+    return message;
+  } catch (error) {
+    const reason = dispatchMessages[error.code] ?? error.message;
+    state.dispatchErrors.set(requestId, reason);
+    return reason;
+  } finally {
+    state.operationsSignature = null;
+  }
+}
+
+function unitPositionLabel(unit) {
+  const evidence = unit.positionEvidence;
+  if (evidence?.mode === 'manual') return 'pozycja potwierdzona ręcznie';
+  if (evidence?.mode === 'synthetic' && evidence.egnosApplied === true && unit.positionVerified)
+    return 'EGNOS (symulacja) · HPL ' + evidence.hpl + ' m';
+  if (evidence?.mode === 'synthetic' && evidence.hpl != null)
+    return 'HPL ' + evidence.hpl + ' m (symulacja) · potwierdź pozycję';
+  return 'pozycja wymaga potwierdzenia';
+}
+
+function withConfirmedUnitPosition(unit, action) {
+  if (unit.positionVerified) return action({});
+  if (window.confirm('Potwierdź pozycję jednostki: ' + label(unit.node) + '.'))
+    return action({ confirmedStartNode: unit.node });
 }
 
 function renderSources(hazards) {

@@ -4,4 +4,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(EnableDispatchPostgres)' == 'true'">
+    <DefineConstants>$(DefineConstants);DISPATCH_POSTGRES</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableDispatchPostgres)' == 'true'">
+    <PackageReference Include="Npgsql" Version="10.0.4" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(EnableDispatchPostgres)' != 'true'">
+    <Compile Remove="PostgresDispatchPersistence.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Demo/RoadBounds.cs" Link="RoadBounds.cs" />
+    <Content Include="../../data/demo/ors/unit-positions.json" Link="unit-positions.json"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

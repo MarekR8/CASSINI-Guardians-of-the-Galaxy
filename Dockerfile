@@ -1,11 +1,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG PROJECT
+ARG ENABLE_DISPATCH_POSTGRES=false
 WORKDIR /source
 COPY src/ src/
 COPY apps/web/ apps/web/
 COPY data/demo/network/graph.json data/demo/network/graph.json
 COPY data/demo/population/estimate.json data/demo/population/estimate.json
-RUN dotnet publish "$PROJECT" -c Release -o /output -p:NuGetAudit=false
+COPY data/demo/ors/ data/demo/ors/
+RUN dotnet publish "$PROJECT" -c Release -o /output -p:NuGetAudit=false -p:EnableDispatchPostgres="$ENABLE_DISPATCH_POSTGRES"
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
