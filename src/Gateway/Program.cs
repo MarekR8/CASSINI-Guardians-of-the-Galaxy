@@ -49,12 +49,21 @@ app.UseStaticFiles(new StaticFileOptions
 var cityDirectory = builder.Configuration["Demo:CityDirectory"];
 if (!string.IsNullOrWhiteSpace(cityDirectory))
 {
-    var cityMap = Path.GetFullPath(Path.Combine(cityDirectory, "city-map.svg"));
-    app.MapGet("/maps/warsaw.svg", (HttpContext context) =>
+    var assets = new (string Route, string File, string ContentType)[]
     {
-        context.Response.Headers.CacheControl = "private,max-age=86400";
-        return Results.File(cityMap, "image/svg+xml");
-    });
+        ("warsaw.svg", "city-map.svg", "image/svg+xml"),
+        ("city.svg", "city-map.svg", "image/svg+xml"),
+        ("city-nodes.svg", "city-nodes.svg", "image/svg+xml"),
+        ("city-imagery.json", "city-imagery.json", "application/json"),
+        ("sentinel-before.jpg", "sentinel-before.jpg", "image/jpeg"),
+        ("sentinel-event.jpg", "sentinel-event.jpg", "image/jpeg"),
+    };
+    foreach (var asset in assets)
+    {
+        var file = Path.GetFullPath(Path.Combine(cityDirectory, asset.File));
+        if (File.Exists(file))
+            app.MapGet("/maps/" + asset.Route, () => Results.File(file, asset.ContentType));
+    }
 }
 app.MapGet("/health", () => Results.Ok(new { service = "gateway" }));
 int? companionPort = int.TryParse(builder.Configuration["Demo:CompanionPort"], out var port) &&

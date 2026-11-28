@@ -16,6 +16,7 @@ internal sealed record ClosureEvidence(string Source, string? ReviewFeatureId, D
 
 internal sealed class ReviewNetwork(DemoNetwork? network, CityNetwork? city = null)
 {
+    internal bool CityOnly => network is null && city is not null;
     internal bool ContainsCitySegment(string id) => city?.Contains(id) == true;
     internal static ReviewFeature ExerciseFeature(DemoNetwork network)
     {
@@ -32,12 +33,12 @@ internal sealed class ReviewNetwork(DemoNetwork? network, CityNetwork? city = nu
 
     internal ReviewFeature[] Read(ImportReviewCommand command)
     {
-        if (network is null)
-            throw new SituationError(409, "ScenarioRequired", "FlyPix road review uses the Warsaw exercise graph.");
+        if (network is null && city is null)
+            throw new SituationError(409, "ScenarioRequired", "FlyPix road review requires an exercise road network.");
         if (command.LayerId?.Trim() is not { Length: > 0 and <= 120 } layerId ||
             command.ImageProductId?.Trim() is not { Length: > 0 and <= 120 } product ||
             command.ObservedAt is not { } observed || command.ModelId?.Length > 120 ||
-            command.Mode is not ("synthetic" or "recorded" or "live"))
+            command.Mode is not ("synthetic" or "manual" or "recorded" or "live"))
             throw SituationCommands.Invalid("Provide the layer, image product, UTC observation time and import mode.");
         if (SituationCommands.ReadType(command.GeoJson) != "FeatureCollection" ||
             !command.GeoJson.TryGetProperty("features", out var features) || features.ValueKind != JsonValueKind.Array ||
@@ -68,7 +69,7 @@ internal sealed class ReviewNetwork(DemoNetwork? network, CityNetwork? city = nu
             }
             var id = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
                 JsonSerializer.Serialize(new { layerId, product, observed = observed.ToUniversalTime(), command.ModelId, feature }))))[..24];
-            var source = command.Mode == "synthetic" ? "exercise" : "flypix-ai";
+            var source = command.Mode switch { "synthetic" => "exercise", "manual" => "flypix-manual", _ => "flypix-ai" };
             result.Add(new ReviewFeature("flypix-" + id, source, command.Mode, layerId, product,
                 observed.ToUniversalTime(), command.ModelId, confidence, geometry.Clone(), Match(polygons)));
         }
@@ -79,12 +80,15 @@ internal sealed class ReviewNetwork(DemoNetwork? network, CityNetwork? city = nu
     {
         var boundaries = polygons.Select(polygon => polygon.EnumerateArray().Select(ring => ring.EnumerateArray()
             .Select(point => (X: point[0].GetDouble(), Y: point[1].GetDouble())).ToArray()).ToArray()).ToArray();
-        var demo = network!.Segments.Where(segment =>
+        var demo = (network?.Segments ?? []).Where(segment =>
             new[] { segment.Geometry, segment.DrivingGeometry, segment.ReverseDrivingGeometry }
                 .Any(line => line is not null && Intersects(line, boundaries))).Select(segment => segment.Id);
         if (city is null) return demo.ToArray();
 
         var points = boundaries.SelectMany(polygon => polygon[0]).ToArray();
+        if (CityOnly && boundaries.SelectMany(polygon => polygon).SelectMany(ring => ring)
+            .Any(point => !city.InBounds(point.X, point.Y)))
+            throw SituationCommands.Invalid("Review geometry must be inside the city bounds.");
         var candidates = city.IntersectingBounds(points.Min(point => point.X), points.Min(point => point.Y),
             points.Max(point => point.X), points.Max(point => point.Y));
         return demo.Concat(candidates.Where(road => Intersects(road.Geometry, boundaries))

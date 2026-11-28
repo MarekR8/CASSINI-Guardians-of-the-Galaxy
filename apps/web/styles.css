@@ -115,3 +115,15 @@ footer { color: var(--muted); padding: 1.1rem 0; font-size: .875rem; }
   #map text { font-size: 23px; }
   #map .minor-label { font-size: 19px; }
 }
+
+body.valencia main { max-width: none; padding-top: .9rem; }
+body.valencia .workspace { grid-template-columns: minmax(0, 1fr); }
+body.valencia #map { height: min(76vh, 950px); min-height: 380px; }
+body.valencia #map.map-detailed .map-city-roads { visibility: visible; }
+body.valencia .exercise-legend { display: none; }
+#valencia-tools > span { color: var(--muted); font-size: .875rem; }
+.operations[hidden] { display: none; }
+#valencia-tools { align-items: center; }
+#valencia-tools select { width: auto; margin: 0; }
+#valencia-tools input { display: inline; width: auto; }
+#reviews details p { overflow-wrap: anywhere; }

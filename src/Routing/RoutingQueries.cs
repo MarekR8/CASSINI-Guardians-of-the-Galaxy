@@ -86,7 +86,7 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
     internal async Task<object> CityRouteAsync(string from, string to, string? mode, CancellationToken cancellationToken)
     {
         var city = Network.City
-            ?? throw new RoutingException(503, "CityMapUnavailable", "Przygotuj lokalny wycinek OSM Warszawy.");
+            ?? throw new RoutingException(503, "CityMapUnavailable", "Przygotuj lokalny wycinek OSM.");
         if (mode is not (null or "walking" or "driving"))
             throw new RoutingException(400, "InvalidRequest", "Tryb musi mieć wartość walking lub driving.");
         var start = ReadPoint(from);
@@ -102,7 +102,7 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
                 !double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var longitude) ||
                 !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var latitude) ||
                 !city.InBounds(longitude, latitude))
-                throw new RoutingException(400, "InvalidPoint", "Podaj długość i szerokość w granicach obszaru Warszawy.");
+                throw new RoutingException(400, "InvalidPoint", "Podaj długość i szerokość w granicach obszaru mapy.");
             return [longitude, latitude];
         }
     }

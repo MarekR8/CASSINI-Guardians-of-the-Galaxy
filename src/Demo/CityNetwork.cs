@@ -1,16 +1,23 @@
 ﻿using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Cassini.Demo;
 
 internal sealed record CityRoad(string Id, long From, long To, string? Name, bool Major,
-    int?[] Walk, int?[] Drive, double[][] Geometry);
+    int?[] Walk, int?[] Drive, double[][] Geometry,
+    [property: JsonPropertyName("class")] string? RoadClass = null, double? LengthMetres = null,
+    int? Lanes = null, int? VehiclesPerHour = null, int? PedestriansPerHour = null,
+    bool? IntersectsObservedFlood = null);
+internal sealed record CityNode(long Id, double Longitude, double Latitude, string Zone);
 internal sealed record CityRoute(int Seconds, string[] Segments, double[][] Geometry);
-internal sealed record CityData(double[] Bounds, string OsmTimestamp, CityRoad[] Roads);
+internal sealed record CityData(double[] Bounds, string OsmTimestamp, CityRoad[] Roads,
+    CityNode[]? Nodes = null, string? Scenario = null);
 
 internal sealed class CityNetwork
 {
     private readonly Dictionary<string, CityRoad> roads;
+    private readonly Dictionary<long, CityNode> nodes;
     private readonly Dictionary<long, List<Arc>> adjacency = [];
     private readonly Dictionary<long, double[]> coordinates = [];
     private readonly Dictionary<(int, int), List<CityRoad>> grid = [];
@@ -19,12 +26,15 @@ internal sealed class CityNetwork
     internal double[] Bounds { get; }
     internal string OsmTimestamp { get; }
     internal int RoadCount => roads.Count;
+    internal IReadOnlyDictionary<string, int> ZoneCounts { get; }
 
     private CityNetwork(CityData data)
     {
         Bounds = data.Bounds;
         OsmTimestamp = data.OsmTimestamp;
         roads = data.Roads.ToDictionary(road => road.Id, StringComparer.Ordinal);
+        nodes = (data.Nodes ?? []).ToDictionary(node => node.Id);
+        ZoneCounts = nodes.Values.GroupBy(node => node.Zone).ToDictionary(group => group.Key, group => group.Count());
         foreach (var road in data.Roads)
         {
             coordinates[road.From] = road.Geometry[0];
@@ -43,20 +53,24 @@ internal sealed class CityNetwork
         }
     }
 
-    internal static CityNetwork? Load(string? directory)
+    internal static CityNetwork? Load(string? directory, string? scenario = null)
     {
-        if (string.IsNullOrWhiteSpace(directory)) return null;
+        if (string.IsNullOrWhiteSpace(directory))
+            return scenario == "valencia" ? throw new InvalidDataException("Prepare the offline Valencia map first.") : null;
         using var source = File.OpenRead(Path.Combine(directory, "city-network.json.gz"));
         using var gzip = new GZipStream(source, CompressionMode.Decompress);
         var data = JsonSerializer.Deserialize<CityData>(gzip, new JsonSerializerOptions(JsonSerializerDefaults.Web))
-            ?? throw new InvalidDataException("Warsaw OSM data is empty.");
+            ?? throw new InvalidDataException("City OSM data is empty.");
         if (data.Bounds.Length != 4 || data.Roads.Length == 0)
-            throw new InvalidDataException("Warsaw OSM data must include its bounds and roads.");
+            throw new InvalidDataException("City OSM data must include its bounds and roads.");
+        if (scenario == "valencia" && (data.Scenario != scenario || data.Nodes is not { Length: > 0 }))
+            throw new InvalidDataException("Prepare a Valencia network with classified nodes.");
         return new CityNetwork(data);
     }
 
     internal bool Contains(string id) => roads.ContainsKey(id);
     internal CityRoad? Road(string id) => roads.GetValueOrDefault(id);
+    internal CityNode? Node(long id) => nodes.GetValueOrDefault(id);
 
     internal IEnumerable<CityRoad> IntersectingBounds(double west, double south, double east, double north)
     {
