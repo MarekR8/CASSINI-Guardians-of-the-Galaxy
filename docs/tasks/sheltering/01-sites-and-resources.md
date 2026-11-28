@@ -21,7 +21,7 @@ The coordinator opens one assembly point and two shelters. A shelter operator re
 
 - [x] Commit configuration, audit history, command receipts, `AssemblyPointChanged.v1` and `ShelterAvailabilityChanged.v1` in the owner stores. Verify restart recovery of pending events.
 - [x] Enforce coordinator activation and site-scoped resource updates with authenticated roles.
-- [ ] Verify broker publication and redelivery end to end with SH-T06.
+- [x] Verify broker publication and redelivery end to end with SH-T06.
 
 ## Dependencies and verification
 
@@ -75,11 +75,23 @@ still replay in demo mode. Audits and outbox entries stay inside the owner store
 The pending outbox entries carry a routing key, a versioned event envelope and
 `publishedAt: null`. The envelope uses the command ID for causation and
 correlation in this slice. It contains site identity, state, operating window and
-reference to evidence. Shelter events add the changed resource types. SH-T06
-will publish the pending entries and verify broker recovery and redelivery.
+reference to evidence. Shelter events add the changed resource types. In the
+[SH-T06 full profile](../../../compose.sheltering-full.yaml), Situation and
+Sheltering publish their pending entries to `evacuation.events`. Each owner
+records `publishedAt` after broker confirmation. A retry after an interrupted
+confirmation reuses the same event ID, so consumers can deduplicate deliveries.
 
 Run `python tests/sheltering_stage_b.py` on the Stage B build with OpenSSL
 available on PATH. The test uses an ephemeral loopback OIDC test issuer and
 checks role and scope denial, idempotency and persisted audit and outbox after
 restart. Run it with `--postgres` and two fresh, migrated databases to test the
 PostgreSQL backend. The loopback HTTP metadata option is for the test issuer.
+
+Build with `EnableRabbitMq=true` to run `python tests/sheltering_site_events_integration.py`
+against a dedicated broker with the management plugin. Use the same
+`RABBITMQ_URI`, `RABBITMQ_API` and optional API credentials as the SH-T06 test.
+The test closes both sites while the broker is unreachable, restarts the owners
+with the broker available, requeues the two messages and verifies redelivery
+with the original IDs. A second restart leaves confirmed events settled. CI
+runs this check with Sheltering's PostgreSQL store and verifies its confirmation
+marker in the database.

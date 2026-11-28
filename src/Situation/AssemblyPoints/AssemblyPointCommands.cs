@@ -1,4 +1,5 @@
 using Cassini.Demo.SiteCatalog;
+using Cassini.Messaging;
 
 namespace Situation.AssemblyPoints;
 
@@ -22,7 +23,7 @@ internal sealed class AssemblyPointCommands(CatalogStore<AssemblyPoint> store, S
 
             return new AssemblyPoint(command.IncidentId!, command.PointId!, name, command.Place!, stepFree,
                 command.Status!, command.OperatingWindow!, command.Evidence!, version);
-        }, (_, point) => new("AssemblyPointChanged.v1", "situation.assembly-point-changed.v1", point.PointId, new
+        }, (_, point) => new(EventTypes.AssemblyPointChanged, EventTypes.RoutingKey(EventTypes.AssemblyPointChanged), point.PointId, new
         {
             point.IncidentId,
             point.PointId,

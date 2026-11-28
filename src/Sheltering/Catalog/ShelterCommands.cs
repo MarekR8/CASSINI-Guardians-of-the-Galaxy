@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Cassini.Demo.SiteCatalog;
 using Cassini.Sheltering.Infrastructure;
+using Cassini.Messaging;
 
 namespace Cassini.Sheltering.Catalog;
 
@@ -75,7 +76,8 @@ internal sealed class ShelterCommands(CatalogStore<Shelter> catalog, SituationCl
         if (previous is null || previous.Resources.IntakePerHour != shelter.Resources.IntakePerHour)
             affectedResources.Add("intakePerHour");
 
-        return new("ShelterAvailabilityChanged.v1", "sheltering.shelter-availability-changed.v1", shelter.ShelterId, new
+        return new(EventTypes.ShelterAvailabilityChanged, EventTypes.RoutingKey(EventTypes.ShelterAvailabilityChanged),
+            shelter.ShelterId, new
         {
             incidentId,
             shelter.ShelterId,

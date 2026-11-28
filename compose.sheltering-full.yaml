@@ -1,4 +1,4 @@
-# SH-T06 Stage B: Sheltering and Routing publish their outboxes to RabbitMQ (evacuation.events) and Sheltering's
+# SH-T06 Stage B: Situation, Sheltering and Routing publish to RabbitMQ (evacuation.events) and Sheltering's
 # instruction board consumes them. Use with compose.yaml and compose.sheltering.yaml; add
 # compose.sheltering-postgres.yaml for the PostgreSQL store. The first run needs internet to pull the broker image.
 #   RABBITMQ_PASSWORD=… docker compose -f compose.yaml -f compose.sheltering.yaml -f compose.sheltering-full.yaml \
@@ -8,6 +8,16 @@ x-live-bus: &live-bus
   Integrations__Bus__Uri: amqp://${RABBITMQ_USER:-cassini}:${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD}@rabbitmq:5672/
 
 services:
+  situation:
+    image: cassini-offline/situation:full
+    build:
+      args:
+        ENABLE_RABBITMQ: "true"
+    environment: *live-bus
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   routing:
     image: cassini-offline/routing:full
     build:

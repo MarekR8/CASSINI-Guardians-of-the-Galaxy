@@ -31,6 +31,7 @@ public static class EventTypes
 
     public const string HazardAlertRecorded = "HazardAlertRecorded.v1";
     public const string SituationChanged = "SituationChanged.v1";
+    public const string AssemblyPointChanged = "AssemblyPointChanged.v1";
     public const string RoutePublished = "RoutePublished.v1";
     public const string RouteWithdrawn = "RouteWithdrawn.v1";
     public const string AssistanceRequested = "AssistanceRequested.v1";
@@ -49,6 +50,7 @@ public static class EventTypes
     {
         [HazardAlertRecorded] = "management.hazard-alert-recorded.v1",
         [SituationChanged] = "situation.changed.v1",
+        [AssemblyPointChanged] = "situation.assembly-point-changed.v1",
         [RoutePublished] = "routing.route-published.v1",
         [RouteWithdrawn] = "routing.route-withdrawn.v1",
         [AssistanceRequested] = "dispatch.assistance-requested.v1",

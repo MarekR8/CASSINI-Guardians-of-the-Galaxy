@@ -89,7 +89,7 @@ Return a stable `code` for business errors using the owner's HTTP problem respon
 
 ## Target integration events
 
-Use the existing [event envelope and RabbitMQ topology](mvp-interfaces.md#rabbitmq-bindings-and-consumers). These are routing keys on `evacuation.events`. SH-T01 commits point and shelter events to the owner outboxes, with RabbitMQ publication and replay assigned to SH-T06.
+Use the existing [event envelope and RabbitMQ topology](mvp-interfaces.md#rabbitmq-bindings-and-consumers). These are routing keys on `evacuation.events`. SH-T01 commits point and shelter events to the owner outboxes and uses the SH-T06 publisher in the optional full profile. Subscribers bind the required topics and deduplicate by event ID.
 
 | Publisher | Event → proposed routing key | Consumers and effect |
 | --- | --- | --- |

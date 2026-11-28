@@ -117,6 +117,23 @@ internal sealed partial class CatalogStore<T> : IDisposable where T : class
         return (state.Revision, state.Items.Values.ToArray());
     }
 
+    internal CatalogOutboxEntry[] ReadOutbox() => persistence.Read().Outbox ?? [];
+
+    internal string[] MarkCatalogPublished(IReadOnlyCollection<string> eventIds, DateTimeOffset at) =>
+        persistence.Update<string[]>(state =>
+        {
+            var otherIds = eventIds.ToHashSet(StringComparer.Ordinal);
+            var changed = false;
+            var confirmed = (state.Outbox ?? []).Select(entry =>
+            {
+                if (!otherIds.Remove(entry.Event.EventId.ToString("D")) || entry.PublishedAt is not null)
+                    return entry;
+                changed = true;
+                return entry with { PublishedAt = at };
+            }).ToArray();
+            return (changed ? state with { Outbox = confirmed } : null, otherIds.ToArray());
+        });
+
     internal CatalogWrite<T> Save<TCommand>(string? commandId, int? expectedVersion, string key,
         TCommand command, CatalogActor actor, DateTimeOffset at, Func<T?, int, T> change,
         Func<T?, T, SiteChange> describe)

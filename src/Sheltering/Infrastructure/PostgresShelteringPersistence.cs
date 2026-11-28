@@ -252,7 +252,17 @@ internal sealed class PostgresShelteringPersistence : ICatalogPersistence<Shelte
         var catalogOutbox = next.Outbox ?? [];
         if (audit.Length != catalogOutbox.Length)
             throw new InvalidDataException("Site configuration audit and outbox must be committed together.");
-        for (var index = loaded.State.Audit?.Length ?? 0; index < audit.Length; index++)
+        var previousOutbox = loaded.State.Outbox ?? [];
+        for (var index = 0; index < previousOutbox.Length; index++)
+        {
+            var entry = catalogOutbox[index];
+            if (entry.PublishedAt == previousOutbox[index].PublishedAt)
+                continue;
+            RequireOne(Execute(connection, transaction,
+                "UPDATE sheltering_catalog_outbox SET document = $2::jsonb WHERE event_id = $1",
+                entry.Event.EventId, JsonSerializer.Serialize(entry, Json)));
+        }
+        for (var index = previousOutbox.Length; index < audit.Length; index++)
         {
             var change = audit[index];
             var fact = catalogOutbox[index];
