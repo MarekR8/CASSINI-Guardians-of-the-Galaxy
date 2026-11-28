@@ -9,10 +9,10 @@ artifacts/sheltering-rehearsal.json.
     python tests/sheltering_rehearsal.py --images-only   # SH-A08 on prebuilt Compose images (CI job verify-sheltering-images)
 
 The image path never builds or pulls (`--no-build --pull never`) and starts from empty volumes. It runs the sample
-regression on compose.yaml, then the sheltering exercise on compose.yaml + compose.sheltering.yaml, including a
-restart. It also checks that a service on the internal `operations` network cannot reach the internet. Build the
+regression and integrated shelter journey on base compose.yaml, then the legacy overlay catalog exercise, including
+a restart. It also checks that a service on the internal `operations` network cannot reach the internet. Build the
 images first:
-    docker compose -f compose.yaml -f compose.sheltering.yaml build
+    docker compose build
 """
 
 import argparse
@@ -116,6 +116,8 @@ def images(port):
                 assert json.load(response) == {"sheltering": True}, "default Compose must expose Sheltering"
             for script in ("offline_integration.py", "connectivity_integration.py"):
                 steps.append(run(f"images:{script}", [PYTHON, f"tests/{script}", stack.url]))
+        with Stack(docker, "cassini-rehearsal-flow", ["compose.yaml"], port) as stack:
+            steps.append(run("images:sample_sheltering_flow.py", [PYTHON, "tests/sample_sheltering_flow.py", stack.url]))
         with Stack(docker, "cassini-rehearsal-sheltering", ["compose.yaml", "compose.sheltering.yaml"], port) as stack:
             with build_opener(ProxyHandler({})).open(stack.url + "/features", timeout=10) as response:
                 assert json.load(response) == {"sheltering": True}

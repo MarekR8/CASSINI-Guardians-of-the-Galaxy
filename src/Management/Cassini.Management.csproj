@@ -26,5 +26,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Cassini.Management.Tests" />
     <ProjectReference Include="../Shared/Messaging/Cassini.Messaging.csproj" />
+    <Content Include="../../data/demo/sheltering/sample-grouping.json" Link="sample-grouping.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,7 @@
 services:
+  management:
+    environment:
+      Grouping__EvidenceFile: ""
   situation:
     environment:
       Demo__Scenario: valencia

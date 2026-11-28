@@ -75,6 +75,8 @@ Krok EWSS wysyła `POST /api/management/commands/ewss-alert` ([przykład](../con
 
 W scenariuszu `sample` (CI) wszystkie kroki są wykonywane: zgłoszenie, losowanie, prośba o transport, zamknięcie mostu, przeliczenie, postęp jednostki, łącze, EWSS, potwierdzenie wyjścia i brak wyjścia. Krok wyjścia wysyła `exit-confirmed` z pozycją węzła wyjścia oznaczoną jako symulacja (`mode: simulated`, `galileoUsed: false`, `osnma: none`, `egnos: unknown`), bo Management wymaga dowodu pozycji. Prawdziwą pozycję z Galileo dostarcza telefon (task 5).
 
+Standardowe `python scripts/offline_demo.py --test` uruchamia też `tests/sample_sheltering_flow.py` na osobnym, świeżym stanie domyślnego stosu. Jedna sesja obejmuje alert, losowanie, brak miejsc, przeplanowanie po zamknięciu mostu, potwierdzone wyjście, reguły opieki dla osobnej pary, rezerwację i publikację, zamknięcie schronienia, oczekiwanie na nowe miejsce, zmianę schronienia bez powrotu do strefy, przyjęcie i wyjazd. Rezerwacje powstają w Sheltering, a dowody trasy w Routing. Pozycje i raporty są syntetyczne; dla pary wymagającej transportu brak potwierdzonego okna pozostaje jawnym stanem eskalacji (nie jest symulowany odbiór przez jednostkę). Zapisane dowody planów Grouping są dostępne w `sample`, ale nie zastępują bieżącej weryfikacji.
+
 Syntetyczne detekcje i punkty trasy pochodzą z [valencia-review.synthetic.json](../apps/web/data/presentation/valencia-review.synthetic.json). Plik ma etykietę **SYMULACJA**, `imageProductId: presentation-synthetic-fixture` i `observedAt: 2024-10-31T18:03:00Z`. Nie jest obserwacją FlyPix. Prawdziwą detekcję z FlyPix importuje się osobno według [instrukcji Walencji](../data/local/valencia.md#flypix-w-przeglądarce).
 
 Poza trybem prezentacji te same operacje są dostępne ręcznie. **Wskaż punkty trasy** służy do testowej trasy pieszej. **Weryfikacja detekcji** zatwierdza lub odrzuca detekcje. **Radar Sentinel‑1** przełącza obraz z 19 i 31 października, a **Pokaż strefy węzłów** pokazuje klasyfikację węzłów.
@@ -158,9 +160,10 @@ python tests/sheltering_browser.py --screenshots artifacts/sheltering-browser
 `sheltering_rehearsal.py` buduje usługi raz, a każdy zestaw testów uruchamia na nowym katalogu stanu. Wynik każdego punktu SH-A zapisuje w `artifacts/sheltering-rehearsal.json`. Opcja `--images-only` działa tylko na gotowych obrazach, zawsze z `--no-build --pull never` i na pustych wolumenach:
 
 1. Uruchamia regresję `sample` na `compose.yaml`.
-2. Uruchamia ćwiczenie schronień na `compose.yaml` + `compose.sheltering.yaml`.
-3. Restartuje Situation i Sheltering, a potem sprawdza zachowany stan.
-4. Sprawdza, że kontener Sheltering w sieci `internal` nie łączy się z internetem.
+2. Uruchamia zintegrowany przepływ schronienia na świeżym domyślnym stosie `compose.yaml`.
+3. Uruchamia ćwiczenie katalogów schronień na zgodnej wstecz nakładce `compose.yaml` + `compose.sheltering.yaml`.
+4. Restartuje Situation i Sheltering, a potem sprawdza zachowany stan.
+5. Sprawdza, że kontener Sheltering w sieci `internal` nie łączy się z internetem.
 
 W CI robi to job `verify-sheltering-images`.
 

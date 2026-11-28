@@ -24,7 +24,7 @@ jobs:
           docker compose -f compose.yaml -f compose.sheltering.yaml config --quiet
           SHELTERING_DB_CONNECTION=ci SHELTERING_DB_PASSWORD=ci docker compose -f compose.yaml -f compose.sheltering.yaml -f compose.sheltering-postgres.yaml --profile full config --quiet
           RABBITMQ_PASSWORD=ci docker compose -f compose.yaml -f compose.sheltering.yaml -f compose.sheltering-full.yaml --profile full config --quiet
-      - name: Run the offline integration scenario
+      - name: Run the offline regression and mandatory default Sheltering journey
         run: python3 scripts/offline_demo.py --test
       - name: Verify the shelter and assembly point catalogs
         run: python3 scripts/offline_demo.py --sheltering --test --no-build

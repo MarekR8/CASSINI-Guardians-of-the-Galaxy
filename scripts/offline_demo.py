@@ -77,6 +77,10 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
             "Sheltering__StateFile": str(data_dir / "shelters.json"),
         }
         configured_names = {name.casefold() for name in env}
+        catalog_mode = next((value for name, value in env.items()
+                             if name.casefold() == "sitecatalog__accessmode"), "demo")
+        if catalog_mode == "demo":
+            catalog_defaults["Grouping__EvidenceFile"] = str(fixture.with_name("sample-grouping.json"))
         env.update({name: value for name, value in catalog_defaults.items() if name.casefold() not in configured_names})
         env["Sheltering__BaseUrl"] = local_url(port + 5)
         if shelter_holds:
@@ -197,6 +201,11 @@ def main():
                         raise RuntimeError("Unexpected Sheltering availability for the selected scenario.")
                 for script in scripts:
                     subprocess.run([os.sys.executable, str(ROOT / "tests" / script), url, *test_options], cwd=ROOT, check=True)
+            if sample_sheltering and not args.sheltering:
+                # The regression above deliberately blocks every exit; the integrated journey needs a fresh incident.
+                with start_services(args.port, Path(directory) / "full-flow", sheltering=True, auto_replan=False) as url:
+                    subprocess.run([os.sys.executable, str(ROOT / "tests" / "sample_sheltering_flow.py"), url],
+                                   cwd=ROOT, check=True)
             if args.sheltering:
                 with start_services(args.port, Path(directory), sheltering=True) as url:
                     subprocess.run(
