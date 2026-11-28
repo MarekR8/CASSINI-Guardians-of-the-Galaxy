@@ -43,6 +43,16 @@ internal static class OfflineScenario
         _ => throw new ArgumentOutOfRangeException(nameof(stage)),
     };
 
+    internal static string StartNode(int stage) => stage == 0 ? InitialNode : LaterNode;
+
+    internal static ScheduledWalkingRoute? RestoreRoute(int stage, string? exit)
+    {
+        if (exit is null)
+            return null;
+
+        return Distribution(StartNode(stage), Closures(stage), stage).FirstOrDefault(option => option.Route.Exit == exit);
+    }
+
     internal static IReadOnlyList<ScheduledWalkingRoute> Distribution(string start, IReadOnlySet<string> closed, int stage)
     {
         var baseline = new DateTimeOffset(2026, 11, 27, 19, 20, 0, TimeSpan.Zero);

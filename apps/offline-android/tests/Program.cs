@@ -17,6 +17,15 @@ Check(detour.Count == 1 && detour[0].Route.Exit == "exit-north" && detour[0].Wei
 Check(!detour[0].Route.Segments.Contains("bridge-2"), "The detour must exclude the closed bridge.");
 var noExit = OfflineScenario.Distribution(OfflineScenario.LaterNode, OfflineScenario.Closures(2), 2);
 Check(OfflineScenario.Draw(noExit, new Random(1)) is null, "Never draw a route when all exits are blocked.");
+Check(OfflineScenario.RestoreRoute(0, "exit-east")?.Route.Exit == "exit-east" &&
+      OfflineScenario.RestoreRoute(1, "exit-east") is null &&
+      OfflineScenario.RestoreRoute(2, "exit-north") is null &&
+      OfflineScenario.RestoreRoute(0, null) is null,
+    "Only a saved route allowed by the current exercise stage can be reopened.");
+IEwssReceiver receiver = new MockEwssReceiver();
+var alert = receiver.Receive();
+Check(alert.Simulated && !string.IsNullOrWhiteSpace(alert.Level) && !string.IsNullOrWhiteSpace(alert.Text),
+    "The mock alert must carry a level and text and identify itself as simulated.");
 
 const string layer = """
     {"type":"FeatureCollection","productId":"sample-for-test","observedAt":"2026-11-27T19:20:00Z",
@@ -72,7 +81,7 @@ finally
     exitDirectory.Delete(recursive: true);
 }
 
-Console.WriteLine("Offline Android schedule, closure, GeoJSON and exit report tests passed.");
+Console.WriteLine("Offline Android schedule, closure, GeoJSON, exit report and EWSS tests passed.");
 
 static void Check(bool condition, string message)
 {

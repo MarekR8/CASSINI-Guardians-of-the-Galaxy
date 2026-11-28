@@ -14,7 +14,10 @@ public sealed class MainActivity : Activity
 {
     private const int LocationRequest = 1;
     private const int ImportRequest = 2;
+    private readonly IEwssReceiver ewss = new MockEwssReceiver();
+    private ScrollView screen = null!;
     private LinearLayout panel = null!;
+    private TextView ewssBanner = null!;
     private TextView routeStatus = null!;
     private TextView distributionStatus = null!;
     private TextView gnssStatus = null!;
@@ -31,24 +34,32 @@ public sealed class MainActivity : Activity
     private bool monitorGnss;
     private int stage;
     private ScheduledWalkingRoute? selected;
+    private ISharedPreferences RoutePreferences => GetSharedPreferences("exercise-route", FileCreationMode.Private)!;
     private string LayerPath => Path.Combine(FilesDir!.AbsolutePath, "copernicus.geojson");
 
     protected override void OnCreate(Bundle? state)
     {
         base.OnCreate(state);
-        stage = state?.GetInt("stage") ?? 0;
+        stage = RoutePreferences.GetInt("stage", 0);
+        selected = OfflineScenario.RestoreRoute(stage, RoutePreferences.GetString("exit", null));
         monitorGnss = state?.GetBoolean("monitorGnss") ?? false;
 
-        var scroll = new ScrollView(this);
-        scroll.SetOnApplyWindowInsetsListener(new SafeScreenInsets());
+        screen = new ScrollView(this);
+        screen.SetOnApplyWindowInsetsListener(new SafeScreenInsets());
         panel = new LinearLayout(this) { Orientation = Orientation.Vertical };
         panel.SetPadding(Dp(20), Dp(20), Dp(20), Dp(20));
-        scroll.AddView(panel);
-        SetContentView(scroll);
+        screen.AddView(panel);
+        SetContentView(screen);
 
         AddText("CASSINI Offline", 32);
         AddText("Demo ewakuacji pieszej", 20);
         AddText("Scenariusz zawiera dane testowe. Obsługa mapy i obliczanie tras działają bez sieci.", 15);
+        ewssBanner = AddText("", 17);
+        ewssBanner.SetBackgroundColor(global::Android.Graphics.Color.Rgb(255, 234, 179));
+        ewssBanner.SetPadding(Dp(12), Dp(8), Dp(12), Dp(8));
+        ewssBanner.AccessibilityLiveRegion = AccessibilityLiveRegion.Polite;
+        ewssBanner.Text = state?.GetString("ewssBanner");
+        ewssBanner.Visibility = string.IsNullOrEmpty(ewssBanner.Text) ? ViewStates.Gone : ViewStates.Visible;
 
         map = new DemoMapView(this);
         panel.AddView(map, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MatchParent, Dp(290))
@@ -61,16 +72,20 @@ public sealed class MainActivity : Activity
         {
             selected = OfflineScenario.Draw(OfflineScenario.Distribution(StartNode, OfflineScenario.Closures(stage), stage),
                 Random.Shared);
+            SaveExerciseRoute();
             RefreshMap();
         });
         nextStage = AddButton("", () =>
         {
             stage = (stage + 1) % 3;
             selected = null;
+            ewssBanner.Visibility = ViewStates.Gone;
+            SaveExerciseRoute();
             RefreshMap();
         });
 
         AddText("Dane satelitarne", 20);
+        AddButton("Odbierz alert EWSS · symulacja", ReceiveEwssAlert);
         gnssStatus = AddText("Odczyt Galileo jest wyłączony.", 15);
         reader = new GalileoReader(this, text => gnssStatus.Text = text);
         AddButton("Sprawdź odbiornik Galileo", EnableGnss);
@@ -114,8 +129,8 @@ public sealed class MainActivity : Activity
     protected override void OnSaveInstanceState(Bundle outState)
     {
         base.OnSaveInstanceState(outState);
-        outState.PutInt("stage", stage);
         outState.PutBoolean("monitorGnss", monitorGnss);
+        outState.PutString("ewssBanner", ewssBanner.Visibility == ViewStates.Visible ? ewssBanner.Text : null);
     }
 
     private bool HasFineLocation => CheckSelfPermission(Manifest.Permission.AccessFineLocation) == Permission.Granted;
@@ -132,6 +147,26 @@ public sealed class MainActivity : Activity
             RequestPermissions([Manifest.Permission.AccessFineLocation, Manifest.Permission.AccessCoarseLocation],
                 LocationRequest);
         }
+    }
+
+    private void SaveExerciseRoute()
+    {
+        using var editor = RoutePreferences.Edit()!;
+        editor.PutInt("stage", stage);
+        editor.PutString("exit", selected?.Route.Exit);
+        editor.Apply();
+    }
+
+    private void ReceiveEwssAlert()
+    {
+        var alert = ewss.Receive();
+        var source = alert.Simulated ? "EWSS · SYMULACJA" : "EWSS";
+        var route = selected is null ? "Brak zapisanej trasy." : "Otworzono zapisaną trasę ćwiczeniową.";
+        ewssBanner.Text = $"{source} · {alert.Level}\n{alert.Text}\n{route}";
+        ewssBanner.Visibility = ViewStates.Visible;
+        showLayer = false;
+        RefreshMap();
+        screen.SmoothScrollTo(0, 0);
     }
 
     private void ConfirmExit()
@@ -321,7 +356,7 @@ public sealed class MainActivity : Activity
         viewSwitch.Text = "Pokaż Copernicus";
     }
 
-    private string StartNode => stage == 0 ? OfflineScenario.InitialNode : OfflineScenario.LaterNode;
+    private string StartNode => OfflineScenario.StartNode(stage);
 
     private static string ExitName(string exit) => exit == "exit-east" ? "Wyjście wschodnie" : "Wyjście północne";
 
