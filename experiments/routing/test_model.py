@@ -5,6 +5,7 @@ import json
 import unittest
 
 from graph import ROOT, EvacuationGraph
+import forecast
 from model import Model, congestion
 
 PARAMS = json.loads((ROOT / "data/demo/routing/params.json").read_text(encoding="utf-8"))
@@ -28,8 +29,9 @@ def network(nodes, roads):
     })
 
 
-def shelter(identifier, node, capacity=1000, step_free=True):
-    return {"id": identifier, "nodeId": node, "capacity": capacity, "intakePerHour": None, "stepFree": step_free}
+def shelter(identifier, node, capacity=1000, step_free=True, safe_until=None):
+    return {"id": identifier, "nodeId": node, "capacity": capacity, "intakePerHour": None, "stepFree": step_free,
+            "safeUntilMinutes": safe_until}
 
 
 def params(**model):
@@ -169,6 +171,45 @@ class MixedCompliance(unittest.TestCase):
         for name, group in light["uninformed"]["nodes"][1].items():
             self.assertAlmostEqual(group["leaveFloodMinutes"], 100 / speeds[name] / 60, delta=0.05)  # report rounds to 0.1
             self.assertEqual(group["status"], "Ok")
+
+
+class ForecastAndCapacity(unittest.TestCase):
+    """Stage B: T_safe per shelter from the hazard forecast; shelter places as a hard limit."""
+
+    def test_crossing_is_interpolated_between_samples(self):
+        series = [{"time": "2024-10-29T17:00:00Z", "dischargeM3s": 900},
+                  {"time": "2024-10-29T18:00:00Z", "dischargeM3s": 1700}]
+        self.assertEqual(forecast.crossing(series, 1300).isoformat(), "2024-10-29T17:30:00+00:00")
+        self.assertEqual(forecast.crossing(series, 500).isoformat(), "2024-10-29T17:00:00+00:00")
+        self.assertIsNone(forecast.crossing(series, 2000))
+
+    def test_bundled_mock(self):
+        safety = forecast.evaluate(forecast.load(), ["shelter-a", "shelter-b", "shelter-c", "shelter-d", "shelter-e"])
+        self.assertEqual([safety[key]["safeUntilMinutes"] for key in ("shelter-a", "shelter-b", "shelter-e")], [60, 96, 72])
+        self.assertEqual(safety["shelter-c"]["status"], "SafeThroughHorizon")
+        self.assertEqual(safety["shelter-d"]["status"], "NotAssessed")
+
+    def test_shelter_unsafe_on_arrival_is_not_chosen(self):
+        # s10 is 100 s away for independent walkers (1.7 min) and 2.4 min for slow ones: T_safe 2 min splits them.
+        result = run(FORK, {1: 100}, {1: 60}, [shelter("s10", 10, safe_until=2), shelter("s20", 20)])
+        self.assertGreater(result["nodes"][1]["independent"]["shares"]["s10"], 0.5)
+        self.assertEqual(result["nodes"][1]["slow"]["shares"], {"s20": 1.0})
+        gone = run(FORK, {1: 100}, {1: 60}, [shelter("s10", 10, safe_until=0), shelter("s20", 20, safe_until=0)])
+        self.assertEqual(set(gone["status"]), {"NoEligibleExit"})
+
+    def test_places_are_a_hard_limit_and_the_rest_is_counted(self):
+        result = run(FORK, {1: 1000}, {1: 60}, [shelter("s10", 10, capacity=200, safe_until=60), shelter("s20", 20, 100)],
+                     params(maxPriceIterations=50))
+        self.assertTrue(all(item["overflow"] == 0 for item in result["shelters"]))
+        # Rationing cuts proportionally and does not move the cut share to a shelter with places left.
+        placed = sum(item["expectedLoad"] for item in result["shelters"])
+        self.assertTrue(290 <= placed <= 300, placed)
+        self.assertAlmostEqual(result["status"]["ShelterCapacityExhausted"], 950 - placed, delta=1)
+        groups = result["nodes"][1].values()
+        for group in groups:   # every group is still guided out of the flood
+            self.assertAlmostEqual(sum(group["shares"].values()), 1, places=3)
+        # Earlier waves may be placed in full; the last wave takes the cut.
+        self.assertTrue(any(group["placedShare"] < 1 for group in groups))
 
 
 class Fixtures(unittest.TestCase):

@@ -89,6 +89,7 @@ internal static class EvacuationFixtureTests
                     errors.Add($"{path}.status {want.GetProperty("status").GetString()} != {group.Status}");
                 if (want.GetProperty("wave").GetInt32() != group.Wave)
                     errors.Add($"{path}.wave {want.GetProperty("wave").GetInt32()} != {group.Wave}");
+                Near($"{path}.placedShare", want.GetProperty("placedShare").GetDouble(), group.PlacedShare, tolerance, errors);
                 var leave = want.GetProperty("leaveFloodMinutes");
                 if (leave.ValueKind == JsonValueKind.Null != group.LeaveFloodMinutes is null)
                     errors.Add($"{path}.leaveFloodMinutes null mismatch");

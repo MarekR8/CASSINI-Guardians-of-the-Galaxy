@@ -164,7 +164,8 @@ internal static class EvacuationInputs
         item.TryGetProperty("name", out var name) ? name.GetString()! : item.GetProperty("id").GetString()!,
         nodeId, item.GetProperty("capacity").GetInt32(),
         item.TryGetProperty("intakePerHour", out var intake) ? NullableDouble(intake) : null,
-        item.TryGetProperty("stepFree", out var stepFree) && stepFree.GetBoolean());
+        item.TryGetProperty("stepFree", out var stepFree) && stepFree.GetBoolean(),
+        item.TryGetProperty("safeUntilMinutes", out var safe) ? NullableDouble(safe) : null);
 
     private static double? NullableDouble(JsonElement value) =>
         value.ValueKind == JsonValueKind.Null ? null : value.GetDouble();
