@@ -18,6 +18,8 @@ from tempfile import TemporaryDirectory
 
 from playwright.sync_api import expect, sync_playwright
 
+expect.set_options(timeout=15_000)  # CI runners are slower than a workstation
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sheltering_reservations_integration as owners  # noqa: E402
 from offline_demo import ARTIFACTS, build, start_services  # noqa: E402
@@ -44,7 +46,20 @@ def journey(page, base, tokens, shots):
     page.goto(base)
     expect(panel).to_be_visible(timeout=20_000)
     expect(rows).to_have_count(5, timeout=20_000)
-    expected = assignments(owners.Client(base))
+    client = owners.Client(base)
+    expected = assignments(client)
+    # The SH-T04 exercise races two people for the last place, so who is withdrawn varies between runs.
+    # Pick the people from the owners' state, not from fixed IDs.
+    by_status = {}
+    for case_id, item in sorted(expected.items()):
+        by_status.setdefault(item["status"], []).append(case_id)
+    withdrawn_case = by_status["AwaitingReplacement"][0]
+    reserved_case = by_status["Reserved"][0]
+    reserved_at = expected[reserved_case]["reservation"]["shelterId"]
+    present_case = by_status["Admitted"][0]
+    present_at = expected[present_case]["reservation"]["shelterId"]
+    operator = {"shelter-a": "op-shelter-a", "shelter-b": "op-shelter-b"}
+    other = "shelter-a" if reserved_at == "shelter-b" else "shelter-b"
 
     # Without an account: owner facts are shown separately and reception is refused, not guessed.
     for case_id, item in expected.items():
@@ -53,7 +68,7 @@ def journey(page, base, tokens, shots):
         expect(row.locator(".fact-route")).to_contain_text("nieopublikowana")
         expect(row.locator(".fact-checkin")).to_contain_text("brak właściciela")
         expect(row.locator(".fact-reception")).to_contain_text("brak uprawnień")
-    withdrawn = page.locator("#sheltering-assignments tr[data-case-id='case-32'] .fact-reservation")
+    withdrawn = page.locator(f"#sheltering-assignments tr[data-case-id='{withdrawn_case}'] .fact-reservation")
     expect(withdrawn).to_contain_text("wycofana")
     expect(withdrawn).not_to_contain_text("zarezerwowano")
     expect(page.locator("#sheltering-reception")).to_contain_text("Podaj token")
@@ -64,10 +79,11 @@ def journey(page, base, tokens, shots):
     use_token("coordinator-42")
     reception = page.locator("#sheltering-reception li")
     expect(reception).to_have_count(2)
-    reserved = page.locator("#sheltering-assignments tr[data-case-id='case-15'] .fact-reservation")
-    expect(reserved).to_have_text("zarezerwowano w shelter-b")
-    expect(page.locator("#sheltering-assignments tr[data-case-id='case-16'] .fact-reception")).to_contain_text("shelter-b · obecny")
-    page.locator("#sheltering-reception button", has_text="Przyjmij case-15").click()
+    reserved = page.locator(f"#sheltering-assignments tr[data-case-id='{reserved_case}'] .fact-reservation")
+    expect(reserved).to_have_text(f"zarezerwowano w {reserved_at}")
+    expect(page.locator(f"#sheltering-assignments tr[data-case-id='{present_case}'] .fact-reception")).to_contain_text(
+        f"{present_at} · obecny")
+    page.locator("#sheltering-reception button", has_text=f"Przyjmij {reserved_case}").click()
     expect(page.locator("#sheltering-status")).to_contain_text("RoleNotPermitted")
     shot("2-coordinator")
 
@@ -76,28 +92,32 @@ def journey(page, base, tokens, shots):
     use_token("coordinator-42")
     expect(page.locator("#sheltering-status")).to_contain_text("Dane nieaktualne")
     expect(page.locator("#sheltering-status")).to_have_attribute("data-stale", "true")
-    expect(reserved).to_have_text("ostatnio: zarezerwowano w shelter-b (niepotwierdzone)")
+    expect(reserved).to_have_text(f"ostatnio: zarezerwowano w {reserved_at} (niepotwierdzone)")
     expect(withdrawn).to_contain_text("wycofana")
     expect(page.locator("#sheltering-reception button")).to_have_count(0)
     shot("3-stale")
     page.unroute("**/api/sheltering/**")
 
-    # Operator of shelter-a: sees only that shelter.
-    use_token("op-shelter-a")
+    # Operator of the other shelter: sees only that shelter.
+    use_token(operator[other])
     expect(page.locator("#sheltering-status")).not_to_contain_text("nieaktualne")
     expect(reception).to_have_count(1)
-    expect(reception.first).to_have_attribute("data-shelter-id", "shelter-a")
+    expect(reception.first).to_have_attribute("data-shelter-id", other)
 
-    # Operator of shelter-b: admits case-15 (partial arrival of the household) and sees it counted once.
-    use_token("op-shelter-b")
+    # Operator of the reserved shelter: admits the reserved person (a partial arrival) and sees them counted once.
+    present = client.call(f"sheltering/queries/shelter-assignments?incidentId={INCIDENT}")  # unchanged so far
+    before = sum(1 for item in present["assignments"]
+                 if item["status"] == "Admitted" and item["reservation"]["shelterId"] == reserved_at)
+    use_token(operator[reserved_at])
     expect(reception).to_have_count(1)
-    expect(reception.first).to_have_attribute("data-shelter-id", "shelter-b")
-    expect(reception.first).to_contain_text("obecni 1")
-    reception.first.locator("button", has_text="Przyjmij case-15").click()
+    expect(reception.first).to_have_attribute("data-shelter-id", reserved_at)
+    expect(reception.first).to_contain_text(f"obecni {before}")
+    reception.first.locator("button", has_text=f"Przyjmij {reserved_case}").click()
     expect(page.locator("#sheltering-status")).to_contain_text("Przyjęcie zapisane")
-    expect(reception.first).to_contain_text("obecni 2")
-    expect(page.locator("#sheltering-assignments tr[data-case-id='case-15'] .fact-reception")).to_contain_text("shelter-b · obecny")
-    expect(page.locator("#sheltering-assignments tr[data-case-id='case-15']")).to_have_attribute("data-status", "Admitted")
+    expect(reception.first).to_contain_text(f"obecni {before + 1}")
+    row = page.locator(f"#sheltering-assignments tr[data-case-id='{reserved_case}']")
+    expect(row.locator(".fact-reception")).to_contain_text(f"{reserved_at} · obecny")
+    expect(row).to_have_attribute("data-status", "Admitted")
     shot("4-operator-b")
 
 
@@ -126,6 +146,11 @@ def main():
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 try:
                     journey(page, base, tokens, args.screenshots)
+                except Exception:
+                    if args.screenshots:
+                        page.screenshot(path=str(args.screenshots / "failure.png"), full_page=True)
+                    print("Panel status at failure:", page.locator("#sheltering-status").text_content(), flush=True)
+                    raise
                 finally:
                     browser.close()
                 assert not errors, errors
