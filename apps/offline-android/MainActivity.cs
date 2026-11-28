@@ -45,6 +45,7 @@ public sealed class MainActivity : Activity
     private ResidentAction action;
     private string? confirmationMessage;
     private bool awaitingPosition;
+    private bool useExercisePosition;
     private int stage;
     private ScheduledWalkingRoute? selected;
     private ISharedPreferences RoutePreferences => GetSharedPreferences("exercise-route", FileCreationMode.Private)!;
@@ -59,6 +60,7 @@ public sealed class MainActivity : Activity
         routeWithdrawn = RoutePreferences.GetBoolean("routeWithdrawn", false);
         monitorGnss = state?.GetBoolean("monitorGnss") ?? false;
         awaitingPosition = state?.GetBoolean("awaitingPosition") ?? false;
+        useExercisePosition = state?.GetBoolean("useExercisePosition") ?? false;
 
         screen = new ScrollView(this);
         screen.SetBackgroundColor(Color.Rgb(247, 249, 252));
@@ -113,6 +115,20 @@ public sealed class MainActivity : Activity
         panel.AddView(demoPanel);
 
         AddHeading("Scenariusz ćwiczenia", 18, demoPanel);
+        var positionSwitch = new Switch(this)
+        {
+            Text = "Potwierdzenie bez satelitów · symulacja",
+            Checked = useExercisePosition,
+        };
+        positionSwitch.SetMinHeight(Dp(48));
+        positionSwitch.CheckedChange += (_, change) =>
+        {
+            useExercisePosition = change.IsChecked;
+            awaitingPosition = false;
+            confirmationMessage = null;
+            RefreshMap();
+        };
+        demoPanel.AddView(positionSwitch);
         AddButton("Symuluj alert EWSS", ReceiveEwssAlert, demoPanel);
         nextStage = AddButton("", AdvanceStage, demoPanel);
         AddHeading("Rozkład tras", 16, demoPanel);
@@ -125,7 +141,6 @@ public sealed class MainActivity : Activity
         AddButton("Sprawdź odbiornik GNSS", EnableGnss, demoPanel);
         exitStatus = AddText("", 14, demoPanel);
         RefreshExitStatus();
-        AddButton("Symuluj potwierdzenie wyjścia", SaveSimulatedExit, demoPanel);
         AddButton("Pokaż JSON ostatniego zgłoszenia", ShowLastExitReport, demoPanel);
 
         AddHeading("Archiwalne warstwy zalania", 18, demoPanel);
@@ -159,6 +174,7 @@ public sealed class MainActivity : Activity
         base.OnSaveInstanceState(outState);
         outState.PutBoolean("monitorGnss", monitorGnss);
         outState.PutBoolean("awaitingPosition", awaitingPosition);
+        outState.PutBoolean("useExercisePosition", useExercisePosition);
         outState.PutBoolean("demoOpen", demoPanel.Visibility == ViewStates.Visible);
         outState.PutString("ewssBanner", ewssBanner.Visibility == ViewStates.Visible ? ewssBanner.Text : null);
     }
@@ -257,6 +273,14 @@ public sealed class MainActivity : Activity
 
     private void ConfirmExit()
     {
+        if (useExercisePosition && selected is { } route)
+        {
+            var exit = OfflineScenario.Nodes[route.Route.Exit];
+            SaveExit(new GnssPosition(exit.Latitude, exit.Longitude, 8, DateTimeOffset.UtcNow, GalileoUsed: false),
+                simulated: true);
+            return;
+        }
+
         if (reader.CurrentPosition() is { } position)
         {
             SaveExit(position, simulated: false);
@@ -280,13 +304,6 @@ public sealed class MainActivity : Activity
             confirmationMessage = residentMessage;
             RefreshMap();
         }
-    }
-
-    private void SaveSimulatedExit()
-    {
-        var exit = OfflineScenario.Nodes[selected?.Route.Exit ?? OfflineScenario.Exits[0]];
-        SaveExit(new GnssPosition(exit.Latitude, exit.Longitude, 8, DateTimeOffset.UtcNow, GalileoUsed: true),
-            simulated: true);
     }
 
     private void SaveExit(GnssPosition position, bool simulated)
@@ -483,7 +500,9 @@ public sealed class MainActivity : Activity
             ResidentAction.FindRoute => ("Trasa ewakuacji",
                 routeWithdrawn ? "Poprzednia trasa została wycofana. Wyznacz nową." : "",
                 "Wyznacz trasę ewakuacji"),
-            ResidentAction.ConfirmExit => (route, confirmationMessage ?? "Potwierdź wyjście po opuszczeniu strefy.",
+            ResidentAction.ConfirmExit => (route, confirmationMessage ?? (useExercisePosition
+                    ? "Symulacja · zgłoszenie użyje pozycji z ćwiczenia."
+                    : "Potwierdź wyjście po opuszczeniu strefy."),
                 "Potwierdź wyjście"),
             ResidentAction.ExitSaved => (savedExitMode == "simulated" ? "Zgłoszenie testowe · symulacja" : "Zgłoszenie wyjścia",
                 "Zapisano na tym urządzeniu · oczekuje na wysłanie.", ""),

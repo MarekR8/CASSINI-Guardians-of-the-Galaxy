@@ -62,7 +62,7 @@ try
     queue.Save(measured);
     var fallback = ExitReport.Create(position with { GalileoUsed = false }, simulated: false);
     queue.Save(fallback);
-    var sample = ExitReport.Create(position, simulated: true);
+    var sample = ExitReport.Create(position with { GalileoUsed = false }, simulated: true);
     queue.Save(sample);
     File.WriteAllText(Path.Combine(exitDirectory.FullName, "incomplete.json.tmp"), "");
 
@@ -83,8 +83,9 @@ try
         "The saved report must preserve identity, UTC time, accuracy and explicitly label position evidence.");
     using var simulated = JsonDocument.Parse(File.ReadAllText(
         pending.Single(path => Path.GetFileNameWithoutExtension(path) == sample.CommandId.ToString("D"))));
-    Check(simulated.RootElement.GetProperty("mode").GetString() == "simulated",
-        "Sample positions must be distinguishable from receiver measurements.");
+    Check(simulated.RootElement.GetProperty("mode").GetString() == "simulated" &&
+          !simulated.RootElement.GetProperty("evidence").GetProperty("galileoUsed").GetBoolean(),
+        "Exercise positions must be marked as simulated without claiming Galileo use.");
     using var fallbackJson = JsonDocument.Parse(File.ReadAllText(
         pending.Single(path => Path.GetFileNameWithoutExtension(path) == fallback.CommandId.ToString("D"))));
     Check(fallbackJson.RootElement.GetProperty("mode").GetString() == "measured" &&
