@@ -26,6 +26,13 @@ IEwssReceiver receiver = new MockEwssReceiver();
 var alert = receiver.Receive();
 Check(alert.Simulated && !string.IsNullOrWhiteSpace(alert.Level) && !string.IsNullOrWhiteSpace(alert.Text),
     "The mock alert must carry a level and text and identify itself as simulated.");
+Check(ResidentFlow.NextAction(false, false, baseline.Count > 0, false) == ResidentAction.FindRoute &&
+      ResidentFlow.NextAction(false, true, baseline.Count > 0, false) == ResidentAction.ConfirmExit &&
+      ResidentFlow.NextAction(false, false, detour.Count > 0, false) == ResidentAction.FindRoute &&
+      ResidentFlow.NextAction(false, true, noExit.Count > 0, false) == ResidentAction.RouteUnavailable &&
+      ResidentFlow.NextAction(false, true, baseline.Count > 0, true) == ResidentAction.ExitSaved &&
+      ResidentFlow.NextAction(true, true, baseline.Count > 0, false) == ResidentAction.ReturnToRoute,
+    "The resident action must follow route availability, closure, saved exit and archive view.");
 
 const string layer = """
     {"type":"FeatureCollection","productId":"sample-for-test","observedAt":"2026-11-27T19:20:00Z",

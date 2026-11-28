@@ -10,5 +10,6 @@
     <Compile Include="../CopernicusLayer.cs" Link="CopernicusLayer.cs" />
     <Compile Include="../ExitReports.cs" Link="ExitReports.cs" />
     <Compile Include="../MockEwssReceiver.cs" Link="MockEwssReceiver.cs" />
+    <Compile Include="../ResidentFlow.cs" Link="ResidentFlow.cs" />
   </ItemGroup>
 </Project>

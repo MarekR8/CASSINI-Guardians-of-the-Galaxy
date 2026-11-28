@@ -9,5 +9,5 @@ internal interface IEwssReceiver
 
 internal sealed class MockEwssReceiver : IEwssReceiver
 {
-    public EwssAlert Receive() => new("Ostrzeżenie", "Ryzyko zalania. Sprawdź zapisaną trasę ewakuacji.", true);
+    public EwssAlert Receive() => new("Ostrzeżenie", "Ryzyko zalania. Sprawdź trasę ewakuacji.", true);
 }
