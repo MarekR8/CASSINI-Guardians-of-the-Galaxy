@@ -42,7 +42,7 @@ h1 { font-size: clamp(1.8rem, 4vw, 3.15rem); letter-spacing: -.035em; line-heigh
 .card-heading { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: 1.25rem; }
 .card-heading p { color: var(--muted); font-size: .9rem; margin-top: .2rem; }
 .badge { border-radius: .35rem; border: 1px solid var(--line); color: var(--muted); font-size: .86rem; padding: .19rem .55rem; white-space: nowrap; }
-#map, #evidence-map { width: 100%; display: block; background: #12232a; border-block: 1px solid var(--line); }
+#map { width: 100%; display: block; background: #12232a; border-block: 1px solid var(--line); }
 #map text { font: 600 17px "Segoe UI", system-ui, sans-serif; fill: #f0f7f7; paint-order: stroke; stroke: #12232a; stroke-width: 4px; stroke-linejoin: round; }
 #map .minor-label { font-size: 15px; fill: #b9d0d3; }
 #map .map-caption { font-size: 14px; fill: #a4babf; letter-spacing: .09em; }
@@ -53,7 +53,7 @@ h1 { font-size: clamp(1.8rem, 4vw, 3.15rem); letter-spacing: -.035em; line-heigh
 .legend .legend-observed { background: #458bcc; height: .75rem; }
 .legend .legend-review { background: #d0a2f5; height: .75rem; }
 .legend [hidden] { display: none; }
-.map-credit { margin: .1rem 1rem .75rem; font-size: .85rem; }
+.map-credit { margin: .1rem 1.25rem .75rem; color: var(--muted); font-size: .85rem; }
 .map-credit a { color: #abc5cb; }
 .legend .legend-path { background: var(--accent); }
 .legend .legend-closed { background: var(--danger); }
@@ -61,6 +61,8 @@ h1 { font-size: clamp(1.8rem, 4vw, 3.15rem); letter-spacing: -.035em; line-heigh
 .scenario, .route-body, .data-body { padding: 1rem 1.25rem 1.25rem; }
 .scenario { border-top: 1px solid var(--line); }
 .buttons { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.buttons[hidden] { display: none; }
+#city-overview[aria-pressed="true"], #city-detail[aria-pressed="true"] { border-color: var(--accent); }
 .route-body { padding-top: 0; }
 label { color: var(--muted); font-size: .875rem; display: block; }
 select, input { display: block; min-width: 0; max-width: 100%; width: 100%; padding: .55rem .65rem; margin-top: .35rem; }
@@ -86,18 +88,14 @@ select, input { display: block; min-width: 0; max-width: 100%; width: 100%; padd
 summary { cursor: pointer; padding: 1rem 1.25rem; font-weight: 650; }
 .data-body { padding-top: 0; }
 .data-body p { color: var(--muted); margin-bottom: .75rem; }
-#import { display: grid; grid-template-columns: 1fr 1fr 1.6fr auto; gap: .7rem; align-items: end; }
-#evidence-map { max-height: 16rem; margin-top: 1rem; border-radius: .6rem; }
 footer { color: var(--muted); padding: 1.1rem 0; font-size: .875rem; }
 @media (max-width: 54rem) {
   .workspace, .operations { grid-template-columns: minmax(0, 1fr); }
-  #import { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 33rem) {
   main { padding-top: 1.3rem; }
   .heading { align-items: start; flex-direction: column; }
   .timestamp { text-align: left; }
-  #import { grid-template-columns: minmax(0, 1fr); }
   #map text { font-size: 23px; }
   #map .minor-label { font-size: 19px; }
 }

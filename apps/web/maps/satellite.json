@@ -1,0 +1,33 @@
+{
+  "sample": {
+    "image": "klodzko-20261105.jpg",
+    "bounds": [
+      16.635,
+      50.423,
+      16.674,
+      50.45
+    ],
+    "observedAt": "2026-11-05T10:06:47.543000Z",
+    "products": [
+      "S2B_T33UXR_20261105T100207_L2A"
+    ],
+    "sourceUrl": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2B_T33UXR_20261105T100207_L2A"
+  },
+  "warsaw": {
+    "image": "warsaw-20261109.jpg",
+    "bounds": [
+      20.83,
+      52.08,
+      21.3,
+      52.39
+    ],
+    "observedAt": "2026-11-09T09:45:56.909000Z",
+    "products": [
+      "S2B_T34UDC_20261109T094127_L2A",
+      "S2B_T34UEC_20261109T094127_L2A",
+      "S2B_T34UDD_20261109T094127_L2A",
+      "S2B_T34UED_20261109T094127_L2A"
+    ],
+    "sourceUrl": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2B_T34UDC_20261109T094127_L2A"
+  }
+}

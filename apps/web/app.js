@@ -1,9 +1,13 @@
 const $ = id => document.getElementById(id);
+const satelliteScenes = fetch('/maps/satellite.json')
+  .then(response => response.ok ? response.json() : null)
+  .catch(() => null);
 const state = {
   network: null, situation: null, distribution: null, draw: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null, reviewSignature: null,
   cityOverview: true, cityPicking: false, cityPoints: [], cityPath: null,
+  satelliteScene: null,
 };
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
@@ -18,6 +22,9 @@ const statuses = {
 };
 const formatTime = new Intl.DateTimeFormat('pl-PL', {
   timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+});
+const formatObservation = new Intl.DateTimeFormat('pl-PL', {
+  timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short',
 });
 const time = value => formatTime.format(new Date(value));
 const minutes = seconds => Math.round(seconds / 60) + ' min';
@@ -94,11 +101,12 @@ function invalidateRead() {
 }
 
 async function refresh(epoch) {
-  const [network, situation, incident, dispatch] = await Promise.all([
+  const [network, situation, incident, dispatch, scenes] = await Promise.all([
     state.network ?? api('routing', 'queries/network'),
     api('situation', 'queries/snapshot'),
     api('management', 'queries/incident'),
     api('dispatch', 'queries/assignments'),
+    satelliteScenes,
   ]);
   if (state.epoch !== epoch) return;
   const node = $('node').value;
@@ -120,12 +128,22 @@ async function refresh(epoch) {
   if (draw) state.draw = { id: state.draw.id, ...draw };
   if (cityPath && state.cityPath === previousCityPath) showCityPath(cityPath);
   const warsaw = network.scenario === 'warsaw';
+  const scene = scenes?.[warsaw ? 'warsaw' : 'sample'];
+  state.satelliteScene = scene;
   text('incident', warsaw ? 'DEMO · POWÓDŹ · WARSZAWA' : 'DEMO · POWÓDŹ · ' + incident.incidentId);
   text('map-area', network.city
     ? 'Warszawa · ' + network.city.roadCount.toLocaleString('pl-PL') + ' odcinków OSM'
-    : warsaw ? 'Warszawa · lokalne ćwiczenie nad Wisłą' : 'Schemat obszaru ćwiczeń');
+    : warsaw ? 'Warszawa · lokalne ćwiczenie nad Wisłą' : 'Kłodzko · obszar ćwiczeń');
   $('map-credit').hidden = !warsaw;
-  $('city-tools').hidden = !network.city;
+  $('city-tools').hidden = !warsaw || !(network.city || scene);
+  $('city-routing').hidden = !network.city;
+  $('satellite-credit').hidden = !scene;
+  if (scene) {
+    $('satellite-source').href = scene.sourceUrl;
+    text('satellite-source', 'Contains modified Copernicus Sentinel data ' + scene.observedAt.slice(0, 4));
+    text('satellite-date', ' · Sentinel-2 L2A · obserwacja ' +
+      formatObservation.format(new Date(scene.observedAt)) + ' UTC');
+  }
   $('review-panel').hidden = !warsaw;
   text('clock', time(distribution.at) + ' UTC');
   text('revision', 'Rewizja ' + situation.revision);
@@ -165,7 +183,6 @@ function syncControls() {
   $('bridge').disabled = state.busy || !state.situation || closed.includes('bridge-2');
   $('north').disabled = state.busy || !closed.includes('bridge-2') || closed.includes('north-link');
   $('reopen').disabled = state.busy || !closed.length;
-  $('import-button').disabled = state.busy || !state.situation;
   $('alert').disabled = state.busy || !state.situation;
   for (const control of $('reviews').querySelectorAll('button'))
     control.disabled = state.busy || !state.situation;
@@ -225,9 +242,13 @@ function renderMap(route) {
   const map = $('map');
   if (!state.network) return;
   const warsaw = state.network.scenario === 'warsaw';
+  const scene = state.satelliteScene;
   const city = state.network.city;
-  const overview = city && state.cityOverview;
-  const bounds = overview ? city.bounds : state.network.bounds;
+  const cityBounds = city?.bounds ?? (warsaw ? scene?.bounds : null);
+  const overview = Boolean(cityBounds && state.cityOverview);
+  const bounds = overview ? cityBounds : state.network.bounds;
+  $('city-overview').setAttribute('aria-pressed', overview);
+  $('city-detail').setAttribute('aria-pressed', !overview);
   const [west, south, east, north] = bounds || [16.646, 50.431, 16.660, 50.442];
   const ratio = Math.cos((south + north) * Math.PI / 360);
   const scale = Math.min(680 / ((east - west) * ratio), 360 / (north - south));
@@ -237,6 +258,11 @@ function renderMap(route) {
     (south + north) / 2 - (y - 210) / scale];
   const pointsOnMap = line => line.map(([lon, lat]) => project(lon, lat).join(',')).join(' ');
   const shape = polygon => polygon.map(ring => 'M ' + pointsOnMap(ring).split(' ').join(' L ') + ' Z').join(' ');
+  const mapImage = ([left, bottom, right, top], href, opacity) => {
+    const [x, y] = project(left, top);
+    const [x2, y2] = project(right, bottom);
+    return svg('image', { href, x, y, width: x2 - x, height: y2 - y, preserveAspectRatio: 'none', opacity });
+  };
   const points = new Map(state.network.nodes.map(node => [node.id, project(node.longitude, node.latitude)]));
   const closed = new Set(state.situation.closedSegments);
   const selected = new Set(route?.segments || []);
@@ -245,23 +271,25 @@ function renderMap(route) {
   grid.append(svg('path', { d: 'M 34 0 H 0 V 34', fill: 'none', stroke: '#294049', 'stroke-width': 1 }));
   defs.append(grid);
   map.replaceChildren(defs, svg('rect', { width: 760, height: 420, fill: 'url(#grid)' }));
-  if (overview) {
-    const [left, bottom, right, top] = city.bounds;
-    const [x, y] = project(left, top);
-    const [x2, y2] = project(right, bottom);
-    map.append(svg('image', { href: '/maps/warsaw.svg?v=' + encodeURIComponent(city.osmTimestamp),
-      x, y, width: x2 - x, height: y2 - y, preserveAspectRatio: 'none' }));
-  } else {
-    for (const line of state.network.waterways || []) {
+  if (scene) {
+    const image = mapImage(scene.bounds, '/maps/' + scene.image, .83);
+    image.id = 'satellite-background';
+    map.append(image);
+  }
+  if (overview && city) {
+    map.append(mapImage(city.bounds, '/maps/warsaw.svg?v=' + encodeURIComponent(city.osmTimestamp), scene ? .48 : 1));
+  } else if (!overview) {
+    for (const line of (scene ? [] : state.network.waterways || [])) {
       map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#285469', 'stroke-width': 18 }));
     }
     for (const line of state.network.contextRoads || []) {
-      map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#38525a', 'stroke-width': 1.15 }));
+      map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none',
+        stroke: scene ? '#9aacac' : '#38525a', 'stroke-opacity': scene ? .55 : 1, 'stroke-width': 1.15 }));
     }
   }
   const hazards = state.situation.hazards || [];
-  $('observed-legend').hidden = !warsaw || !hazards.some(h => h.productId);
-  for (const hazard of hazards.filter(h => warsaw || h.source === 'synthetic')) {
+  $('observed-legend').hidden = !hazards.some(h => h.productId);
+  for (const hazard of hazards) {
     const observed = Boolean(hazard.productId);
     for (const polygon of polygons(hazard.geometry)) {
       map.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd',
@@ -487,34 +515,7 @@ function renderSources(hazards) {
     ? imported.map(h => (h.source.includes('sentinel-1') ? 'Sentinel-1' : 'Copernicus EMS') +
       ' · ' + h.productId + ' · ' + h.observedAt +
       (h.provenance?.mode === 'recorded' ? ' · Dane zapisane' : '')).join(' | ')
-    : 'Zaimportuj warstwę Copernicus EMS lub maskę Sentinel-1.');
-  const existing = $('evidence-map');
-  if (!imported.length) {
-    existing?.remove();
-    return;
-  }
-  const polygons = [];
-  function collect(geometry) {
-    if (geometry.type === 'Polygon') polygons.push(geometry.coordinates);
-    if (geometry.type === 'MultiPolygon') polygons.push(...geometry.coordinates);
-    if (geometry.type === 'GeometryCollection') geometry.geometries.forEach(collect);
-  }
-  imported.forEach(hazard => collect(hazard.geometry));
-  const coordinates = polygons.flat(2);
-  if (!coordinates.length) return;
-  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
-  for (const [x, y] of coordinates) {
-    xMin = Math.min(xMin, x); xMax = Math.max(xMax, x);
-    yMin = Math.min(yMin, y); yMax = Math.max(yMax, y);
-  }
-  const scale = Math.min(560 / (xMax - xMin || 1), 180 / (yMax - yMin || 1));
-  const project = ([x, y]) => [(x - (xMin + xMax) / 2) * scale + 300, ((yMin + yMax) / 2 - y) * scale + 110].join(',');
-  const map = existing || svg('svg', { id: 'evidence-map', viewBox: '0 0 600 220', role: 'img', 'aria-label': 'Lokalne warstwy Copernicus EMS' });
-  map.replaceChildren(...polygons.map(polygon => svg('path', {
-    d: polygon.map(ring => 'M ' + ring.map(project).join(' L ') + ' Z').join(' '),
-    'fill-rule': 'evenodd', fill: '#3b8499', stroke: '#90d4d9', 'stroke-width': 1,
-  })));
-  if (!existing) $('import').after(map);
+    : 'Zasięg zalania pochodzi ze scenariusza ćwiczeniowego.');
 }
 
 const closure = (segmentId, closed, expectedRevision = state.situation.revision) =>
@@ -552,22 +553,6 @@ $('draw').addEventListener('click', () => run(async () => {
 }));
 $('alert').addEventListener('click', () => run(() =>
   api('management', 'commands/alert', { commandId: commandId() }).then(() => 'Zapisano zgłoszenie zalania.')));
-$('import').addEventListener('submit', event => {
-  event.preventDefault();
-  run(async () => {
-    const file = $('geojson').files[0];
-    if (file.size > 8 * 1024 * 1024) throw new Error('Plik GeoJSON przekracza 8 MB.');
-    const geoJson = JSON.parse(await file.text());
-    await api('situation', 'commands/import-copernicus', {
-      commandId: commandId(), expectedRevision: state.situation.revision,
-      productId: $('product').value.trim(), observedAt: new Date($('observed').value + 'Z').toISOString(),
-      source: $('hazard-source').value, geoJson,
-    });
-    $('import').reset();
-    return 'Zaimportowano warstwę o podanym ID produktu.';
-  });
-});
-
 await run(() => {});
 setInterval(async () => {
   if (state.busy || state.polling) return;

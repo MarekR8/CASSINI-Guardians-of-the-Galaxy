@@ -36,7 +36,7 @@ Do pierwszej budowy potrzeba obrazów bazowych .NET dostępnych w lokalnym cache
 4. W **Pomocy terenowej** wybierz **Przydziel**, aby zarezerwować jednostkę dla jednego zgłoszenia. Rezerwacja jest możliwa tylko po wyznaczeniu dojazdu i wyjazdu jednostki. Test integracyjny próbuje dwóch równoległych rezerwacji.
 5. Wybierz **Zamknij most**. Poprzednia trasa jest wycofywana, jeśli prowadziła przez most. W rozkładzie zostaje 100% dla wyjścia północnego. W razie potrzeby wylosuj nową trasę i przelicz trasę jednostki. Po zamknięciu północnego dojścia węzeł wyświetli **Brak dostępnej trasy**.
 6. Po przywróceniu dostępności i przydzieleniu jednostki przejdź przez potwierdzenie zadania, przyjazd i odbiór. Potwierdzenie wyjścia mieszkańca jest odrębną operacją.
-7. Opcjonalnie zaimportuj lokalny produkt Copernicus EMS w panelu źródeł. Warstwa ma oddzielną ramkę mapy z metadanymi i nie zmienia syntetycznego rozkładu tras.
+7. Na głównej mapie widać dołączone zobrazowanie Sentinel‑2 oraz datę obserwacji. Rozwiń **Źródła danych**, aby sprawdzić, z czego pochodzi poligon zalania i szacunek ludności.
 
 ## Usługi i CQRS
 
@@ -53,7 +53,8 @@ Routing wyznacza najkrótszą dopuszczalną trasę do każdego dostępnego wyjś
 
 ## Źródła satelitarne i zakres offline
 
-- **Copernicus EMS** dostarcza archiwalne warstwy przygotowane przed odłączeniem. Wybierz produkt, przygotuj poligony WGS 84 i zachowaj czas obserwacji, ID produktu i zasięg. Import jest lokalny. [Pobieranie produktów Copernicus EMS](https://mapping.emergency.copernicus.eu/about/rapid-mapping-manual/product-overview/how-is-a-product-delivered/viewing-and-downloading-a-product/).
+- **Sentinel‑2** dostarcza tło głównej mapy. Obrazy Kłodzka i Warszawy są dołączone do Gateway i wyświetlają się automatycznie offline. Daty, zasięgi i identyfikatory produktów są w [metadanych obrazów](../apps/web/maps/satellite.json). Contains modified Copernicus Sentinel data 2026.
+- **Copernicus EMS** dostarcza archiwalne warstwy, które zespół może przygotować przed uruchomieniem pokazu. Warstwy poligonowe przekazane przez [skrypt przygotowania danych](../data/local/README.md) pojawiają się na głównej mapie ze źródłem, datą i identyfikatorem produktu.
 - **Galileo** jest odczytywany na kompatybilnym odbiorniku Androida. Widok pokazuje pozycję po skorelowaniu świeżego pomiaru ze statusem wskazującym użycie wyłącznie Galileo. Aplikacja nie wykorzystuje pomiaru sprzętowego do prowadzenia po syntetycznym grafie. [Galileo Open Service](https://www.euspa.europa.eu/galileo-os), [Android GnssStatus](https://developer.android.com/reference/android/location/GnssStatus).
 - **EGNOS** wymaga sprzętu, który potwierdza faktyczne zastosowanie korekt. **GOVSATCOM** i **IRIS²** przewidziano jako możliwe łącza dla wyposażonego punktu koordynacji. Demo nie wymaga terminala ani aktywnego połączenia. [EGNOS](https://www.euspa.europa.eu/eu-space-programme/egnos/services), [GOVSATCOM](https://www.euspa.europa.eu/govsatcom-hub), [IRIS²](https://defence-industry-space.ec.europa.eu/eu-space/iris2-secure-connectivity_en).
 

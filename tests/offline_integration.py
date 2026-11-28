@@ -36,8 +36,14 @@ def post(service, path, body, expected=200):
     return request(f"/api/{service}/commands/{path}", body, expected)
 
 
-assert "Koordynacja ewakuacji" in request("/")
+page = request("/")
+assert "Koordynacja ewakuacji" in page
+assert 'id="satellite-credit"' in page and 'type="file"' not in page
 assert "commands/draw" in request("/app.js")
+scene = request("/maps/satellite.json")["sample"]
+with LOCAL_HTTP.open(BASE + "/maps/" + scene["image"], timeout=10) as image:
+    assert image.headers.get_content_type() == "image/jpeg"
+    assert image.read(3) == b"\xff\xd8\xff"
 
 initial = get("situation", "snapshot")
 assert initial["revision"] == 0 and initial["closedSegments"] == []

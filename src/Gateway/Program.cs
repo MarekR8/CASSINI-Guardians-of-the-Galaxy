@@ -37,7 +37,15 @@ app.Use(async (context, next) =>
     await next();
 });
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        if (context.Context.Request.Path.StartsWithSegments("/maps") &&
+            Path.GetExtension(context.File.Name) == ".jpg")
+            context.Context.Response.Headers.CacheControl = "private,max-age=86400";
+    },
+});
 var cityDirectory = builder.Configuration["Demo:CityDirectory"];
 if (!string.IsNullOrWhiteSpace(cityDirectory))
 {

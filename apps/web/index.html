@@ -27,8 +27,10 @@
         <svg id="map" viewBox="0 0 760 420" role="img" aria-label="Graf przejść, wyjścia i obszar zalania"></svg>
         <div class="scenario" id="city-tools" hidden>
           <div class="buttons">
-            <button id="city-overview" type="button">Cała Warszawa</button>
-            <button id="city-detail" type="button">Most Świętokrzyski</button>
+            <button id="city-overview" type="button" aria-pressed="true">Cała Warszawa</button>
+            <button id="city-detail" type="button" aria-pressed="false">Most Świętokrzyski</button>
+          </div>
+          <div class="buttons" id="city-routing" hidden>
             <label for="city-mode">Tryb trasy
               <select id="city-mode"><option value="walking">Pieszo</option><option value="driving">Samochodem</option></select>
             </label>
@@ -37,6 +39,7 @@
           <p id="city-status" role="status"></p>
         </div>
         <div class="legend"><span><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span id="review-legend" hidden><i class="legend-review"></i> Detekcja do weryfikacji</span><span><i class="legend-path"></i> Wylosowana trasa</span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span><i class="legend-exit"></i> Wyjście</span></div>
+        <p class="map-credit" id="satellite-credit" hidden><a id="satellite-source" target="_blank" rel="noopener noreferrer"></a><span id="satellite-date"></span></p>
         <p class="map-credit" id="map-credit" hidden><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors · ODbL</a></p>
         <div class="scenario">
           <h3>Scenariusz drogowy</h3>
@@ -75,17 +78,10 @@
     </div>
 
     <details class="card data">
-      <summary>Źródła satelitarne i lokalny import</summary>
+      <summary>Źródła danych</summary>
       <div class="data-body">
         <p id="sources">Scenariusz korzysta z jawnie oznaczonych danych syntetycznych.</p>
         <p id="population-estimate" hidden></p>
-        <form id="import">
-          <label>Źródło<select id="hazard-source"><option value="ems">Copernicus EMS</option><option value="sentinel-1">Sentinel-1</option></select></label>
-          <label>ID produktu lub sceny<input id="product" required maxlength="120" placeholder="Wpisz ID produktu"></label>
-          <label>Czas obserwacji (UTC)<input id="observed" type="datetime-local" required></label>
-          <label>Warstwa GeoJSON<input id="geojson" type="file" accept=".geojson,.json,application/geo+json,application/json" required></label>
-          <button id="import-button" disabled>Zaimportuj warstwę</button>
-        </form>
       </div>
     </details>
     <footer>Dane demonstracyjne · czas w UTC. Trasy na mapie służą do ćwiczeń.</footer>
