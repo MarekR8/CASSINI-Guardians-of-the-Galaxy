@@ -3,6 +3,7 @@ ARG PROJECT
 WORKDIR /source
 COPY src/ src/
 COPY apps/web/ apps/web/
+COPY data/demo/network/graph.json data/demo/network/graph.json
 RUN dotnet publish "$PROJECT" -c Release -o /output -p:NuGetAudit=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0

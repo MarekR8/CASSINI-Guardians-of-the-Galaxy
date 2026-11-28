@@ -1,13 +1,17 @@
 namespace Cassini.Routing;
 
+using Cassini.Demo;
+
 internal sealed record Node(string Id, string Label, double Longitude, double Latitude);
 internal sealed record Segment(
-    string Id, string From, string To, int? WalkingSeconds, int? DrivingSeconds, bool BothWays);
+    string Id, string From, string To, int? WalkingSeconds, int? DrivingSeconds, bool BothWays,
+    double[][]? Geometry = null, double[][]? DrivingGeometry = null,
+    double[][]? ReverseDrivingGeometry = null, int? ReverseDrivingSeconds = null);
 internal sealed record GraphPath(string[] Nodes, string[] Segments, int Seconds);
 
 internal static class Network
 {
-    internal static readonly Node[] Nodes =
+    internal static Node[] Nodes { get; private set; } =
     [
         new("walk-start", "Punkt startu", 16.6500, 50.4360),
         new("pickup", "Punkt przesiadkowy", 16.6520, 50.4350),
@@ -17,7 +21,7 @@ internal static class Network
         new("exit-north", "Wyjście północne", 16.6540, 50.4410),
     ];
 
-    internal static readonly Segment[] Segments =
+    internal static Segment[] Segments { get; private set; } =
     [
         new("walk-to-pickup", "walk-start", "pickup", 300, null, false),
         new("east-link", "pickup", "east-junction", 360, 150, true),
@@ -28,6 +32,17 @@ internal static class Network
     ];
 
     internal static readonly string[] Exits = ["exit-east", "exit-north"];
+    internal static DemoNetwork? Warsaw { get; private set; }
+
+    internal static void Configure(DemoNetwork? network)
+    {
+        if (network is null) return;
+        Warsaw = network;
+        Nodes = network.Nodes.Select(node => new Node(node.Id, node.Label, node.Longitude, node.Latitude)).ToArray();
+        Segments = network.Segments.Select(link => new Segment(link.Id, link.From, link.To, link.WalkingSeconds,
+            link.DrivingSeconds, link.BothWays, link.Geometry, link.DrivingGeometry, link.ReverseDrivingGeometry,
+            link.ReverseDrivingSeconds)).ToArray();
+    }
 
     internal static bool Contains(string? node) => Nodes.Any(candidate => candidate.Id == node);
 
@@ -48,13 +63,17 @@ internal static class Network
 
             foreach (var segment in Segments)
             {
-                var seconds = driving ? segment.DrivingSeconds : segment.WalkingSeconds;
-                if (!seconds.HasValue || closed.Contains(segment.Id))
+                if (closed.Contains(segment.Id))
                     continue;
                 var next = segment.From == node ? segment.To
                     : segment.BothWays && segment.To == node ? segment.From
                     : null;
                 if (next is null)
+                    continue;
+                var seconds = driving
+                    ? Warsaw is not null && segment.To == node ? segment.ReverseDrivingSeconds : segment.DrivingSeconds
+                    : segment.WalkingSeconds;
+                if (seconds is null)
                     continue;
 
                 var duration = cost.Duration + seconds.Value;

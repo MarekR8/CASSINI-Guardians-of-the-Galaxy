@@ -1,0 +1,14 @@
+{
+  "id": "warsaw",
+  "title": "Warszawa · Wisła i Praga",
+  "coordinateSystem": "EPSG:4326",
+  "evidenceAoi": [20.995, 52.225, 21.065, 52.260],
+  "mapBounds": [21.023, 52.236, 21.046, 52.252],
+  "graph": "network/graph.json",
+  "bridge": { "name": "Most Świętokrzyski", "segmentId": "bridge-2" },
+  "pedestrianStart": "walk-start",
+  "pickup": "pickup",
+  "exits": ["exit-east", "exit-north"],
+  "inlandApproach": "north-link",
+  "unit": { "id": "unit-3", "start": "exit-east" }
+}

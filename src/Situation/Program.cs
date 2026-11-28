@@ -1,11 +1,14 @@
 using Situation;
+using Cassini.Demo;
 
 var builder = WebApplication.CreateBuilder(args);
 if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
     builder.WebHost.UseUrls("http://127.0.0.1:5082");
 
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 8 * 1024 * 1024);
-builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situation:StateFile"]));
+var network = DemoNetwork.Load(builder.Configuration["Demo:Scenario"]);
+builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situation:StateFile"], network));
+builder.Services.AddSingleton(new ReviewNetwork(network));
 builder.Services.AddSingleton<SituationQueries>();
 builder.Services.AddSingleton<SituationCommands>();
 
@@ -29,5 +32,9 @@ app.MapGet("/queries/snapshot", (SituationQueries queries) => queries.Snapshot()
 app.MapPost("/commands/closure", (ClosureCommand command, SituationCommands commands) => commands.SetClosure(command));
 app.MapPost("/commands/import-copernicus", (ImportCopernicusCommand command, SituationCommands commands) =>
     commands.ImportCopernicus(command));
+app.MapPost("/commands/import-flypix", (ImportReviewCommand command, SituationCommands commands) =>
+    commands.ImportReview(command));
+app.MapPost("/commands/review-decision", (ReviewDecisionCommand command, SituationCommands commands) =>
+    commands.DecideReview(command));
 
 app.Run();

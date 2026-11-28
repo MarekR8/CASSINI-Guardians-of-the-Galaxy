@@ -23,9 +23,10 @@
 
     <div class="workspace">
       <section class="card map-card" aria-labelledby="map-title">
-        <div class="card-heading"><div><h2 id="map-title">Mapa sytuacji</h2><p>Schemat obszaru ćwiczeń</p></div><span class="badge" id="revision">Rewizja —</span></div>
+        <div class="card-heading"><div><h2 id="map-title">Mapa sytuacji</h2><p id="map-area">Schemat obszaru ćwiczeń</p></div><span class="badge" id="revision">Rewizja —</span></div>
         <svg id="map" viewBox="0 0 760 420" role="img" aria-label="Graf przejść, wyjścia i obszar zalania"></svg>
-        <div class="legend"><span><i class="legend-hazard"></i> Obszar zalania</span><span><i class="legend-path"></i> Wylosowana trasa</span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span><i class="legend-exit"></i> Wyjście</span></div>
+        <div class="legend"><span><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span id="review-legend" hidden><i class="legend-review"></i> Detekcja do weryfikacji</span><span><i class="legend-path"></i> Wylosowana trasa</span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span><i class="legend-exit"></i> Wyjście</span></div>
+        <p class="map-credit" id="map-credit" hidden><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors · ODbL</a></p>
         <div class="scenario">
           <h3>Scenariusz drogowy</h3>
           <div class="buttons">
@@ -34,6 +35,10 @@
             <button id="reopen" disabled>Otwórz przejścia</button>
           </div>
         </div>
+        <section class="scenario" id="review-panel" hidden>
+          <h3>Weryfikacja detekcji</h3>
+          <ul class="records" id="reviews"></ul>
+        </section>
       </section>
       <section class="card routing-card" aria-labelledby="routing-title">
         <div class="card-heading"><div><h2 id="routing-title">Rozkład tras</h2><p id="recipient">Przejścia piesze z wybranego węzła</p></div></div>
@@ -63,7 +68,8 @@
       <div class="data-body">
         <p id="sources">Scenariusz korzysta z jawnie oznaczonych danych syntetycznych.</p>
         <form id="import">
-          <label>ID produktu Copernicus EMS<input id="product" required maxlength="120" placeholder="Wpisz ID produktu"></label>
+          <label>Źródło<select id="hazard-source"><option value="ems">Copernicus EMS</option><option value="sentinel-1">Sentinel-1</option></select></label>
+          <label>ID produktu lub sceny<input id="product" required maxlength="120" placeholder="Wpisz ID produktu"></label>
           <label>Czas obserwacji (UTC)<input id="observed" type="datetime-local" required></label>
           <label>Warstwa GeoJSON<input id="geojson" type="file" accept=".geojson,.json,application/geo+json,application/json" required></label>
           <button id="import-button" disabled>Zaimportuj warstwę</button>

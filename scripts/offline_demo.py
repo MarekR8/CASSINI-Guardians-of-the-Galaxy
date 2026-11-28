@@ -36,7 +36,7 @@ def local_url(port):
 
 
 @contextmanager
-def start_services(port, data_dir):
+def start_services(port, data_dir, scenario="sample"):
     data_dir.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env.update({
@@ -47,6 +47,7 @@ def start_services(port, data_dir):
         "HTTPS_PROXY": "",
         "ALL_PROXY": "",
         "Demo__DataDirectory": str(data_dir),
+        "Demo__Scenario": scenario,
         "Situation__StateFile": str(data_dir / "situation.json"),
         "Routing__StatePath": str(data_dir / "routing-draws.json"),
         "Situation__BaseUrl": local_url(port + 2),
@@ -98,7 +99,8 @@ def wait_ready(url, process, log):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=5080, help="Gateway port (uses this port and the next four)")
-    parser.add_argument("--data", type=Path, default=ARTIFACTS / "offline-demo", help="Local state/log directory")
+    parser.add_argument("--data", type=Path, help="Local state/log directory")
+    parser.add_argument("--scenario", choices=("sample", "warsaw"), default="sample")
     parser.add_argument("--no-build", action="store_true", help="Use existing compiled services")
     parser.add_argument("--test", action="store_true", help="Run integration tests in fresh temporary state")
     args = parser.parse_args()
@@ -109,14 +111,16 @@ def main():
     if args.test:
         ARTIFACTS.mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="integration-", dir=ARTIFACTS) as directory:
-            with start_services(args.port, Path(directory)) as url:
+            with start_services(args.port, Path(directory), args.scenario) as url:
                 subprocess.run(
-                    [os.sys.executable, str(ROOT / "tests" / "offline_integration.py"), url],
+                    [os.sys.executable, str(ROOT / "tests" / (
+                        "warsaw_integration.py" if args.scenario == "warsaw" else "offline_integration.py")), url],
                     cwd=ROOT,
                     check=True,
                 )
         return
-    with start_services(args.port, args.data.resolve()) as url:
+    data = args.data or ARTIFACTS / ("offline-demo" if args.scenario == "sample" else "warsaw-demo")
+    with start_services(args.port, data.resolve(), args.scenario) as url:
         print("CASSINI Offline: " + url, flush=True)
         print("Ctrl+C zatrzymuje lokalne mikroserwisy.", flush=True)
         try:

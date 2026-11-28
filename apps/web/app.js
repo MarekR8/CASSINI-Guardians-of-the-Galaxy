@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 const state = {
   network: null, situation: null, distribution: null, draw: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
-  operationsSignature: null, sourcesSignature: null,
+  operationsSignature: null, sourcesSignature: null, reviewSignature: null,
 };
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
@@ -21,7 +21,20 @@ const formatTime = new Intl.DateTimeFormat('pl-PL', {
 const time = value => formatTime.format(new Date(value));
 const minutes = seconds => Math.round(seconds / 60) + ' min';
 const text = (id, value) => { $(id).textContent = value; };
-const label = id => names[id] || id;
+const label = id => (state.network?.scenario === 'warsaw'
+  ? state.network.nodes.find(node => node.id === id)?.label : names[id]) || id;
+const segmentLabel = id => ({
+  'bridge-2': 'Most Świętokrzyski', 'north-link': 'Dojście północne',
+  'walk-to-pickup': 'Dojście do punktu przesiadkowego', 'east-link': 'Dojazd do mostu',
+  'north-exit-link': 'Dojście do wyjścia', 'outside-connector': 'Objazd dla jednostki',
+})[id] || id;
+const warsawMapLabels = {
+  'walk-start': ['Punkt zbiórki', 10, 22],
+  pickup: ['Punkt przesiadkowy', 12, -12],
+  'east-junction': ['Most Świętokrzyski', -12, -12],
+  'exit-east': ['Wyjście · Powiśle', -10, -14],
+  'exit-north': ['Wyjście · Praga', 10, -14],
+};
 const commandId = () => crypto.randomUUID();
 
 async function api(service, path, data) {
@@ -100,7 +113,11 @@ async function refresh(epoch) {
   state.situation = situation;
   state.distribution = distribution;
   if (draw) state.draw = { id: state.draw.id, ...draw };
-  text('incident', 'DEMO · POWÓDŹ · ' + incident.incidentId);
+  const warsaw = network.scenario === 'warsaw';
+  text('incident', warsaw ? 'DEMO · POWÓDŹ · WARSZAWA' : 'DEMO · POWÓDŹ · ' + incident.incidentId);
+  text('map-area', warsaw ? 'Warszawa · Wisła i Praga' : 'Schemat obszaru ćwiczeń');
+  $('map-credit').hidden = !warsaw;
+  $('review-panel').hidden = !warsaw;
   text('clock', time(distribution.at) + ' UTC');
   text('revision', 'Rewizja ' + situation.revision);
   renderDistribution();
@@ -110,11 +127,17 @@ async function refresh(epoch) {
     state.operationsSignature = operations;
   }
   const hazards = situation.hazards || [];
-  const sources = JSON.stringify(hazards.map(hazard => [hazard.id, hazard.productId, hazard.observedAt]));
+  const sources = JSON.stringify(hazards);
   if (sources !== state.sourcesSignature || state.lastSourceRevision !== situation.revision) {
     renderSources(hazards);
     state.sourcesSignature = sources;
     state.lastSourceRevision = situation.revision;
+  }
+  const reviews = situation.reviewFeatures || [];
+  const reviewSignature = JSON.stringify(reviews);
+  if (reviewSignature !== state.reviewSignature) {
+    renderReviews(reviews);
+    state.reviewSignature = reviewSignature;
   }
 }
 
@@ -127,6 +150,8 @@ function syncControls() {
   $('reopen').disabled = state.busy || !closed.length;
   $('import-button').disabled = state.busy || !state.situation;
   $('alert').disabled = state.busy || !state.situation;
+  for (const control of $('reviews').querySelectorAll('button'))
+    control.disabled = state.busy || !state.situation;
 }
 
 function renderDistribution() {
@@ -172,10 +197,24 @@ function svg(tag, attrs, value) {
   return item;
 }
 
+function polygons(geometry) {
+  if (geometry.type === 'Polygon') return [geometry.coordinates];
+  if (geometry.type === 'MultiPolygon') return geometry.coordinates;
+  if (geometry.type === 'GeometryCollection') return geometry.geometries.flatMap(polygons);
+  return [];
+}
+
 function renderMap(route) {
   const map = $('map');
   if (!state.network) return;
-  const project = (lon, lat) => [68 + (lon - 16.646) / .014 * 600, 36 + (50.442 - lat) / .011 * 330];
+  const warsaw = state.network.scenario === 'warsaw';
+  const [west, south, east, north] = state.network.bounds || [16.646, 50.431, 16.660, 50.442];
+  const ratio = Math.cos((south + north) * Math.PI / 360);
+  const scale = Math.min(680 / ((east - west) * ratio), 360 / (north - south));
+  const project = (lon, lat) => [380 + (lon - (west + east) / 2) * ratio * scale,
+    210 + ((south + north) / 2 - lat) * scale];
+  const pointsOnMap = line => line.map(([lon, lat]) => project(lon, lat).join(',')).join(' ');
+  const shape = polygon => polygon.map(ring => 'M ' + pointsOnMap(ring).split(' ').join(' L ') + ' Z').join(' ');
   const points = new Map(state.network.nodes.map(node => [node.id, project(node.longitude, node.latitude)]));
   const closed = new Set(state.situation.closedSegments);
   const selected = new Set(route?.segments || []);
@@ -184,24 +223,41 @@ function renderMap(route) {
   grid.append(svg('path', { d: 'M 34 0 H 0 V 34', fill: 'none', stroke: '#294049', 'stroke-width': 1 }));
   defs.append(grid);
   map.replaceChildren(defs, svg('rect', { width: 760, height: 420, fill: 'url(#grid)' }));
-  for (const hazard of (state.situation.hazards || []).filter(h => h.source === 'synthetic')) {
-    const ring = hazard.geometry.coordinates?.[0];
-    if (ring) map.append(svg('polygon', {
-      points: ring.map(([lon, lat]) => project(lon, lat).join(',')).join(' '),
-      fill: '#285b6d', 'fill-opacity': .76, stroke: '#5c9fb1', 'stroke-width': 2,
-    }));
+  for (const line of state.network.waterways || []) {
+    map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#285469', 'stroke-width': 18 }));
   }
-  map.append(svg('text', { x: 122, y: 318, class: 'map-caption' }, 'OBSZAR ZALANIA'));
+  for (const line of state.network.contextRoads || []) {
+    map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#38525a', 'stroke-width': 1.15 }));
+  }
+  const hazards = state.situation.hazards || [];
+  $('observed-legend').hidden = !warsaw || !hazards.some(h => h.productId);
+  for (const hazard of hazards.filter(h => warsaw || h.source === 'synthetic')) {
+    const observed = Boolean(hazard.productId);
+    for (const polygon of polygons(hazard.geometry)) {
+      map.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd',
+        fill: observed ? '#2372b0' : '#285b6d', 'fill-opacity': observed ? .45 : .6,
+        stroke: observed ? '#79c4ff' : '#5c9fb1', 'stroke-dasharray': observed ? 'none' : '5 4',
+        'stroke-width': 1.8 }));
+    }
+  }
+  const pending = (state.situation.reviewFeatures || []).filter(feature => feature.status === 'Pending');
+  $('review-legend').hidden = !pending.length;
+  for (const feature of pending) {
+    for (const polygon of polygons(feature.geometry)) {
+      map.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd', fill: '#9c67c2', 'fill-opacity': .38,
+        stroke: '#e0abff', 'stroke-width': 2.4, 'stroke-dasharray': '5 4' }));
+    }
+  }
   map.append(svg('path', { d: 'M 713 62 V 29 M 706 38 L 713 29 L 720 38', stroke: '#a4babf', fill: 'none', 'stroke-width': 2 }));
   map.append(svg('text', { x: 708, y: 82, class: 'map-caption' }, 'N'));
   for (const segment of state.network.segments) {
     if (!(segment.walkingSeconds > 0)) continue;
-    const [x1, y1] = points.get(segment.from);
-    const [x2, y2] = points.get(segment.to);
+    const geometry = segment.geometry ? pointsOnMap(segment.geometry)
+      : [points.get(segment.from), points.get(segment.to)].map(point => point.join(',')).join(' ');
     const inaccessible = closed.has(segment.id);
     const active = selected.has(segment.id);
-    map.append(svg('line', {
-      x1, y1, x2, y2, stroke: inaccessible ? '#ff9e8f' : active ? '#8df0ce' : '#89a4a9',
+    map.append(svg('polyline', {
+      points: geometry, fill: 'none', stroke: inaccessible ? '#ff9e8f' : active ? '#8df0ce' : '#89a4a9',
       'stroke-width': inaccessible || active ? 6 : 3, 'stroke-linecap': 'round',
       'stroke-dasharray': inaccessible ? '10 7' : 'none',
     }));
@@ -211,10 +267,41 @@ function renderMap(route) {
     const isStart = id === $('node').value;
     map.append(svg('circle', { cx: x, cy: y, r: isStart ? 9 : 6,
       fill: isExit ? '#fbd47e' : isStart ? '#8df0ce' : '#b7cbce', stroke: '#12232a', 'stroke-width': 2 }));
-    const below = id === 'pickup' || id === 'east-junction';
-    const left = id === 'exit-east';
-    map.append(svg('text', { x: x + (left ? -5 : 10), y: y + (below ? 30 : -14),
-      'text-anchor': left ? 'end' : 'start', class: isExit || isStart ? '' : 'minor-label' }, label(id)));
+    const caption = warsaw ? warsawMapLabels[id] : [
+      label(id), id === 'exit-east' ? -5 : 10, id === 'pickup' || id === 'east-junction' ? 30 : -14,
+    ];
+    if (caption) {
+      const [name, dx, dy] = caption;
+      map.append(svg('text', { x: x + dx, y: y + dy, 'text-anchor': dx < 0 ? 'end' : 'start',
+        class: isExit || isStart ? '' : 'minor-label' }, name));
+    }
+  }
+}
+
+function renderReviews(reviews) {
+  const list = $('reviews');
+  list.replaceChildren();
+  if (!reviews.length) list.append(element('li', 'Brak detekcji dla scenariusza.'));
+  for (const feature of reviews) {
+    const item = element('li');
+    const details = element('div');
+    const confidence = feature.confidence == null ? '' : ' · ' + Math.round(feature.confidence * 100) + '% pewności';
+    const status = { Pending: 'Do weryfikacji', Approved: 'Zatwierdzona', Rejected: 'Odrzucona' }[feature.status];
+    const provenance = feature.mode === 'synthetic' ? 'Symulacja' : 'FlyPix AI · ' + (feature.mode === 'live' ? 'API' : 'zapis');
+    details.append(element('b', feature.segmentIds.map(segmentLabel).join(', ') || 'Poza korytarzami ćwiczenia'),
+      element('p', status + ' · ' + provenance + confidence),
+      element('p', feature.imageProductId + ' · ' + feature.observedAt));
+    item.append(details);
+    if (feature.status === 'Pending') {
+      const decide = decision => api('situation', 'commands/review-decision', {
+        commandId: commandId(), expectedRevision: state.situation.revision, reviewFeatureId: feature.id, decision,
+      }).then(() => decision === 'approve' ? 'Zatwierdzono zamknięcie wykrytych odcinków.' : 'Odrzucono detekcję.');
+      const controls = element('div', null, 'buttons');
+      if (feature.segmentIds.length) controls.append(button('Zatwierdź zamknięcie', () => decide('approve')));
+      controls.append(button('Odrzuć', () => decide('reject')));
+      item.append(controls);
+    }
+    list.append(item);
   }
 }
 
@@ -289,8 +376,9 @@ function renderOperations(incident, dispatch) {
 function renderSources(hazards) {
   const imported = hazards.filter(h => h.productId);
   text('sources', imported.length
-    ? imported.map(h => h.productId + ' · ' + h.observedAt).join(' | ')
-    : 'Dane ćwiczeń są syntetyczne. Zaimportuj własny lokalny produkt Copernicus EMS jako osobną warstwę.');
+    ? imported.map(h => (h.source.includes('sentinel-1') ? 'Sentinel-1' : 'Copernicus EMS') +
+      ' · ' + h.productId + ' · ' + h.observedAt).join(' | ')
+    : 'Zaimportuj warstwę Copernicus EMS lub maskę Sentinel-1.');
   const existing = $('evidence-map');
   if (!imported.length) {
     existing?.remove();
@@ -363,7 +451,8 @@ $('import').addEventListener('submit', event => {
     const geoJson = JSON.parse(await file.text());
     await api('situation', 'commands/import-copernicus', {
       commandId: commandId(), expectedRevision: state.situation.revision,
-      productId: $('product').value.trim(), observedAt: new Date($('observed').value + 'Z').toISOString(), geoJson,
+      productId: $('product').value.trim(), observedAt: new Date($('observed').value + 'Z').toISOString(),
+      source: $('hazard-source').value, geoJson,
     });
     $('import').reset();
     return 'Zaimportowano warstwę o podanym ID produktu.';

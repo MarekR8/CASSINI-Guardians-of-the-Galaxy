@@ -59,6 +59,21 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
         return new("Active", saved.Route, snapshot.Revision);
     }
 
+    internal async Task<object> ValidateRouteAsync(string segments, DateTimeOffset? at, CancellationToken cancellationToken)
+    {
+        var ids = segments.Split(',', StringSplitOptions.TrimEntries);
+        if (ids.Length > 100 || ids.Any(id => !Network.Segments.Any(segment => segment.Id == id)))
+            throw new RoutingException(400, "InvalidSegment", "Podaj znane odcinki oddzielone przecinkami.");
+
+        var snapshot = await situation.ReadAsync(cancellationToken);
+        var checkedAt = at ?? ScenarioTime(snapshot.Stage);
+        if (checkedAt < ScenarioTime(snapshot.Stage))
+            throw new RoutingException(400, "InvalidTime", "Aktualna migawka nie potwierdza stanu w przeszłości.");
+        var blocked = ids.Where(snapshot.ClosedSegments.Contains).Distinct().ToArray();
+        return new { ok = blocked.Length == 0, reason = blocked.Length == 0 ? null : "ClosedSegment",
+            closedSegments = blocked, snapshot.Revision, at = checkedAt };
+    }
+
     internal static void ValidateDistribution(string? node, string? mode, string? destination)
     {
         if (!Network.Contains(node) || (destination is not null && !Network.Exits.Contains(destination)))

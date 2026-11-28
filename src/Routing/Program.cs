@@ -1,6 +1,8 @@
 using Cassini.Routing;
+using Cassini.Demo;
 
 var builder = WebApplication.CreateBuilder(args);
+Network.Configure(DemoNetwork.Load(builder.Configuration["Demo:Scenario"]));
 if (builder.Configuration["urls"] is null)
     builder.WebHost.UseUrls("http://127.0.0.1:5083");
 
@@ -39,7 +41,13 @@ app.MapGet("/health/live", () => Results.Ok(new { service = "routing" }));
 app.MapGet("/health/ready", () => Results.Ok(new { service = "routing" }));
 
 var queries = app.MapGroup("/queries");
-queries.MapGet("/network", () => new { Network.Nodes, Network.Segments, Network.Exits });
+queries.MapGet("/network", () => new {
+    Network.Nodes, Network.Segments, Network.Exits, Network.Warsaw?.Bounds,
+    Network.Warsaw?.ContextRoads, Network.Warsaw?.Waterways, Network.Warsaw?.Attribution, Network.Warsaw?.OsmTimestamp,
+    scenario = Network.Warsaw is null ? "sample" : "warsaw"
+});
+queries.MapGet("/validate-route", async (string segments, DateTimeOffset? at, RoutingQueries handlers,
+    CancellationToken cancellationToken) => await handlers.ValidateRouteAsync(segments, at, cancellationToken));
 queries.MapGet("/distribution",
     (string node, DateTimeOffset? at, string? mode, string? destination, bool? accessible, RoutingQueries handlers,
         CancellationToken cancellationToken) =>

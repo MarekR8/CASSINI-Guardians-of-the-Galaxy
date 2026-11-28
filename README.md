@@ -19,4 +19,6 @@ Otwórz [panel CASSINI](http://127.0.0.1:5080). Po zbudowaniu obrazów panel, ws
 
 Zobacz [instrukcję demo i transportu obrazów](docs/offline-demo.md), [aplikację Android](apps/offline-android/README.md), [pola na dane zespołu](data/local/README.md) i [instrukcje dla agentów](AGENTS.md).
 
+Scenariusz Warszawy z lokalną mapą OpenStreetMap uruchamia `python scripts/offline_demo.py --scenario warsaw`. [Dane Copernicus, import FlyPix i przebieg pokazu](data/local/README.md#warszawa--paczka-od-osoby-odpowiedzialnej-za-task-01).
+
 Starszy [plan pełnej architektury](docs/mvp-implementation-guide.md) opisuje następną warstwę wdrożenia, w tym logowanie, bazy relacyjne i dystrybucję zdarzeń.

@@ -5,9 +5,10 @@ namespace Situation;
 
 internal sealed record ClosureCommand(string? CommandId, string? SegmentId, bool? Closed, int? ExpectedRevision);
 internal sealed record ImportCopernicusCommand(
-    string? CommandId, int? ExpectedRevision, string? ProductId, DateTimeOffset? ObservedAt, JsonElement GeoJson);
+    string? CommandId, int? ExpectedRevision, string? ProductId, DateTimeOffset? ObservedAt, JsonElement GeoJson,
+    string? SourceUrl = null, string? Source = null);
 
-internal sealed class SituationCommands(SituationStore store)
+internal sealed class SituationCommands(SituationStore store, ReviewNetwork reviewNetwork)
 {
     private static readonly HashSet<string> KnownSegments = new(StringComparer.Ordinal)
     {
@@ -22,19 +23,85 @@ internal sealed class SituationCommands(SituationStore store)
 
         return store.Apply(id, revision, Fingerprint("closure", command), snapshot =>
         {
-            var closures = new SortedSet<string>(snapshot.ClosedSegments, StringComparer.Ordinal);
-            var changed = closed ? closures.Add(segment) : closures.Remove(segment);
-            if (!changed)
-                return snapshot;
+            var evidence = new ClosureEvidence("operator", null, null, DateTimeOffset.UtcNow);
+            return UpdateClosures(snapshot, [segment], closed, evidence);
+        });
+    }
 
-            var stage = closures.Contains("bridge-2") ? (closures.Contains("north-link") ? 2 : 1) : 0;
-            var revision = snapshot.Revision + 1;
-            var segmentRevisions = new Dictionary<string, int>(snapshot.SegmentRevisions) { [segment] = revision };
-            return snapshot with
+    internal SituationSnapshot ImportReview(ImportReviewCommand command)
+    {
+        var (id, revision) = CheckVersion(command.CommandId, command.ExpectedRevision);
+        var incoming = reviewNetwork.Read(command);
+        return store.Apply(id, revision, Fingerprint("import-review", command), snapshot =>
+        {
+            var existing = snapshot.ReviewFeatures ?? [];
+            var existingIds = existing.Select(feature => feature.Id).ToHashSet(StringComparer.Ordinal);
+            var additions = incoming.Where(feature => !existingIds.Contains(feature.Id)).ToArray();
+            return additions.Length == 0 ? snapshot : snapshot with
             {
-                Revision = revision, Stage = stage, ClosedSegments = closures.ToArray(), SegmentRevisions = segmentRevisions
+                Revision = snapshot.Revision + 1,
+                ReviewFeatures = [.. existing, .. additions],
             };
         });
+    }
+
+    internal SituationSnapshot DecideReview(ReviewDecisionCommand command)
+    {
+        var (id, revision) = CheckVersion(command.CommandId, command.ExpectedRevision);
+        if (command.Decision is not ("approve" or "reject") || string.IsNullOrEmpty(command.ReviewFeatureId))
+            throw Invalid("Specify a reviewFeatureId and approve or reject.");
+
+        return store.Apply(id, revision, Fingerprint("review-decision", command), snapshot =>
+        {
+            var features = snapshot.ReviewFeatures ?? [];
+            var feature = features.SingleOrDefault(item => item.Id == command.ReviewFeatureId)
+                ?? throw new SituationError(404, "ReviewFeatureMissing", "The review feature was not found.");
+            if (feature.Status != "Pending")
+                throw new SituationError(409, "ReviewAlreadyDecided", "The review feature already has a decision.");
+            var approve = command.Decision == "approve";
+            if (approve && feature.SegmentIds.Length == 0)
+                throw Invalid("Confirm a feature that intersects at least one exercise corridor.");
+
+            var decidedAt = DateTimeOffset.UtcNow;
+            var evidenceSource = feature.Mode == "synthetic" ? "exercise-verified" : "flypix-verified";
+            var updated = approve
+                ? UpdateClosures(snapshot, feature.SegmentIds, true,
+                    new ClosureEvidence(evidenceSource, feature.Id, feature.ObservedAt, decidedAt))
+                : snapshot;
+            return updated with
+            {
+                Revision = snapshot.Revision + 1,
+                ReviewFeatures = features.Select(item => item.Id == feature.Id
+                    ? item with { Status = approve ? "Approved" : "Rejected", DecidedAt = decidedAt }
+                    : item).ToArray()
+            };
+        });
+    }
+
+    private static SituationSnapshot UpdateClosures(SituationSnapshot snapshot, string[] segments, bool closed,
+        ClosureEvidence evidence)
+    {
+        var closures = new SortedSet<string>(snapshot.ClosedSegments, StringComparer.Ordinal);
+        var changed = segments.Where(segment => closed ? closures.Add(segment) : closures.Remove(segment)).ToArray();
+        if (changed.Length == 0)
+            return snapshot;
+
+        var stage = closures.Contains("bridge-2") ? (closures.Contains("north-link") ? 2 : 1) : 0;
+        var revision = snapshot.Revision + 1;
+        var segmentRevisions = new Dictionary<string, int>(snapshot.SegmentRevisions);
+        var activeEvidence = snapshot.ClosureEvidence is null
+            ? new Dictionary<string, ClosureEvidence>() : new(snapshot.ClosureEvidence);
+        foreach (var segment in changed)
+        {
+            segmentRevisions[segment] = revision;
+            if (closed) activeEvidence[segment] = evidence;
+            else activeEvidence.Remove(segment);
+        }
+        return snapshot with
+        {
+            Revision = revision, Stage = stage, ClosedSegments = closures.ToArray(),
+            SegmentRevisions = segmentRevisions, ClosureEvidence = activeEvidence
+        };
     }
 
     internal SituationSnapshot ImportCopernicus(ImportCopernicusCommand command)
@@ -45,14 +112,30 @@ internal sealed class SituationCommands(SituationStore store)
             throw Invalid("A Copernicus EMS product ID and observation timestamp are required.");
 
         var geometry = ReadPolygons(command.GeoJson);
-        var layer = new HazardLayer("copernicus:" + product, "copernicus-ems-operator-import",
-            product, observedAt.ToUniversalTime(), geometry);
-        return store.Apply(id, revision, Fingerprint("copernicus", command), snapshot =>
-            snapshot with
+        var source = command.Source switch
+        {
+            null or "ems" => "copernicus-ems-operator-import",
+            "sentinel-1" => "copernicus-sentinel-1-operator-import",
+            _ => throw Invalid("Specify ems or sentinel-1 as the Copernicus source.")
+        };
+        var layer = new HazardLayer((command.Source == "sentinel-1" ? "sentinel-1:" : "copernicus:") + product, source,
+            product, observedAt.ToUniversalTime(), geometry, CheckSourceUrl(command.SourceUrl));
+        var fingerprint = command.Source is null && command.SourceUrl is null
+            ? Fingerprint("copernicus", new { command.CommandId, command.ExpectedRevision, command.ProductId,
+                command.ObservedAt, command.GeoJson })
+            : Fingerprint("copernicus", command);
+        return store.Apply(id, revision, fingerprint, snapshot =>
+        {
+            var existing = snapshot.Hazards.FirstOrDefault(item => item.Id == layer.Id);
+            if (existing is not null && existing.ObservedAt == layer.ObservedAt && existing.SourceUrl == layer.SourceUrl &&
+                JsonElement.DeepEquals(existing.Geometry, layer.Geometry))
+                return snapshot;
+            return snapshot with
             {
                 Revision = snapshot.Revision + 1,
                 Hazards = [.. snapshot.Hazards.Where(item => item.Id != layer.Id), layer]
-            });
+            };
+        });
     }
 
     private static (string, int) CheckVersion(string? commandId, int? revision)
@@ -102,7 +185,7 @@ internal sealed class SituationCommands(SituationStore store)
         return JsonSerializer.SerializeToElement(new { type = "GeometryCollection", geometries });
     }
 
-    private static void CheckPolygon(JsonElement polygon, ref int points)
+    internal static void CheckPolygon(JsonElement polygon, ref int points)
     {
         if (polygon.ValueKind != JsonValueKind.Array || polygon.GetArrayLength() == 0)
             throw Invalid("A polygon must have at least one boundary.");
@@ -130,11 +213,20 @@ internal sealed class SituationCommands(SituationStore store)
         }
     }
 
-    private static string? ReadType(JsonElement element) => element.ValueKind == JsonValueKind.Object &&
+    internal static string? ReadType(JsonElement element) => element.ValueKind == JsonValueKind.Object &&
         element.TryGetProperty("type", out var type) && type.ValueKind == JsonValueKind.String ? type.GetString() : null;
 
     private static bool IsCoordinate(JsonElement value, int minimum, int maximum) =>
         value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) && number >= minimum && number <= maximum;
 
-    private static SituationError Invalid(string message) => new(400, "InvalidRequest", message);
+    internal static string? CheckSourceUrl(string? sourceUrl)
+    {
+        if (sourceUrl is null) return null;
+        if (sourceUrl.Length > 400 || !Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri) ||
+            uri.Scheme != Uri.UriSchemeHttps || uri.UserInfo.Length != 0)
+            throw Invalid("Provide an HTTPS URL for the public source.");
+        return sourceUrl;
+    }
+
+    internal static SituationError Invalid(string message) => new(400, "InvalidRequest", message);
 }

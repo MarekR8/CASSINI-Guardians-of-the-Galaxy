@@ -6,7 +6,12 @@
 **/__pycache__
 artifacts
 apps/offline-android
-data
+data/*
+!data/demo
+data/demo/*
+!data/demo/network
+data/demo/network/*
+!data/demo/network/graph.json
 docs
 scripts
 tests
