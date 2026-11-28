@@ -57,14 +57,17 @@ try
 {
     var queue = new LocalExitReports(exitDirectory.FullName);
     var measuredAt = new DateTimeOffset(2026, 11, 28, 14, 20, 0, TimeSpan.FromHours(1));
-    var position = new GalileoPosition(50.431, 16.653, 8, measuredAt);
+    var position = new GnssPosition(50.431, 16.653, 8, measuredAt, GalileoUsed: true);
     var measured = ExitReport.Create(position, simulated: false);
     queue.Save(measured);
-    queue.Save(ExitReport.Create(position, simulated: true));
+    var fallback = ExitReport.Create(position with { GalileoUsed = false }, simulated: false);
+    queue.Save(fallback);
+    var sample = ExitReport.Create(position, simulated: true);
+    queue.Save(sample);
     File.WriteAllText(Path.Combine(exitDirectory.FullName, "incomplete.json.tmp"), "");
 
     var pending = new LocalExitReports(exitDirectory.FullName).PendingFiles();
-    Check(pending.Length == 2, "Complete reports survive reopening and incomplete writes stay out of the queue.");
+    Check(pending.Length == 3, "Complete reports survive reopening and incomplete writes stay out of the queue.");
     using var saved = JsonDocument.Parse(File.ReadAllText(
         pending.Single(path => Path.GetFileNameWithoutExtension(path) == measured.CommandId.ToString("D"))));
     var report = saved.RootElement;
@@ -79,16 +82,31 @@ try
           evidence.GetProperty("egnos").GetString() == "unknown",
         "The saved report must preserve identity, UTC time, accuracy and explicitly label position evidence.");
     using var simulated = JsonDocument.Parse(File.ReadAllText(
-        pending.Single(path => Path.GetFileNameWithoutExtension(path) != measured.CommandId.ToString("D"))));
+        pending.Single(path => Path.GetFileNameWithoutExtension(path) == sample.CommandId.ToString("D"))));
     Check(simulated.RootElement.GetProperty("mode").GetString() == "simulated",
         "Sample positions must be distinguishable from receiver measurements.");
+    using var fallbackJson = JsonDocument.Parse(File.ReadAllText(
+        pending.Single(path => Path.GetFileNameWithoutExtension(path) == fallback.CommandId.ToString("D"))));
+    Check(fallbackJson.RootElement.GetProperty("mode").GetString() == "measured" &&
+          !fallbackJson.RootElement.GetProperty("evidence").GetProperty("galileoUsed").GetBoolean(),
+        "A hardware fix without Galileo evidence must be recorded without claiming Galileo.");
 }
 finally
 {
     exitDirectory.Delete(recursive: true);
 }
 
-Console.WriteLine("Offline Android schedule, closure, GeoJSON, exit report and EWSS tests passed.");
+const long second = 1_000_000_000;
+var utc = new DateTimeOffset(2026, 11, 28, 13, 20, 0, TimeSpan.Zero);
+Check(GnssPosition.IsFresh(20 * second, 28 * second) && !GnssPosition.IsFresh(20 * second, 31 * second) &&
+      !GnssPosition.IsFresh(20 * second, 19 * second) && !GnssPosition.IsFresh(0, second) &&
+      GnssPosition.IsFreshUtc(utc, utc.AddSeconds(8)) && !GnssPosition.IsFreshUtc(utc, utc.AddSeconds(11)) &&
+      !GnssPosition.IsFreshUtc(utc, utc.AddSeconds(-1)) &&
+      GnssPosition.MatchesGalileoStatus(20 * second, 21 * second, true) &&
+      !GnssPosition.MatchesGalileoStatus(20 * second, 22 * second, true) &&
+      !GnssPosition.MatchesGalileoStatus(20 * second, 20 * second, false),
+    "Position freshness and Galileo evidence must be assessed independently using monotonic timestamps.");
+Console.WriteLine("Offline Android schedule, closure, GeoJSON, GNSS, exit report and EWSS tests passed.");
 
 static void Check(bool condition, string message)
 {

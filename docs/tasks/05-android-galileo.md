@@ -57,7 +57,8 @@ dotnet build apps/offline-android/Cassini.Offline.Android.csproj -c Release
 ## Results
 
 The Android app saves exit reports to its private storage with a stable command ID and an on-device
-JSON preview. A real report uses the existing fresh Galileo-only fix with reported accuracy.
+JSON preview. A real report uses a fresh GNSS fix with reported accuracy, including multi-constellation fixes.
+The report records Galileo use when the receiver reports it near the time of the fix.
 The sample report uses a synthetic exercise exit and is labeled as a simulation. OSNMA is simulated
 and EGNOS remains unknown. Gateway delivery awaits W2 and receiver behavior requires a device test.
 The mock EWSS banner reopens the locally saved exercise route. A closure invalidates the

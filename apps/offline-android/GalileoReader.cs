@@ -4,30 +4,37 @@ using Android.OS;
 
 namespace Cassini.Offline;
 
-internal sealed class GalileoReader(Context context, Action<string> show) : Java.Lang.Object, ILocationListener
+internal sealed class GalileoReader(Context context, Action<string, string?> show) : Java.Lang.Object, ILocationListener
 {
-    private const long Second = 1_000_000_000;
+    private const string Waiting = "Szukamy pozycji satelitarnej. Na otwartej przestrzeni telefon zwykle ustali ją szybciej.";
+    private const string Disabled = "Włącz lokalizację w ustawieniach telefonu i spróbuj ponownie.";
     private readonly LocationManager? manager = context.GetSystemService(Context.LocationService) as LocationManager;
     private SatelliteStatus? callback;
+    private bool listening;
     private Location? lastLocation;
+    private long locationReceivedAt;
     private long statusObservedAt;
-    private bool galileoOnly;
+    private bool galileoUsed;
+    private bool otherConstellationUsed;
 
     internal void Start()
     {
-        if (callback is not null)
-            return;
-
         if (manager is null || !manager.IsProviderEnabled(LocationManager.GpsProvider))
         {
-            show("Odbiornik GNSS jest wyłączony lub niedostępny.");
+            show("Odbiornik GNSS jest wyłączony lub niedostępny.", Disabled);
+            return;
+        }
+
+        if (listening)
+        {
+            ShowMeasurement();
             return;
         }
 
         var executor = context.MainExecutor;
         if (executor is null)
         {
-            show("Nie można uruchomić odczytu GNSS.");
+            show("Nie można uruchomić odczytu GNSS.", "Odczyt pozycji jest niedostępny. Spróbuj ponownie.");
             return;
         }
 
@@ -36,33 +43,34 @@ internal sealed class GalileoReader(Context context, Action<string> show) : Java
             callback = new SatelliteStatus(OnSatellites);
             if (!manager.RegisterGnssStatusCallback(executor, callback))
             {
-                Stop();
-                show("Odbiornik nie udostępnia danych o konstelacji.");
-                return;
+                callback.Dispose();
+                callback = null;
             }
 
             manager.RequestLocationUpdates(LocationManager.GpsProvider, 1000, 0, this);
-            show("Oczekiwanie na pomiar i status satelitów Galileo.");
+            listening = true;
+            show("Oczekiwanie na pomiar GNSS.", Waiting);
         }
         catch (Exception e) when (e is Java.Lang.SecurityException or Java.Lang.IllegalArgumentException)
         {
             Stop();
-            show("Nie można uruchomić odbiornika GNSS.");
+            show("Nie można uruchomić odbiornika GNSS.", "Odczyt pozycji jest niedostępny. Spróbuj ponownie.");
         }
     }
 
     internal void Stop()
     {
-        if (callback is null)
-            return;
-
-        manager?.RemoveUpdates(this);
-        manager?.UnregisterGnssStatusCallback(callback);
+        if (listening)
+            manager?.RemoveUpdates(this);
+        listening = false;
+        if (callback is not null)
+        {
+            manager?.UnregisterGnssStatusCallback(callback);
+            callback.Dispose();
+        }
         callback = null;
-        lastLocation = null;
-        statusObservedAt = 0;
-        galileoOnly = false;
-        show("Odczyt Galileo jest wstrzymany.");
+        ClearMeasurement();
+        show("Odczyt GNSS jest wstrzymany.", null);
     }
 
     private void OnSatellites(GnssStatus satellites)
@@ -83,68 +91,78 @@ internal sealed class GalileoReader(Context context, Action<string> show) : Java
                 otherConstellation = true;
         }
 
-        galileoOnly = galileo && !otherConstellation;
+        galileoUsed = galileo;
+        otherConstellationUsed = otherConstellation;
         statusObservedAt = SystemClock.ElapsedRealtimeNanos();
-        if (!galileoOnly)
-        {
-            show(galileo
-                ? "Odbiornik raportuje pomiar mieszany z Galileo. Demo pomija jego współrzędne."
-                : "Brak potwierdzenia udziału Galileo w ostatnim pomiarze odbiornika.");
-            return;
-        }
-
-        if (!ShowMeasurement())
-            show("Odbiornik raportuje Galileo. Oczekiwanie na odpowiadający pomiar pozycji.");
+        ShowMeasurement();
     }
 
     public void OnLocationChanged(Location location)
     {
-        if (callback is null)
+        if (!listening)
             return;
 
         var mock = OperatingSystem.IsAndroidVersionAtLeast(31) ? location.Mock : location.IsFromMockProvider;
         lastLocation = location.Provider == LocationManager.GpsProvider && !mock ? location : null;
+        locationReceivedAt = SystemClock.ElapsedRealtimeNanos();
         if (lastLocation is null)
-            show("Pominięto pozycję ze źródła innego niż sprzętowy GNSS.");
+            show("Pominięto pozycję testową lub ze źródła innego niż GNSS.", Waiting);
         else
             ShowMeasurement();
     }
 
-    private bool ShowMeasurement()
+    private void ShowMeasurement()
     {
-        if (CurrentMeasurement() is not { } location)
-            return false;
+        if (CurrentPosition() is not { } position)
+        {
+            show("Oczekiwanie na świeży pomiar GNSS z informacją o dokładności.", Waiting);
+            return;
+        }
 
-        var time = DateTimeOffset.FromUnixTimeMilliseconds(location.Time);
-        var accuracy = location.HasAccuracy ? $" • dokładność ±{location.Accuracy:F0} m" : "";
-        show($"GNSS: {location.Latitude:F5}, {location.Longitude:F5}{accuracy}\n" +
-             $"{time:HH:mm:ss} UTC • odbiornik raportuje tylko Galileo");
-        return true;
+        var evidence = position.GalileoUsed
+            ? otherConstellationUsed ? "Galileo i inne konstelacje" : "Galileo"
+            : "udział Galileo niepotwierdzony";
+        show($"GNSS: {position.Latitude:F5}, {position.Longitude:F5} • dokładność ±{position.AccuracyMeters:F0} m\n" +
+             $"{position.ObservedAt:HH:mm:ss} UTC • {evidence}",
+             "Pozycja gotowa. Jeśli jesteś już poza strefą, potwierdź wyjście.");
     }
 
-    internal GalileoPosition? CurrentPosition()
+    internal GnssPosition? CurrentPosition()
     {
-        if (CurrentMeasurement() is not { HasAccuracy: true } location)
+        if (lastLocation is not { HasAccuracy: true } location ||
+            !float.IsFinite(location.Accuracy) || location.Accuracy < 0)
             return null;
 
-        return new GalileoPosition(location.Latitude, location.Longitude, location.Accuracy,
-            DateTimeOffset.FromUnixTimeMilliseconds(location.Time));
+        var now = SystemClock.ElapsedRealtimeNanos();
+        var elapsed = location.ElapsedRealtimeNanos;
+        var observedAt = DateTimeOffset.FromUnixTimeMilliseconds(location.Time);
+        // Only a valid boot-clock timestamp can be matched with satellite status.
+        var hasMonotonicTimestamp = elapsed > 0 && elapsed <= now;
+        var fresh = hasMonotonicTimestamp ? GnssPosition.IsFresh(elapsed, now)
+            : GnssPosition.IsFresh(locationReceivedAt, now) && GnssPosition.IsFreshUtc(observedAt, DateTimeOffset.UtcNow);
+        if (!fresh)
+            return null;
+
+        return new GnssPosition(location.Latitude, location.Longitude, location.Accuracy,
+            observedAt, hasMonotonicTimestamp && GnssPosition.MatchesGalileoStatus(elapsed, statusObservedAt, galileoUsed));
     }
 
-    private Location? CurrentMeasurement() =>
-        galileoOnly && lastLocation is { } location &&
-        Math.Abs(location.ElapsedRealtimeNanos - statusObservedAt) <= Second &&
-        SystemClock.ElapsedRealtimeNanos() - location.ElapsedRealtimeNanos <= Second * 2 ? location : null;
+    private void ClearMeasurement()
+    {
+        lastLocation = null;
+        locationReceivedAt = 0;
+        statusObservedAt = 0;
+        galileoUsed = false;
+        otherConstellationUsed = false;
+    }
 
     public void OnProviderDisabled(string provider)
     {
-        lastLocation = null;
-        statusObservedAt = 0;
-        galileoOnly = false;
-        show("Odbiornik GNSS jest wyłączony.");
+        ClearMeasurement();
+        show("Odbiornik GNSS jest wyłączony.", Disabled);
     }
 
-    public void OnProviderEnabled(string provider) => show("Oczekiwanie na pomiar i status satelitów Galileo.");
+    public void OnProviderEnabled(string provider) => show("Oczekiwanie na pomiar GNSS.", Waiting);
 
     public void OnStatusChanged(string? provider, Availability status, Bundle? extras)
     {

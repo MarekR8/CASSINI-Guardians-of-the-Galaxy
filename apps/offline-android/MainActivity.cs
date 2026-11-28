@@ -58,6 +58,7 @@ public sealed class MainActivity : Activity
         savedExitMode = selected is null ? null : RoutePreferences.GetString("savedExitMode", null);
         routeWithdrawn = RoutePreferences.GetBoolean("routeWithdrawn", false);
         monitorGnss = state?.GetBoolean("monitorGnss") ?? false;
+        awaitingPosition = state?.GetBoolean("awaitingPosition") ?? false;
 
         screen = new ScrollView(this);
         screen.SetBackgroundColor(Color.Rgb(247, 249, 252));
@@ -121,7 +122,7 @@ public sealed class MainActivity : Activity
         AddText("OSNMA: symulacja · EGNOS: brak potwierdzenia korekt", 14, demoPanel);
         gnssStatus = AddText("Odczyt Galileo jest wyłączony.", 14, demoPanel);
         reader = new GalileoReader(this, ShowGnssStatus);
-        AddButton("Sprawdź odbiornik Galileo", EnableGnss, demoPanel);
+        AddButton("Sprawdź odbiornik GNSS", EnableGnss, demoPanel);
         exitStatus = AddText("", 14, demoPanel);
         RefreshExitStatus();
         AddButton("Symuluj potwierdzenie wyjścia", SaveSimulatedExit, demoPanel);
@@ -157,6 +158,7 @@ public sealed class MainActivity : Activity
     {
         base.OnSaveInstanceState(outState);
         outState.PutBoolean("monitorGnss", monitorGnss);
+        outState.PutBoolean("awaitingPosition", awaitingPosition);
         outState.PutBoolean("demoOpen", demoPanel.Visibility == ViewStates.Visible);
         outState.PutString("ewssBanner", ewssBanner.Visibility == ViewStates.Visible ? ewssBanner.Text : null);
     }
@@ -262,18 +264,20 @@ public sealed class MainActivity : Activity
         }
 
         awaitingPosition = true;
-        confirmationMessage = "Włącz dokładną lokalizację. Gdy telefon ustali pozycję, ponów potwierdzenie.";
-        RefreshMap();
+        if (!HasFineLocation)
+        {
+            confirmationMessage = "Zezwól aplikacji na dostęp do dokładnej lokalizacji.";
+            RefreshMap();
+        }
         EnableGnss();
     }
 
-    private void ShowGnssStatus(string status)
+    private void ShowGnssStatus(string status, string? residentMessage)
     {
         gnssStatus.Text = status;
-        if (awaitingPosition && reader.CurrentPosition() is not null)
+        if (awaitingPosition && residentMessage is not null && confirmationMessage != residentMessage)
         {
-            awaitingPosition = false;
-            confirmationMessage = "Pozycja gotowa. Jeśli jesteś już poza strefą, potwierdź wyjście.";
+            confirmationMessage = residentMessage;
             RefreshMap();
         }
     }
@@ -281,10 +285,11 @@ public sealed class MainActivity : Activity
     private void SaveSimulatedExit()
     {
         var exit = OfflineScenario.Nodes[selected?.Route.Exit ?? OfflineScenario.Exits[0]];
-        SaveExit(new GalileoPosition(exit.Latitude, exit.Longitude, 8, DateTimeOffset.UtcNow), simulated: true);
+        SaveExit(new GnssPosition(exit.Latitude, exit.Longitude, 8, DateTimeOffset.UtcNow, GalileoUsed: true),
+            simulated: true);
     }
 
-    private void SaveExit(GalileoPosition position, bool simulated)
+    private void SaveExit(GnssPosition position, bool simulated)
     {
         try
         {
