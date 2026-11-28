@@ -20,7 +20,7 @@
   <main>
     <div class="heading">
       <div><p class="eyebrow" id="incident">DEMO · POWÓDŹ</p><h1>Koordynacja ewakuacji</h1></div>
-      <div class="timestamp"><span>Czas scenariusza</span><strong id="clock">—</strong></div>
+      <div class="timestamp" id="scenario-time"><span>Czas scenariusza</span><strong id="clock">—</strong></div>
     </div>
     <p id="notice" role="status" aria-live="polite">Ładowanie scenariusza lokalnego…</p>
 
@@ -44,14 +44,24 @@
           </div>
           <p id="city-status" role="status"></p>
         </div>
+        <div class="map-layer-tools buttons" id="valencia-tools" hidden>
+          <label for="valencia-image">Radar Sentinel-1</label>
+          <select id="valencia-image">
+            <option value="">Mapa OSM</option>
+            <option value="before">19.10.2024 · przed zalaniem</option>
+            <option value="event">31.10.2024 · po zdarzeniu</option>
+          </select>
+          <label><input type="checkbox" id="valencia-nodes"> Pokaż strefy węzłów</label>
+          <span id="valencia-zone-counts"></span>
+        </div>
         <div class="map-layer-tools" id="map-layer-tools" hidden><button id="map-layer" type="button">Pokaż Sentinel-2</button></div>
-        <div class="legend"><span><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="archive-legend" hidden><i class="legend-archive"></i> <span id="archive-label"></span></span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span id="review-legend" hidden><i class="legend-review"></i> Detekcja do weryfikacji</span><span><i class="legend-path"></i> Wylosowana trasa</span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span><i class="legend-exit"></i> Wyjście</span></div>
+        <div class="legend"><span class="exercise-legend"><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="archive-legend" hidden><i class="legend-archive"></i> <span id="archive-label"></span></span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span id="review-legend" hidden><i class="legend-review"></i> Detekcja do weryfikacji</span><span><i class="legend-path"></i> <span id="map-route-label">Wylosowana trasa</span></span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span class="exercise-legend"><i class="legend-exit"></i> Wyjście</span></div>
         <p class="map-credit" id="satellite-credit" hidden><a id="satellite-source" target="_blank" rel="noopener noreferrer"></a><span id="satellite-date"></span></p>
         <p class="map-credit" id="ortho-credit" hidden><a id="ortho-source" target="_blank" rel="noopener noreferrer">Ortofotomapa · Geoportal / GUGiK</a></p>
         <p class="map-credit" id="archive-credit" hidden><a id="archive-source" target="_blank" rel="noopener noreferrer"></a><span id="archive-date"></span></p>
         <div class="map-layer-tools" id="archive-tools" hidden><button id="archive-focus" type="button">Zbliż na zalanie archiwalne</button></div>
         <p class="map-credit" id="map-credit" hidden><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors · ODbL</a></p>
-        <div class="scenario">
+        <div class="scenario" id="exercise-controls">
           <h3>Scenariusz drogowy</h3>
           <div class="buttons">
             <button id="bridge" disabled>Zamknij most</button>
@@ -64,7 +74,7 @@
           <ul class="records" id="reviews"></ul>
         </section>
       </section>
-      <section class="card routing-card" aria-labelledby="routing-title">
+      <section class="card routing-card" id="exercise-routing" aria-labelledby="routing-title">
         <div class="card-heading"><div><h2 id="routing-title">Rozkład tras</h2><p id="recipient">Przejścia piesze z wybranego węzła</p></div></div>
         <div class="route-body">
           <label for="node">Węzeł startowy</label>
@@ -76,7 +86,7 @@
       </section>
     </div>
 
-    <div class="operations">
+    <div class="operations" id="exercise-operations">
       <section class="card" aria-labelledby="cases-title">
         <div class="card-heading"><div><h2 id="cases-title">Zgłoszenia i mieszkańcy</h2><p id="alert-count">Ładowanie…</p></div><button id="alert" disabled>Zgłoś zalanie</button></div>
         <ul class="records" id="cases"></ul>

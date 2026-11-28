@@ -22,21 +22,21 @@ FOOT = WALKING
 MAJOR = {"motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary", "secondary_link"}
 
 
-def touches(points):
-    west, south, east, north = AREA
+def touches(points, area=AREA):
+    west, south, east, north = area
     return (min(p[0] for p in points) <= east and max(p[0] for p in points) >= west
             and min(p[1] for p in points) <= north and max(p[1] for p in points) >= south)
 
 
-def fetch(path):
+def fetch(path, source=SOURCE):
     partial = path.with_suffix(path.suffix + ".part")
-    req = Request(SOURCE, headers={"User-Agent": "CASSINI-Warsaw-offline-map/1.0"})
+    req = Request(source, headers={"User-Agent": "CASSINI-offline-map/1.0"})
     with urlopen(req, timeout=120) as response, partial.open("wb") as target:
         shutil.copyfileobj(response, target)
     partial.replace(path)
 
 
-def read_pbf(path):
+def read_pbf(path, area=AREA):
     import osmium
 
     nodes, ways = {}, {}
@@ -49,7 +49,7 @@ def read_pbf(path):
             if not all(node.location.valid() for node in way.nodes):
                 return
             points = [(node.lon, node.lat) for node in way.nodes]
-            if len(points) >= 2 and touches(points):
+            if len(points) >= 2 and touches(points, area):
                 ids = [node.ref for node in way.nodes]
                 nodes.update(zip(ids, points))
                 ways[way.id] = (ids, dict(way.tags))
@@ -78,9 +78,9 @@ def direction_cost(tags, seconds, car):
     return [seconds if one_way != "-1" else None, seconds if one_way not in {"yes", "true", "1"} else None]
 
 
-def build(nodes, ways, timestamp):
+def build(nodes, ways, timestamp, area=AREA, describe_edge=None):
     histogram = Counter(node for ids, tags in ways.values()
-                        if tags.get("highway") in CAR | FOOT for node in set(ids))
+                        if tags.get("highway") in CAR | FOOT for node in ids)
     roads, waterways = [], []
     for way, (ids, tags) in sorted(ways.items()):
         road = tags.get("highway")
@@ -88,7 +88,7 @@ def build(nodes, ways, timestamp):
             continue
         if tags.get("waterway") == "river":
             points = [nodes[node] for node in ids]
-            if touches(points):
+            if touches(points, area):
                 waterways.append(points)
         if road not in CAR | FOOT:
             continue
@@ -99,7 +99,11 @@ def build(nodes, ways, timestamp):
             section = ids[start:end + 1]
             start = end
             points = [nodes[node] for node in section]
-            if not touches(points):
+            if not touches(points, area):
+                continue
+            if describe_edge and not all(
+                area[0] <= x <= area[2] and area[1] <= y <= area[3] for x, y in points
+            ):
                 continue
             metres = sum(distance(a, b) for a, b in zip(points, points[1:]))
             if metres <= 0:
@@ -112,14 +116,17 @@ def build(nodes, ways, timestamp):
                 continue
             # The way and its two endpoint nodes give clients an auditable OSM identifier.
             identifier = f"osm-{way}-{section[0]}-{section[-1]}"
-            roads.append({"id": identifier, "from": section[0], "to": section[-1],
+            edge = {"id": identifier, "from": section[0], "to": section[-1],
                           "name": tags.get("name"), "major": road in MAJOR, "class": road,
-                          "walk": walk, "drive": drive, "geometry": points})
+                          "walk": walk, "drive": drive, "geometry": points}
+            if describe_edge:
+                describe_edge(edge, tags, metres)
+            roads.append(edge)
     distinct = {road["id"]: road for road in roads}
-    return {"bounds": AREA, "osmTimestamp": timestamp, "roads": list(distinct.values()), "waterways": waterways}
+    return {"bounds": area, "osmTimestamp": timestamp, "roads": list(distinct.values()), "waterways": waterways}
 
 
-def svg_map(network):
+def svg_map(network, show_paths=False):
     west, south, east, north = network["bounds"]
     longitude_scale = math.cos(math.radians((south + north) / 2))
     ratio = 10000
@@ -132,8 +139,12 @@ def svg_map(network):
     styles = {False: ("#507079", 2.15), True: ("#8da7ac", 4.6)}
     roads = defaultdict(list)
     for link in network["roads"]:
-        if link["class"] != "service" and any(link["drive"]):
+        if show_paths and not any(link["drive"]):
+            roads["walking"].append(path(link["geometry"]))
+        elif show_paths or (link["class"] != "service" and any(link["drive"])):
             roads[link["major"]].append(path(link["geometry"]))
+    if show_paths:
+        styles = {"walking": ("#52746a", 0.9), False: ("#6f8993", 1.5), True: ("#c1c9c3", 3.3)}
     water = "".join(path(line) for line in network["waterways"])
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" preserveAspectRatio="none">'
             f'<path fill="none" stroke="#4b89aa" stroke-width="12" d="{water}"/>'
