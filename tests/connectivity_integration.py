@@ -118,13 +118,18 @@ assert post("management", "ewss-alert", {**alert, "commandId": "ewss-long", "tex
     "InvalidEwssAlert"
 assert [item["broadcastId"] for item in get("management", "ewss-alerts")["alerts"]] == [broadcast["broadcastId"]]
 
-# Measured transit per profile (field alert command, Gateway → Management on this machine).
+# Measured transit per profile (field alert command, Gateway → Management on this machine). The fastest of three
+# samples is kept: on freshly started services the first command also pays for warm-up, which once made the
+# terrestrial sample (94 ms) slower than the simulated IRIS² delay.
 measured = {}
 for profile in ("terrestrial", "iris2", "govsatcom"):
     set_profile(profile)
-    started = time.monotonic()
-    _, headers = field("management", "alert", {"commandId": "latency-" + profile})
-    measured[profile] = (round((time.monotonic() - started) * 1000), int(headers["X-Cassini-Link-Transit-Ms"]))
+    samples = []
+    for attempt in range(3):
+        started = time.monotonic()
+        _, headers = field("management", "alert", {"commandId": f"latency-{profile}-{attempt}"})
+        samples.append((round((time.monotonic() - started) * 1000), int(headers["X-Cassini-Link-Transit-Ms"])))
+    measured[profile] = min(samples)
 assert measured["terrestrial"][0] < measured["iris2"][0] < measured["govsatcom"][0], measured
 assert measured["govsatcom"][1] >= 600
 set_profile("terrestrial")

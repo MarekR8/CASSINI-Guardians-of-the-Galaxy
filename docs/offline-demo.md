@@ -148,12 +148,21 @@ Próba generalna i testy:
 ```sh
 python scripts/offline_demo.py --scenario sample --test    # regresja bazowa
 python tests/sheltering_rehearsal.py                        # macierz SH-A01–SH-A08 na świeżym stanie
-python tests/sheltering_rehearsal.py --browser --images     # + ścieżka w przeglądarce i gotowe obrazy Docker
+python tests/sheltering_rehearsal.py --browser              # + ścieżka w przeglądarce (Playwright)
+docker compose -f compose.yaml -f compose.sheltering.yaml build
+python tests/sheltering_rehearsal.py --images-only          # SH-A08 na gotowych obrazach, bez pobierania i budowania
 python -m pip install playwright==1.49.1 && python -m playwright install chromium
 python tests/sheltering_browser.py --screenshots artifacts/sheltering-browser
 ```
 
-`sheltering_rehearsal.py` buduje usługi raz, a każdy zestaw testów uruchamia na nowym katalogu stanu. Wynik każdego punktu SH-A zapisuje w `artifacts/sheltering-rehearsal.json`. Opcja `--images` startuje `compose.yaml` z `compose.sheltering.yaml` na pustych wolumenach z `--no-build --pull never` i uruchamia na nich test katalogów. Obrazy trzeba wcześniej zbudować poleceniem `build` podanym wyżej.
+`sheltering_rehearsal.py` buduje usługi raz, a każdy zestaw testów uruchamia na nowym katalogu stanu. Wynik każdego punktu SH-A zapisuje w `artifacts/sheltering-rehearsal.json`. Opcja `--images-only` działa tylko na gotowych obrazach, zawsze z `--no-build --pull never` i na pustych wolumenach:
+
+1. Uruchamia regresję `sample` na `compose.yaml`.
+2. Uruchamia ćwiczenie schronień na `compose.yaml` + `compose.sheltering.yaml`.
+3. Restartuje Situation i Sheltering, a potem sprawdza zachowany stan.
+4. Sprawdza, że kontener Sheltering w sieci `internal` nie łączy się z internetem.
+
+W CI robi to job `verify-sheltering-images`.
 
 ### Ranking jednostek (`sample`)
 
