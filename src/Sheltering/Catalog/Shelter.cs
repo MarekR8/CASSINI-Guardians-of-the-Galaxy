@@ -1,4 +1,5 @@
 using Cassini.Demo.SiteCatalog;
+using Cassini.Sheltering.Reception;
 
 namespace Cassini.Sheltering.Catalog;
 
@@ -23,8 +24,11 @@ internal sealed record AvailablePlaces(int Places, int AccessiblePlaces);
 
 internal sealed record Shelter(
     string ShelterId, string Name, SitePlace Place, bool StepFree, string Status, SiteWindow OperatingWindow,
-    SiteEvidence Evidence, int Version, ShelterResources Resources, ShelterCommitments Commitments)
+    SiteEvidence Evidence, int Version, ShelterResources Resources, ShelterCommitments Commitments,
+    ShelterReception? Reception = null)
 {
+    internal ShelterReception Ledger => Reception ?? ShelterReception.Empty;
+
     internal bool IsOvercommitted => Commitments.TotalPlaces > Resources.Places ||
         Commitments.TotalAccessiblePlaces > Resources.AccessiblePlaces;
 

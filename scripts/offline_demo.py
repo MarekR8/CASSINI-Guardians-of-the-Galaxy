@@ -36,7 +36,8 @@ def local_url(port):
 
 
 @contextmanager
-def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False, *, auto_replan=None):
+def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False, *, auto_replan=None,
+                   shelter_holds=False):
     data_dir.mkdir(parents=True, exist_ok=True)
     services = [*SERVICES, ("Sheltering", "Cassini.Sheltering", 5)] if sheltering else SERVICES
     env = dict(os.environ)
@@ -69,6 +70,8 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
             "Sheltering__StateFile": str(data_dir / "shelters.json"),
             "Sheltering__BaseUrl": local_url(port + 5),
         })
+        if shelter_holds:
+            env["Sheltering__HoldsFile"] = str(ROOT / "data" / "demo" / "sheltering" / "sample-holds.json")
     children = []
     try:
         for directory, assembly, offset in services:
@@ -158,6 +161,11 @@ def main():
                         cwd=ROOT,
                         check=True,
                     )
+                reception = Path(directory) / "reception"
+                for args_tail in ([], ["--after-restart"]):
+                    with start_services(args.port, reception, sheltering=True, shelter_holds=True) as url:
+                        subprocess.run([os.sys.executable, str(ROOT / "tests" / "shelter_reception_integration.py"),
+                                        url, *args_tail], cwd=ROOT, check=True)
         return
     state_name = "sheltering-demo" if args.sheltering else "offline-demo" if args.scenario == "sample" else "valencia-demo"
     data = args.data or ARTIFACTS / state_name
