@@ -1,6 +1,6 @@
 ﻿# Dane dostarczane przez zespół
 
-Poniżej opisano demonstrator Warszawy. Do starszego, lokalnego ćwiczenia nadal służy [szablon produktu](product.example.json). Surowe dane, stan synchronizacji i poświadczenia trzymaj lokalnie w ignorowanych katalogach.
+Domyślny scenariusz opisuje [Walencja – mapa, dane EMS i FlyPix](valencia.md). Poniżej znajduje się instrukcja wcześniejszego ćwiczenia warszawskiego. Do starszego, lokalnego ćwiczenia nadal służy [szablon produktu](product.example.json). Surowe dane, stan synchronizacji i poświadczenia trzymaj lokalnie w ignorowanych katalogach.
 
 ## Task 01 · punkt podłączenia Copernicusa
 

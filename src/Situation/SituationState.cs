@@ -35,14 +35,15 @@ internal sealed class SituationStore
     private readonly string? file;
     private State state;
 
-    internal SituationStore(string? stateFile, DemoNetwork? network, IPopulationEstimator population)
+    internal SituationStore(string? stateFile, DemoNetwork? network, IPopulationEstimator population,
+        string scenario, string? hazardSeed)
     {
         file = string.IsNullOrWhiteSpace(stateFile) ? null : Path.GetFullPath(stateFile);
         state = file is not null && File.Exists(file)
             ? JsonSerializer.Deserialize<State>(File.ReadAllBytes(file), Json)
                 ?? throw new InvalidDataException("Situation state is empty.")
-            : new State(InitialSnapshot(network), new Dictionary<string, Receipt>(), network is null ? null : "warsaw");
-        if ((state.Scenario == "warsaw") != (network is not null))
+            : new State(InitialSnapshot(network, hazardSeed), new Dictionary<string, Receipt>(), scenario);
+        if ((state.Scenario ?? "sample") != scenario)
             throw new InvalidDataException("The situation state belongs to a different scenario. Use a separate state directory.");
         state = state with
         {
@@ -100,8 +101,19 @@ internal sealed class SituationStore
         File.Move(temporaryPath, path, overwrite: true);
     }
 
-    private static SituationSnapshot InitialSnapshot(DemoNetwork? network)
+    private static SituationSnapshot InitialSnapshot(DemoNetwork? network, string? hazardSeed)
     {
+        if (hazardSeed is not null)
+        {
+            var seed = JsonSerializer.Deserialize<ImportCopernicusCommand>(File.ReadAllBytes(hazardSeed), Json)
+                ?? throw new InvalidDataException("Valencia flood observation is missing.");
+            if (seed.ProductId is not { Length: > 0 } product || seed.ObservedAt is not { } observed || seed.Source != "ems")
+                throw new InvalidDataException("Valencia flood observation requires EMS provenance.");
+            var layer = new HazardLayer("copernicus:" + product, "copernicus-ems-archive", product, observed,
+                SituationCommands.ReadPolygons(seed.GeoJson), SituationCommands.CheckSourceUrl(seed.SourceUrl));
+            return new SituationSnapshot(0, 0, [], [layer], [], []);
+        }
+
         if (network is not null)
         {
             var exerciseFlood = JsonSerializer.SerializeToElement(new

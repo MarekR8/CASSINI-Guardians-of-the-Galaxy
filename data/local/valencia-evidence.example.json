@@ -1,0 +1,9 @@
+{
+  "flypix": {
+    "layerId": "valencia-road-review",
+    "imageProductId": "",
+    "observedAt": "",
+    "mode": "manual",
+    "geoJson": "flypix-road-review.geojson"
+  }
+}
