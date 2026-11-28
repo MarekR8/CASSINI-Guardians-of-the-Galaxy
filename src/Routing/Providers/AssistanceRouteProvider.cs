@@ -42,6 +42,10 @@ internal sealed class AssistanceRouteProvider(IRouteProvider provider)
 
     private static double[] Coordinates(string id)
     {
+        // The sample's pedestrian marker is away from the vehicular exit on the ORS graph.
+        if (Network.Warsaw is null && id == "exit-north")
+            return [16.65554, 50.440838];
+
         var node = Network.Nodes.Single(node => node.Id == id);
         // Match the routed vehicle lane where the exercise provides distinct road and pavement points.
         var lane = Network.Segments.Where(segment => segment.From == id || segment.To == id)

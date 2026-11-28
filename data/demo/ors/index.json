@@ -84,7 +84,7 @@
       }
     }
   },
-  "9a35a881d141d4d96e18e2e6ef2a0bc3031c28d725a152bfd27912473330f90c": {
+  "ac7cff415ef1088c49a3c877031a922504e50d7bc00683648745622d5befe4f6": {
     "scenario": "sample",
     "bridgeClosed": true,
     "leg": "outbound",
@@ -96,8 +96,8 @@
           50.435
         ],
         [
-          16.654,
-          50.441
+          16.65554,
+          50.440838
         ]
       ],
       "options": {
