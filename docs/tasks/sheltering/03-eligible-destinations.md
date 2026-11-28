@@ -21,7 +21,7 @@ An eligible first leg leads out of the hazard although both shelters have no ava
 
 - [x] Add contract and regression coverage for a recorded, graph-matched provider candidate. Expose the current-evidence recheck for SH-T06 to call before publication.
 - [x] Check competing departure and arrival windows against the exercise transport evidence and measure candidate latency.
-- [ ] Integrate current reservation and transport evidence from their owners and invoke the recheck at publication through SH-T04 and SH-T06.
+- [x] Read current reservations from Sheltering and recheck the booked route at SH-T04 reservation and SH-T06 publication. Use a labeled synthetic transport window in the offline exercise, where Dispatch has no assignment for group travel.
 
 ## Dependencies and verification
 
@@ -34,5 +34,6 @@ The [SH-W3 contract and replay](../../../contracts/http/routing/README.md) cover
 - A direct candidate for `case-14` with a synthetic reservation at `shelter-a`, followed by routing to `assembly-north` when both shelters are full. The later `leg-shelter` uses the latest reported position at `exit-north` and the outside connector.
 - A closed bridge invalidates the recorded east route. The north exit remains available until its approach is also closed, at which point the decision is `EscalationRequired`.
 - A Grouping party preserves required care and uses a confirmed synthetic transport window. Routing rejects a departure beyond the confirmed window.
+- The first-leg decision reads the current individual hold from Sheltering. Releasing that hold restores the safe first-leg fallback. Routing rejects publication for an unverified hold, a stale assignment version or route inputs that differ from the booking. Assisted publication requires a matching transport window from the exercise fixture.
 
-Run `python tests/destination_routing_integration.py` through the local Gateway. It prints median end-to-end request latency for ten graph and ten recorded candidates. In the local exercise both medians were about 3 ms. Fixtures model graph-matched paths and time windows on the `sample` graph. The replay requires no ORS key. Live providers, reservations, transport allocation and publication remain integration work.
+Run `python tests/destination_routing_integration.py` through the local Gateway. It prints median end-to-end request latency for ten graph and ten recorded candidates. Run `python tests/sheltering_reservations_integration.py` and `python tests/sheltering_publication_integration.py` for booking and publication. Fixtures model graph-matched paths and transport windows on the `sample` graph. The replay requires no ORS key. Live group transport allocation remains outside the offline exercise.

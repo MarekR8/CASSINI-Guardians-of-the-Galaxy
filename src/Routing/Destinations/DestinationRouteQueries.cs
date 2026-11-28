@@ -63,7 +63,36 @@ internal sealed class DestinationRouteQueries(
 
         if (reservationId is not null)
         {
-            var booking = fixtures.Bookings.SingleOrDefault(item => item.ReservationId == reservationId);
+            OwnedShelterAssignment? assignment = null;
+            var ownerAvailable = true;
+            if (travel.Cases.Length == 1)
+            {
+                try
+                {
+                    assignment = await destinations.ReadAssignment(travel.IncidentId, travel.Cases[0].CaseId,
+                        travel.LegId, cancellation);
+                    if (assignment is { Status: "Reserved", Reservation: { } hold } &&
+                        hold.ReservationId == reservationId && DestinationQueries.ValidId(hold.ShelterId))
+                    {
+                        var reference = new DestinationRef("shelter", hold.ShelterId);
+                        var route = await EvaluateNamed(snapshot, travel, reference, recorded: null, transport, cancellation);
+                        if (hold.Covers(route))
+                            return new("DirectShelter", "Reserved", snapshot.Revision, route, [], reservationId,
+                                transport?.TransportId, transport is null ? null : "synthetic");
+                        reasons.Add(new(reference, route.Reason ?? "ReservationRequiresReview"));
+                    }
+                    else if (assignment is not null)
+                        reasons.Add(new(null, "ReservationUnverified"));
+                }
+                catch (RoutingException error) when (error.Status == 503)
+                {
+                    ownerAvailable = false;
+                    reasons.Add(new(null, error.Code));
+                }
+            }
+
+            var booking = ownerAvailable && assignment is null
+                ? fixtures.Bookings.SingleOrDefault(item => item.ReservationId == reservationId) : null;
             if (booking is not null && booking.Status == "Reserved" && booking.SituationRevision == snapshot.Revision &&
                 booking.IncidentId == travel.IncidentId && booking.LegId == travel.LegId &&
                 travel.Cases.Length > 0 && DestinationEvidenceFixtures.SameCases(booking.CaseIds, travel) &&
@@ -89,7 +118,7 @@ internal sealed class DestinationRouteQueries(
                     reasons.Add(new(reference, error.Code));
                 }
             }
-            else
+            else if (reasons.Count == 0)
                 reasons.Add(new(null, "ReservationUnverified"));
         }
 

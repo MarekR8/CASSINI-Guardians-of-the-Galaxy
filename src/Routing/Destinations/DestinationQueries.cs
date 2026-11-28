@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using System.Net;
 using System.Text.Json;
+using Cassini.Routing.Publication;
 
 namespace Cassini.Routing.Destinations;
 
@@ -11,6 +13,20 @@ internal sealed record ShelterAvailabilityCatalog(int? Revision, int? SituationR
     JsonElement[]? Shelters);
 internal sealed record DestinationCatalog(string IncidentId, int SituationRevision, DateTimeOffset At,
     int AssemblyPointRevision, int ShelterRevision, JsonElement[] AssemblyPoints, JsonElement[] Shelters);
+internal sealed record ShelterAssignmentResponse(OwnedShelterAssignment? Assignment);
+internal sealed record OwnedShelterAssignment(string IncidentId, string CaseId, string LegId, int Version,
+    string Status, OwnedShelterHold? Reservation);
+internal sealed record OwnedShelterHold(string ReservationId, string ShelterId, DateTimeOffset HoldsExpireAt,
+    ArrivalWindow? ArrivalWindow, HeldResources? Resources, RouteProposal? Route)
+{
+    internal bool Covers(DestinationRoute route) =>
+        route is { Status: "Eligible", ArrivalWindow: { } arrival,
+            AvailabilityReason: not ("Overcommitted" or "ShelterAvailabilityUnverified") } &&
+        ArrivalWindow is { } held && held.Earliest <= arrival.Earliest && arrival.LatestExclusive <= held.LatestExclusive &&
+        arrival.LatestExclusive <= HoldsExpireAt &&
+        Resources is { Places: > 0 } resources && (!route.Travel.StepFree || resources.AccessiblePlaces > 0);
+}
+internal sealed record HeldResources(int Places, int AccessiblePlaces);
 
 internal sealed class DestinationQueries(HttpClient http, DestinationSources sources, TimeProvider clock)
 {
@@ -50,6 +66,22 @@ internal sealed class DestinationQueries(HttpClient http, DestinationSources sou
         bool eligibleOnly = false) => Read<ShelterAvailabilityCatalog>(new Uri(sources.Sheltering,
             $"queries/shelter-availability?eligibleOnly={eligibleOnly}&at={Time(at)}"), cancellation);
 
+    internal async Task<OwnedShelterAssignment?> ReadAssignment(string incidentId, string caseId, string legId,
+        CancellationToken cancellation)
+    {
+        const string code = "ReservationEvidenceUnavailable";
+        var path = $"queries/shelter-assignment?incidentId={Uri.EscapeDataString(incidentId)}" +
+            $"&caseId={Uri.EscapeDataString(caseId)}&legId={Uri.EscapeDataString(legId)}";
+        var response = await ReadResponse<ShelterAssignmentResponse>(new Uri(sources.Sheltering, path), cancellation, code,
+            notFoundCode: "AssignmentNotFound");
+        if (response is null)
+            return null;
+        if (response.Assignment is not { Version: > 0 } assignment || assignment.IncidentId != incidentId ||
+            assignment.CaseId != caseId || assignment.LegId != legId)
+            throw Unavailable(code);
+        return assignment;
+    }
+
     internal Task<TravelSubject> ReadSubject(string incidentId, string? groupId, CancellationToken cancellation)
     {
         var path = groupId is null ? "queries/incident"
@@ -64,7 +96,11 @@ internal sealed class DestinationQueries(HttpClient http, DestinationSources sou
         value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
 
     private async Task<T> Read<T>(Uri uri, CancellationToken cancellation, string code = "DestinationCatalogUnavailable",
-        string? bearer = null)
+        string? bearer = null) where T : class =>
+        await ReadResponse<T>(uri, cancellation, code, bearer) ?? throw Unavailable(code);
+
+    private async Task<T?> ReadResponse<T>(Uri uri, CancellationToken cancellation, string code, string? bearer = null,
+        string? notFoundCode = null) where T : class
     {
         try
         {
@@ -72,6 +108,11 @@ internal sealed class DestinationQueries(HttpClient http, DestinationSources sou
             if (!string.IsNullOrEmpty(bearer))
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
             using var response = await http.SendAsync(request, cancellation);
+            if (notFoundCode is not null && response.StatusCode == HttpStatusCode.NotFound &&
+                (await response.Content.ReadFromJsonAsync<JsonElement>(cancellation)) is { ValueKind: JsonValueKind.Object } problem &&
+                problem.TryGetProperty("code", out var reason) && reason.ValueKind == JsonValueKind.String &&
+                reason.GetString() == notFoundCode)
+                return null;
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<T>(cancellation) ?? throw Unavailable(code);
         }

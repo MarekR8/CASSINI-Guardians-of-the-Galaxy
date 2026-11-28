@@ -214,6 +214,22 @@ def exercise(client, peer=None):
     assert [item["status"] for item in booked["assignments"]] == ["Reserved", "Reserved"], booked
     assert client.shelters()["shelter-b"]["commitments"]["heldAccessiblePlaces"] == 2
 
+    assisted = next(item for item in booked["assignments"] if item["caseId"] == "case-15")
+    assisted_hold = assisted["reservation"]
+    assignment_ref = {"incidentId": INCIDENT, "caseId": "case-15", "legId": LEG}
+    client.call("routing/commands/publish-route", {
+        "commandId": "publish-party-without-transport", "expectedVersion": 0,
+        "subject": {"kind": "shelter-assignment", "id": f"{INCIDENT}/case-15/{LEG}"},
+        "assignment": {**assignment_ref, "assignmentVersion": assisted["version"],
+                       "reservationId": assisted_hold["reservationId"], "shelterId": assisted_hold["shelterId"]},
+        "route": {**assisted_hold["route"], "query": {**assisted_hold["route"]["query"], "transportId": None}},
+    }, 422, "RouteIneligible")
+    assisted_instruction = client.command("reconcile-shelter-instruction", {
+        **assignment_ref, "commandId": "publish-party-with-mock-transport", "expectedAssignmentVersion": assisted["version"],
+    })
+    assert assisted_instruction["state"] == "Current", assisted_instruction
+    assert assisted_instruction["instruction"]["current"]["validUntil"] == "2026-11-27T19:30:00+00:00"
+
     # SH-W4 -> SH-T05: the holds sit in shelter-b's reception ledger, so admission converts exactly this hold.
     awaiting = {item["caseId"]: item["reservationId"] for item in client.reception("shelter-b")["awaiting"]}
     assert awaiting == {loser: f"loser-{loser}-{loser}", "case-15": "party-b-case-15", "case-16": "party-b-case-16"}, awaiting

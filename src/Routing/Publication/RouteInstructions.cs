@@ -89,7 +89,7 @@ internal sealed class RouteInstructionStore(CatalogStore<RouteInstruction> store
         Read().Journal.Outbox.Where(entry => entry.Sequence > after).ToArray();
 
     internal async Task<RouteInstruction> Publish(PublishRouteCommand command, DestinationRouteQueries routes,
-        CancellationToken cancellation)
+        DestinationQueries destinations, CancellationToken cancellation)
     {
         var subject = RequireCommand(command.CommandId, command.Subject, command.ExpectedVersion);
         var assignment = command.Assignment;
@@ -111,10 +111,19 @@ internal sealed class RouteInstructionStore(CatalogStore<RouteInstruction> store
             throw new RoutingException(422, "RouteIneligible",
                 $"The proposal is no longer eligible: {checkedRoute.Reason ?? "RouteIneligible"}.");
 
+        var owned = await destinations.ReadAssignment(assignment.IncidentId!, assignment.CaseId!, assignment.LegId!, cancellation);
+        if (owned is not { Status: "Reserved", Reservation: { } hold } || owned.Version != assignment.AssignmentVersion ||
+            hold.ReservationId != assignment.ReservationId || hold.ShelterId != assignment.ShelterId)
+            throw new RoutingException(409, "ReservationChanged", "The published route needs the current Sheltering reservation.");
+        if (hold.Route?.Query != query || !hold.Covers(checkedRoute))
+            throw new RoutingException(422, "ReservationDoesNotCoverRoute",
+                "The current hold must cover the route inputs, arrival window and required resources.");
+
+        var validUntil = evidence.ValidUntil < hold.HoldsExpireAt ? evidence.ValidUntil : hold.HoldsExpireAt;
         return Commit(command.CommandId!, command, subject, command.ExpectedVersion!.Value, (current, version, now) =>
         {
             var route = new CurrentRoute(current.LastRouteVersion + 1, evidenceId, checkedRoute.Destination, assignment,
-                checkedRoute.SituationRevision, arrival, evidence.ValidUntil, now, command.CommandId!);
+                checkedRoute.SituationRevision, arrival, validUntil, now, command.CommandId!);
             var events = new List<IntegrationEvent>();
             var withdrawal = current.LastWithdrawal;
             if (current.Current is { } superseded)
