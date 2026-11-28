@@ -37,7 +37,7 @@ def local_url(port):
 
 @contextmanager
 def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False, *,
-                   auto_replan=None, evacuation_enabled=None):
+                   auto_replan=None, evacuation_enabled=None, shelter_holds=False):
     data_dir.mkdir(parents=True, exist_ok=True)
     services = [*SERVICES, ("Sheltering", "Cassini.Sheltering", 5)] if sheltering else SERVICES
     env = dict(os.environ)
