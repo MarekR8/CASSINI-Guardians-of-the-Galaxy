@@ -1,5 +1,20 @@
 using System.Text;
+using System.Security.Claims;
 using Cassini.Gateway.Link;
+
+// Authorization policy tests use role claims only; no resident or operational data is needed.
+static ClaimsPrincipal Role(string role) => new(new ClaimsIdentity([new Claim(ClaimTypes.Role, role)], "test"));
+var resident = Role(GatewayAuth.Resident);
+foreach (var path in new[] { "/situation/queries/snapshot", "/situation/queries/closed-roads", "/routing/queries/network",
+                              "/routing/queries/distribution", "/routing/queries/draws/example", "/routing/queries/city-route",
+                              "/routing/queries/city-node/1", "/routing/queries/city-edge/example", "/routing/queries/validate-route" })
+    Check(GatewayAuth.CanRead(resident, path), $"The public operation {path} remains available.");
+foreach (var path in new[] { "/management/queries/incident", "/dispatch/queries/assignments", "/sheltering/queries/shelter-assignments",
+                              "/routing/queries/route-instruction", "/routing/queries/route-outbox", "/routing/queries/first-leg",
+                              "/routing/queries/destination-route", "/routing/queries/new-operation", "/routing/commands/draw" })
+    Check(!GatewayAuth.CanRead(resident, path), $"The private or unknown operation {path} requires a staff role.");
+Check(GatewayAuth.CanRead(Role(GatewayAuth.Coordinator), "/routing/queries/route-instruction"), "Staff access remains available.");
+Check(!GatewayAuth.CanRead(Role("unknown"), "/routing/queries/network"), "Unrecognized roles receive no query access.");
 
 var directory = Path.Combine(Path.GetTempPath(), $"cassini-gateway-{Guid.NewGuid():N}");
 try

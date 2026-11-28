@@ -108,15 +108,27 @@ static class GatewayAuth
         return user.IsInRole(Resident) && Same(service, "routing") && Same(operation, "draw");
     }
 
-    // Staff roles read everything. Residents read only the shared situation picture and routes, not other
-    // residents' cases or unit assignments (INV-14), until a caseId claim allows a per-case view.
-    static bool CanRead(ClaimsPrincipal user, string path)
+    // Staff roles retain their existing access. Residents may read only explicitly public network and
+    // situation operations. New owner queries are not automatically public; case-bound access needs a case claim.
+    internal static bool CanRead(ClaimsPrincipal user, string path)
     {
         if (user.IsInRole(Coordinator) || user.IsInRole(Dispatcher) || user.IsInRole(Responder))
             return true;
         if (!user.IsInRole(Resident))
             return false;
-        return path.Trim('/').Split('/') is [var service, ..] && (Same(service, "situation") || Same(service, "routing"));
+        var segments = path.Trim('/').Split('/');
+        if (segments.Length is < 3 or > 4 || !Same(segments[1], "queries"))
+            return false;
+        var service = segments[0];
+        var operation = segments[2];
+        if (Same(service, "situation"))
+            return segments.Length == 3 && (Same(operation, "snapshot") || Same(operation, "closed-roads"));
+        if (!Same(service, "routing"))
+            return false;
+        return segments.Length == 3
+            ? Same(operation, "network") || Same(operation, "distribution") || Same(operation, "city-route") ||
+              Same(operation, "validate-route")
+            : segments[3].Length > 0 && (Same(operation, "draws") || Same(operation, "city-node") || Same(operation, "city-edge"));
     }
 
     static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
