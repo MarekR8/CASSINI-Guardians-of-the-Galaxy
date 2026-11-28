@@ -46,6 +46,7 @@ public sealed class MainActivity : Activity
     private string? confirmationMessage;
     private bool awaitingPosition;
     private bool useExercisePosition;
+    private bool awaitingExercisePermission;
     private int stage;
     private ScheduledWalkingRoute? selected;
     private ISharedPreferences RoutePreferences => GetSharedPreferences("exercise-route", FileCreationMode.Private)!;
@@ -61,6 +62,7 @@ public sealed class MainActivity : Activity
         monitorGnss = state?.GetBoolean("monitorGnss") ?? false;
         awaitingPosition = state?.GetBoolean("awaitingPosition") ?? false;
         useExercisePosition = state?.GetBoolean("useExercisePosition") ?? false;
+        awaitingExercisePermission = state?.GetBoolean("awaitingExercisePermission") ?? false;
 
         screen = new ScrollView(this);
         screen.SetBackgroundColor(Color.Rgb(247, 249, 252));
@@ -117,7 +119,7 @@ public sealed class MainActivity : Activity
         AddHeading("Scenariusz ćwiczenia", 18, demoPanel);
         var positionSwitch = new Switch(this)
         {
-            Text = "Potwierdzenie bez satelitów · symulacja",
+            Text = "Szybkie potwierdzenie · symulacja",
             Checked = useExercisePosition,
         };
         positionSwitch.SetMinHeight(Dp(48));
@@ -125,6 +127,7 @@ public sealed class MainActivity : Activity
         {
             useExercisePosition = change.IsChecked;
             awaitingPosition = false;
+            awaitingExercisePermission = false;
             confirmationMessage = null;
             RefreshMap();
         };
@@ -175,6 +178,7 @@ public sealed class MainActivity : Activity
         outState.PutBoolean("monitorGnss", monitorGnss);
         outState.PutBoolean("awaitingPosition", awaitingPosition);
         outState.PutBoolean("useExercisePosition", useExercisePosition);
+        outState.PutBoolean("awaitingExercisePermission", awaitingExercisePermission);
         outState.PutBoolean("demoOpen", demoPanel.Visibility == ViewStates.Visible);
         outState.PutString("ewssBanner", ewssBanner.Visibility == ViewStates.Visible ? ewssBanner.Text : null);
     }
@@ -228,6 +232,7 @@ public sealed class MainActivity : Activity
         savedExitMode = null;
         confirmationMessage = null;
         awaitingPosition = false;
+        awaitingExercisePermission = false;
         showLayer = false;
         ewssBanner.Visibility = ViewStates.Gone;
         SaveExerciseRoute();
@@ -275,6 +280,16 @@ public sealed class MainActivity : Activity
     {
         if (useExercisePosition && selected is { } route)
         {
+            if (!HasFineLocation)
+            {
+                awaitingExercisePermission = true;
+                confirmationMessage = "Zezwól na dokładną lokalizację, aby sprawdzić odbiornik. Zgłoszenie użyje pozycji z ćwiczenia.";
+                RefreshMap();
+                EnableGnss();
+                return;
+            }
+
+            EnableGnss();
             var exit = OfflineScenario.Nodes[route.Route.Exit];
             SaveExit(new GnssPosition(exit.Latitude, exit.Longitude, 8, DateTimeOffset.UtcNow, GalileoUsed: false),
                 simulated: true);
@@ -378,12 +393,19 @@ public sealed class MainActivity : Activity
         if (requestCode != LocationRequest)
             return;
 
+        var completeExercise = awaitingExercisePermission && useExercisePosition && action == ResidentAction.ConfirmExit;
+        awaitingExercisePermission = false;
         if (HasFineLocation)
-            EnableGnss();
+        {
+            if (completeExercise)
+                ConfirmExit();
+            else
+                EnableGnss();
+        }
         else
         {
             gnssStatus.Text = "Odczyt satelitarny wymaga zgody na dokładną lokalizację.";
-            if (awaitingPosition)
+            if (awaitingPosition || completeExercise)
             {
                 awaitingPosition = false;
                 confirmationMessage = "Do potwierdzenia wyjścia potrzebna jest zgoda na dokładną lokalizację.";
@@ -501,7 +523,7 @@ public sealed class MainActivity : Activity
                 routeWithdrawn ? "Poprzednia trasa została wycofana. Wyznacz nową." : "",
                 "Wyznacz trasę ewakuacji"),
             ResidentAction.ConfirmExit => (route, confirmationMessage ?? (useExercisePosition
-                    ? "Symulacja · zgłoszenie użyje pozycji z ćwiczenia."
+                    ? "Symulacja · zgłoszenie użyje pozycji z ćwiczenia. Odczyt satelitarny uruchomi się równolegle."
                     : "Potwierdź wyjście po opuszczeniu strefy."),
                 "Potwierdź wyjście"),
             ResidentAction.ExitSaved => (savedExitMode == "simulated" ? "Zgłoszenie testowe · symulacja" : "Zgłoszenie wyjścia",
