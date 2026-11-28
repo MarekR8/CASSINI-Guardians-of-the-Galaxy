@@ -8,6 +8,7 @@
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>0.1</ApplicationDisplayVersion>
     <AndroidPackageFormats>apk</AndroidPackageFormats>
+    <UseDefaultPublishRuntimeIdentifier>false</UseDefaultPublishRuntimeIdentifier>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

@@ -59,6 +59,27 @@ assert initial["hazards"][0]["source"] == "synthetic"
 assert initial["hazards"][0]["provenance"]["mode"] == "mock"
 assert initial["populationEstimate"]["value"] == 4872
 
+assert 'id="integration-preview"' in page
+ems = get("situation", "integration-copernicus")
+flypix = get("situation", "integration-flypix")
+city_data = get("situation", "city-data")
+city_map = get("situation", "city-map")
+assert all(result["mode"] == "mock" for result in (ems, flypix, city_data, city_map))
+assert ems["activationCode"] == "EMSR756" and ems["aoiNumber"] == 3
+assert ems["productType"] == "delineation" and ems["productId"].startswith("mock-")
+assert flypix["imageProductId"].startswith("mock-") and flypix["modelId"].startswith("mock-")
+assert 0 <= flypix["geoJson"]["features"][0]["properties"]["confidence"] <= 1
+assert city_data["datasetId"] == city_map["datasetId"]
+assert city_data["zones"] == [{"zoneId": city_map["geoJson"]["features"][0]["properties"]["zoneId"], "people": 120}]
+for preview in (ems, flypix, city_map):
+    west, south, east, north = preview["bounds"]
+    assert preview["geoJson"]["type"] == "FeatureCollection"
+    geometry = preview["geoJson"]["features"][0]["geometry"]
+    assert geometry["type"] == "Polygon"
+    ring = geometry["coordinates"][0]
+    assert ring[0] == ring[-1] and all(west <= lon <= east and south <= lat <= north for lon, lat in ring)
+assert get("situation", "snapshot") == initial
+
 alert_cmd = {"commandId": "alert-retry"}
 first_alert = post("management", "alert", alert_cmd)
 assert post("management", "alert", alert_cmd) == first_alert

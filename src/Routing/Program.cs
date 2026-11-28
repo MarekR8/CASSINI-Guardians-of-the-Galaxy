@@ -5,8 +5,9 @@ using Cassini.Demo;
 var builder = WebApplication.CreateBuilder(args);
 var scenario = builder.Configuration["Demo:Scenario"] is { Length: > 0 } configured ? configured : "sample";
 var valencia = scenario == "valencia";
-var network = DemoNetwork.Load(valencia ? "sample" : scenario);
-Network.Configure(network, scenario == "sample" ? null : CityNetwork.Load(builder.Configuration["Demo:CityDirectory"], scenario));
+if (scenario is not ("sample" or "valencia"))
+    throw new InvalidDataException($"Unknown demo scenario '{scenario}'.");
+Network.Configure(valencia ? CityNetwork.Load(builder.Configuration["Demo:CityDirectory"], scenario) : null);
 if (builder.Configuration["urls"] is null)
     builder.WebHost.UseUrls("http://127.0.0.1:5083");
 
@@ -84,8 +85,7 @@ app.MapGet("/health/ready", () => Results.Ok(new { service = "routing" }));
 
 var queries = app.MapGroup("/queries");
 queries.MapGet("/network", () => new {
-    Network.Nodes, Network.Segments, Network.Exits, Network.Warsaw?.Bounds,
-    Network.Warsaw?.ContextRoads, Network.Warsaw?.Waterways, Network.Warsaw?.Attribution, Network.Warsaw?.OsmTimestamp,
+    Network.Nodes, Network.Segments, Network.Exits,
     city = Network.City is { } city ? new { city.Bounds, city.OsmTimestamp, city.RoadCount, city.ZoneCounts } : null,
     scenario
 });

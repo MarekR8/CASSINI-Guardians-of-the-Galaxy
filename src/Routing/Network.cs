@@ -32,27 +32,15 @@ internal static class Network
     ];
 
     internal static string[] Exits { get; private set; } = ["exit-east", "exit-north"];
-    internal static DemoNetwork? Warsaw { get; private set; }
     internal static CityNetwork? City { get; private set; }
 
-    internal static void Configure(DemoNetwork? network, CityNetwork? city = null)
+    internal static void Configure(CityNetwork? city)
     {
         City = city;
-        if (network is null)
-        {
-            if (city is not null)
-            {
-                Nodes = [];
-                Segments = [];
-                Exits = [];
-            }
-            return;
-        }
-        Warsaw = network;
-        Nodes = network.Nodes.Select(node => new Node(node.Id, node.Label, node.Longitude, node.Latitude)).ToArray();
-        Segments = network.Segments.Select(link => new Segment(link.Id, link.From, link.To, link.WalkingSeconds,
-            link.DrivingSeconds, link.BothWays, link.Geometry, link.DrivingGeometry, link.ReverseDrivingGeometry,
-            link.ReverseDrivingSeconds)).ToArray();
+        if (city is null) return;
+        Nodes = [];
+        Segments = [];
+        Exits = [];
     }
 
     internal static bool Contains(string? node) => Nodes.Any(candidate => candidate.Id == node);
@@ -83,9 +71,7 @@ internal static class Network
                     : null;
                 if (next is null)
                     continue;
-                var seconds = driving
-                    ? Warsaw is not null && segment.To == node ? segment.ReverseDrivingSeconds : segment.DrivingSeconds
-                    : segment.WalkingSeconds;
+                var seconds = driving ? segment.DrivingSeconds : segment.WalkingSeconds;
                 if (seconds is null)
                     continue;
 

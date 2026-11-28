@@ -1,10 +1,4 @@
 {
-  "flood-warsaw-exercise": {
-    "value": 65,
-    "method": "sum of GHS-POP cells with centres inside the flood polygon",
-    "source": "Copernicus GHSL GHS-POP R2023A",
-    "year": 2025
-  },
   "flood-demo": {
     "value": 4872,
     "method": "sum of GHS-POP cells with centres inside the flood polygon",

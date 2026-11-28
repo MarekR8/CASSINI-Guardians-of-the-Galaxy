@@ -18,10 +18,10 @@ A resident's phone: a Galileo position with its evidence (constellation, OSNMA, 
 ## Scope
 
 ### Stage A (demo)
-- [ ] "Confirm exit" screen: collects position, `observedAt`, `accuracy`, `evidence { galileoUsed, osnma: "simulated"|"verified"|"none", egnos: "applied"|"unknown" }`.
+- [x] "Confirm exit" screen: collects position, `observedAt`, `accuracy`, `evidence { galileoUsed, osnma: "simulated"|"verified"|"none", egnos: "applied"|"unknown" }`.
 - [ ] HTTP client for Management `POST /commands/progress` (Gateway address in settings) with an offline queue and a stable `commandId` on retry. Default mock mode: local storage + JSON preview.
-- [ ] `MockEwssReceiver`: alert with a level and text → banner + opens the route.
-- [ ] Every simulated field is visibly labeled as a simulation on screen.
+- [x] `MockEwssReceiver`: alert with a level and text → banner + opens the route.
+- [x] Every simulated field is visibly labeled as a simulation on screen.
 
 ### Stage B (completion)
 - [ ] Capture `GnssNavigationMessage` (Galileo I/NAV) to a file as input for real OSNMA verification.
@@ -56,4 +56,10 @@ dotnet build apps/offline-android/Cassini.Offline.Android.csproj -c Release
 
 ## Results
 
-_(fill in)_
+The Android app saves exit reports to its private storage with a stable command ID and an on-device
+JSON preview. A real report uses a fresh GNSS fix with reported accuracy, including multi-constellation fixes.
+The report records Galileo use when the receiver reports it near the time of the fix.
+The sample report uses a synthetic exercise exit and is labeled as a simulation. OSNMA is simulated
+and EGNOS remains unknown. Gateway delivery awaits W2 and receiver behavior requires a device test.
+The mock EWSS banner reopens the locally saved exercise route. A closure invalidates the
+previous selection and an alert without a saved route leaves the map in its current exercise state.

@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 from urllib.error import URLError
 
-from import_warsaw_evidence import LOCAL, ensure_area, import_layer, load_json, local_base, request, timestamp
+from local_evidence import LOCAL, ensure_area, import_layer, load_json, local_base, request, timestamp
 
 
 def main():

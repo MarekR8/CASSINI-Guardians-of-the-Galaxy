@@ -43,17 +43,11 @@ internal sealed class AssistanceRouteProvider(IRouteProvider provider)
     private static double[] Coordinates(string id)
     {
         // The sample's pedestrian marker is away from the vehicular exit on the ORS graph.
-        if (Network.Warsaw is null && id == "exit-north")
+        if (id == "exit-north")
             return [16.65554, 50.440838];
 
         var node = Network.Nodes.Single(node => node.Id == id);
-        // Match the routed vehicle lane where the exercise provides distinct road and pavement points.
-        var lane = Network.Segments.Where(segment => segment.From == id || segment.To == id)
-            .Select(segment => (Segment: segment, Line: segment.DrivingGeometry))
-            .FirstOrDefault(item => item.Line is { Length: >= 2 });
-        var point = lane.Line is null ? [node.Longitude, node.Latitude]
-            : lane.Segment.From == id ? lane.Line[0] : lane.Line[^1];
-        return point.Select(value => Math.Round(value, 6)).ToArray();
+        return [Math.Round(node.Longitude, 6), Math.Round(node.Latitude, 6)];
     }
 
     private static bool Near(double[] left, double[] right)
@@ -104,10 +98,6 @@ internal readonly record struct ClosedRoadArea(double West, double South, double
         if (segment is null)
             return Network.City?.Road(id) is { } road ? Bounds(Core(road.Geometry).ToArray(), 10) : null;
 
-        // Warsaw's bridge edge includes connection roads also used by the detour.
-        if (id == "bridge-2" && segment.DrivingGeometry is { Length: > 2 } bridge)
-            return Bounds(BridgeCrossing(bridge), 25);
-
         var lines = new[] { segment.DrivingGeometry, segment.ReverseDrivingGeometry, segment.Geometry }
             .OfType<double[][]>().ToArray();
         if (lines.Length == 0)
@@ -125,18 +115,6 @@ internal readonly record struct ClosedRoadArea(double West, double South, double
             Math.Round(points.Min(point => point[1]) - margin, 6),
             Math.Round(points.Max(point => point[0]) + longitudeMargin, 6),
             Math.Round(points.Max(point => point[1]) + margin, 6));
-    }
-
-    private static double[][] BridgeCrossing(double[][] line)
-    {
-        var scale = Math.Cos(line[0][1] * Math.PI / 180);
-        var pair = line.Zip(line.Skip(1)).MaxBy(edge =>
-        {
-            var x = (edge.First[0] - edge.Second[0]) * scale;
-            var y = edge.First[1] - edge.Second[1];
-            return x * x + y * y;
-        });
-        return [Interpolate(pair.First, pair.Second, .25), Interpolate(pair.First, pair.Second, .75)];
     }
 
     private static double[] Interpolate(double[] a, double[] b, double fraction) =>
