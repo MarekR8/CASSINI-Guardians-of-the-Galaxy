@@ -14,6 +14,8 @@ data/demo/population/*
 !data/demo/population/estimate.json
 !data/demo/ors
 !data/demo/ors/**
+!data/demo/sheltering
+!data/demo/sheltering/sample-sites.json
 !data/demo/routing
 data/demo/routing/*
 !data/demo/routing/valencia-task03.zip
