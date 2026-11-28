@@ -130,14 +130,12 @@ def main():
         with tempfile.TemporaryDirectory(prefix="integration-", dir=ARTIFACTS) as directory:
             with start_services(args.port, Path(directory), args.scenario,
                                 city.resolve() if city else None) as url:
-                subprocess.run(
-                    [os.sys.executable, str(ROOT / "tests" / (
-                        "valencia_integration.py" if args.scenario == "valencia" else
-                        "warsaw_city_integration.py" if city else
-                        "warsaw_integration.py" if args.scenario == "warsaw" else "offline_integration.py")), url],
-                    cwd=ROOT,
-                    check=True,
-                )
+                scripts = (["valencia_integration.py"] if args.scenario == "valencia" else
+                           ["warsaw_city_integration.py"] if city else
+                           ["warsaw_integration.py"] if args.scenario == "warsaw" else
+                           ["offline_integration.py", "connectivity_integration.py"])
+                for script in scripts:
+                    subprocess.run([os.sys.executable, str(ROOT / "tests" / script), url], cwd=ROOT, check=True)
         return
     data = args.data or ARTIFACTS / ("offline-demo" if args.scenario == "sample" else args.scenario + "-demo")
     with start_services(args.port, data.resolve(), args.scenario, city.resolve() if city else None) as url:

@@ -6,7 +6,7 @@ Example payloads and schemas shared between services and clients. Paths are rela
 | --- | --- | --- |
 | [`management/`](management/) | Management (task 6) | Android (task 5, **W2**), dashboard (task 7), Dispatch |
 | [`events/`](events/) | Producer named in each file (task 6 delivers the envelope, **W3**) | Services subscribed to `evacuation.events` |
-| [`gateway/`](gateway/) | Gateway link simulator (task 6, hosted by task 7) | Dashboard, field clients |
+| [`gateway/`](gateway/) | Gateway link simulator (task 6, hosted by task 7) | Dashboard, field clients, Android |
 
 ## Management
 
