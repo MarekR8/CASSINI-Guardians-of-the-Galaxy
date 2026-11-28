@@ -1,0 +1,56 @@
+# Task 6 Stage B: Management on PostgreSQL (management_db) with the RabbitMQ bus on evacuation.events.
+# The first run needs internet to pull the images; afterwards the stack starts offline.
+#   RABBITMQ_PASSWORD=… MANAGEMENT_DB_PASSWORD=… \
+#   docker compose -f compose.yaml -f compose.management-full.yaml --profile full up -d --build
+services:
+  management:
+    image: cassini-offline/management:full
+    build:
+      args:
+        ENABLE_MANAGEMENT_POSTGRES: "true"
+        ENABLE_RABBITMQ: "true"
+    environment:
+      ConnectionStrings__Management: Host=management-db;Database=management_db;Username=management;Password=${MANAGEMENT_DB_PASSWORD:?Set MANAGEMENT_DB_PASSWORD}
+      Integrations__Bus__Mode: live
+      Integrations__Bus__Uri: amqp://${RABBITMQ_USER:-cassini}:${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD}@rabbitmq:5672/
+    depends_on:
+      situation:
+        condition: service_started
+      management-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  rabbitmq:
+    profiles: [full]
+    image: rabbitmq:4.4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-cassini}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD}
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    networks: [operations, local-ui]
+    ports: ["127.0.0.1:${RABBITMQ_UI_PORT:-15672}:15672"]
+    volumes: [rabbitmq:/var/lib/rabbitmq]
+
+  management-db:
+    profiles: [full]
+    image: postgres:17
+    environment:
+      POSTGRES_DB: management_db
+      POSTGRES_USER: management
+      POSTGRES_PASSWORD: ${MANAGEMENT_DB_PASSWORD:?Set MANAGEMENT_DB_PASSWORD}
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U management -d management_db"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    networks: [operations]
+    volumes: [management-db:/var/lib/postgresql/data]
+
+volumes:
+  rabbitmq:
+  management-db:
