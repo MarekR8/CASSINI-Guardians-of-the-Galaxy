@@ -147,11 +147,11 @@ internal sealed class DispatchCommands(
             assignment.PositionEvidence);
         if (evidence is null)
             return UnverifiedPosition();
+        var priorStatus = RouteReview.Assess(assignment, await review.ReadAsync(assignment.Route.Revision, cancellation));
         var lookup = await routing.GetTransportRoute(assignment.LastKnownNode, request.PickupNode, cancellation);
         if (await GetRouteError(lookup, cancellation) is { } routeError)
             return routeError;
 
-        var priorStatus = RouteReview.Assess(assignment, await review.ReadAsync(assignment.Route.Revision, cancellation));
         return store.Execute(command.CommandId, command, latest =>
         {
             var current = latest.Assignments.Single(item => item.AssignmentId == assignment.AssignmentId);

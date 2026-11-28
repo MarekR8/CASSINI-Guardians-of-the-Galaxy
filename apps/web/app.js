@@ -749,11 +749,15 @@ const dispatchMessages = {
   RouteRequiresReview: 'Warunki przejazdu się zmieniły. Przelicz trasę jednostki.',
   SituationChanged: 'Sytuacja zmieniła się podczas sprawdzania trasy. Spróbuj ponownie.',
   UnitUnavailable: 'Ta jednostka została już przydzielona.',
+  BookingConflict: 'Jednostka lub zgłoszenie ma już aktywną rezerwację.',
 };
 
 function dispatchRouteLabel(status) {
   const roads = status?.segments?.map(label).join(', ');
-  if (status?.state === 'Blocked') return 'Trasa wycofana. Zamknięte odcinki: ' + roads + '.';
+  if (status?.state === 'Blocked') {
+    const closedAt = status.observedAt ? ' Zamknięcie: ' + new Date(status.observedAt).toLocaleString('pl-PL') + '.' : '';
+    return 'Trasa wycofana. Zamknięte odcinki: ' + roads + '.' + closedAt;
+  }
   if (status?.state === 'ReviewRequired') return 'Dostępność odcinka się zmieniła. Przelicz trasę: ' + roads + '.';
   return dispatchMessages[status?.code] ?? 'Trasa jednostki oczekuje na weryfikację.';
 }

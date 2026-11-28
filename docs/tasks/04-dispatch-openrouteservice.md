@@ -25,7 +25,7 @@ A person without a car asks for transport. The dispatcher sees a unit, its posit
 ### Stage B (completion)
 - [ ] Rank units by approach time using the ranking from task 3 (W4).
 - [ ] React to `RouteWithdrawn.v1` / `SituationChanged.v1` from RabbitMQ (W3) instead of manual `replan`.
-- [ ] Dispatch in PostgreSQL: active unit booking uniqueness as a database constraint.
+- [x] Dispatch in PostgreSQL: active unit and request booking uniqueness as database constraints.
 
 ## Dependencies
 
@@ -112,8 +112,9 @@ captures are local under `artifacts/ors-verified`.
 
 ## Konfiguracja ORS na kolejnych komputerach
 
-Na komputerze z .NET 10 SDK i Pythonem 3 zwykłe demo offline uruchom poleceniem
-`python scripts/offline_demo.py`. Aby odtworzyć gotowe nagrania zespołu,
+Na komputerze z .NET 10 SDK i Pythonem 3 demo Dispatch offline uruchom poleceniem
+`python scripts/offline_demo.py --scenario sample` lub `--scenario warsaw`.
+Aby odtworzyć gotowe nagrania zespołu,
 rozpakuj `ors-verified.zip` do `artifacts/` na komputerze z tą samą wersją
 kodu. Pliki JSON powinny znaleźć się w `artifacts/ors-verified`.
 W PowerShellu uruchom:
@@ -172,3 +173,45 @@ workflow na domyślną gałąź wybierz **Actions → OpenRouteService live veri
 → Run workflow**. Klucz jest przekazywany tylko do kroku nagrywania. Test
 rezerwacji i przeliczenia trasy używa zapisów. Zwykłe **Offline demo CI**
 uruchamia się na pushach i PR-ach z lokalnym serwerem testowym.
+
+## Obsługa zadań w panelu Dispatch
+
+- Świeży stan demo ma dwie jednostki. Jednostka 4 ma symulowany HPL powyżej progu.
+  Po wybraniu jej z listy dyspozytor musi potwierdzić punkt startu.
+- Po zmianie rewizji Dispatch zestawia zapisane odcinki lub geometrię z zamknięciami
+  i odcinkami zmienionymi od czasu przydziału. Trasa może pozostać aktualna,
+  zostać wycofana albo wymagać ponownej weryfikacji. Po dotarciu do punktu
+  odbioru sprawdzany jest pozostały odcinek wyjazdowy.
+- **Historia zadania** pokazuje przydział, ręczne potwierdzenia, postęp i
+  przeliczenia wraz z czasem, punktem i rewizją. Rozpoznane wycofanie zapisuje się
+  w historii przy skutecznym przeliczeniu. Aktualny powód zamknięcia i jego
+  czas są widoczne wcześniej w statusie. Historia rejestruje decyzję o ręcznym
+  potwierdzeniu pozycji, a tożsamość operatora wymaga logowania.
+
+## Opcjonalna baza Dispatch
+
+Domyślna konfiguracja zapisuje stan w lokalnym JSON. W wariancie PostgreSQL
+stan, historia i pokwitowania komend są zapisywane w tej samej transakcji co
+aktywne rezerwacje. Baza wymusza unikalność jednostki i zgłoszenia w aktywnym
+przydziale. Przy pierwszym uruchomieniu na pustej bazie Dispatch może
+zainicjalizować dane z lokalnego `dispatch.json` wskazanego przez
+`Demo__DataDirectory`. Kolejne uruchomienia czytają stan z bazy.
+
+Z lokalną bazą ustaw `ConnectionStrings__Dispatch` w środowisku i uruchom:
+
+```sh
+dotnet build Cassini.Offline.slnx -m:1 -p:EnableDispatchPostgres=true -p:NuGetAudit=false
+python scripts/offline_demo.py --no-build --scenario sample
+```
+
+W Compose ustaw `DISPATCH_DB_PASSWORD` i `DISPATCH_DB_CONNECTION` lokalnie.
+Użyj hosta `dispatch-db`, bazy `dispatch`, użytkownika `dispatch` i tego samego
+hasła w obu ustawieniach. Backend buduje i uruchamia profil dodatkowy:
+
+```sh
+docker compose -f compose.yaml -f compose.dispatch-postgres.yaml --profile full build
+docker compose -f compose.yaml -f compose.dispatch-postgres.yaml --profile full up
+```
+
+Osobny job CI sprawdza równoległe rezerwacje z dwóch procesów Dispatch,
+odtworzenie pokwitowania po restarcie i zwolnienie rezerwacji.
