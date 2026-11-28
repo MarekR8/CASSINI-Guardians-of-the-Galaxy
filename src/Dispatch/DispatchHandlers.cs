@@ -128,7 +128,7 @@ internal sealed class DispatchCommands(
         });
     }
 
-    public async Task<IResult> Replan(ReplanAssignment command, CancellationToken cancellation)
+    public async Task<IResult> Replan(ReplanAssignment command, CancellationToken cancellation, bool onlyWithdrawn = false)
     {
         if (store.CheckReceipt(command.CommandId, command) is { } prior)
             return prior;
@@ -148,6 +148,8 @@ internal sealed class DispatchCommands(
         if (evidence is null)
             return UnverifiedPosition();
         var priorStatus = RouteReview.Assess(assignment, await review.ReadAsync(assignment.Route.Revision, cancellation));
+        if (onlyWithdrawn && priorStatus.State is not ("Blocked" or "ReviewRequired"))
+            return DispatchStore.Error("RouteNotWithdrawn", "The current route has no confirmed conflicting change.", 409);
         var lookup = await routing.GetTransportRoute(assignment.LastKnownNode, request.PickupNode, cancellation);
         if (await GetRouteError(lookup, cancellation) is { } routeError)
             return routeError;

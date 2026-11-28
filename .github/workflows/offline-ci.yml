@@ -28,6 +28,37 @@ jobs:
       - name: Verify Android offline logic without an emulator
         run: dotnet run --project apps/offline-android/tests/Offline.Tests.csproj -p:NuGetAudit=false
 
+  verify-dispatch-notifications:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      rabbitmq:
+        image: rabbitmq:4-management
+        env:
+          RABBITMQ_DEFAULT_USER: dispatch-ci
+          RABBITMQ_DEFAULT_PASS: dispatch-ci-only
+        ports:
+          - 5672/tcp
+          - 15672/tcp
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q check_port_connectivity"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build Dispatch with RabbitMQ support
+        run: dotnet build Cassini.Offline.slnx -m:1 -p:NuGetAudit=false -p:EnableDispatchRabbitMq=true
+      - name: Verify both RabbitMQ notifications
+        env:
+          ConnectionStrings__DispatchRabbitMq: amqp://dispatch-ci:dispatch-ci-only@127.0.0.1:${{ job.services.rabbitmq.ports[5672] }}/%2F
+          RABBITMQ_TEST_USERNAME: dispatch-ci
+          RABBITMQ_TEST_PASSWORD: dispatch-ci-only
+        run: python3 tests/dispatch_ors_integration.py --rabbit-management http://127.0.0.1:${{ job.services.rabbitmq.ports[15672] }}
+
   verify-dispatch-postgres:
     runs-on: ubuntu-24.04
     timeout-minutes: 10

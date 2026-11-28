@@ -23,8 +23,8 @@ A person without a car asks for transport. The dispatcher sees a unit, its posit
 - [x] Unit position with `positionEvidence { source, egnosApplied, hpl, mode }` in `GET /queries/assignments`.
 
 ### Stage B (completion)
-- [ ] Rank units by approach time using the ranking from task 3 (W4).
-- [ ] React to `RouteWithdrawn.v1` / `SituationChanged.v1` from RabbitMQ (W3) instead of manual `replan`.
+- [x] Rank verified and available units by the approach time returned by Routing.
+- [x] Subscribe to `RouteWithdrawn.v1` and `SituationChanged.v1` in Dispatch and reconcile assignments automatically. Publishing these events from the owners' outboxes belongs to W3.
 - [x] Dispatch in PostgreSQL: active unit and request booking uniqueness as database constraints.
 
 ## Dependencies
@@ -171,6 +171,11 @@ uruchamia się na pushach i PR-ach z lokalnym serwerem testowym.
 
 ## Obsługa zadań w panelu Dispatch
 
+- Kliknij **Porównaj czasy dojazdu** przy otwartym zgłoszeniu. Dostępne jednostki
+  z potwierdzoną pozycją i poprawną trasą do odbioru i wyjazdu są ustawione według
+  czasu dojazdu. Remis rozstrzyga identyfikator jednostki. Pozostałe jednostki
+  mają status bez szacowanego czasu. Przycisk **Przydziel** rezerwuje wybraną
+  jednostkę po ponownej walidacji.
 - Świeży stan demo ma dwie jednostki. Jednostka 4 ma symulowany HPL powyżej progu.
   Po wybraniu jej z listy dyspozytor musi potwierdzić punkt startu.
 - Po zmianie rewizji Dispatch zestawia zapisane odcinki lub geometrię z zamknięciami
@@ -182,6 +187,50 @@ uruchamia się na pushach i PR-ach z lokalnym serwerem testowym.
   w historii przy skutecznym przeliczeniu. Aktualny powód zamknięcia i jego
   czas są widoczne wcześniej w statusie. Historia rejestruje decyzję o ręcznym
   potwierdzeniu pozycji, a tożsamość operatora wymaga logowania.
+
+### Ranking i automatyczne przeliczenie
+
+`GET /queries/unit-candidates?requestId=request-15` w Dispatch zwraca
+`requestId`, `requestVersion`, `situationRevision` i `candidates[]`. Gateway
+udostępnia tę operację pod `/api/dispatch/queries/unit-candidates`.
+Każdy kandydat ma `unitId`, `node`, `status` oraz `approachSeconds`.
+`Eligible` oznacza dostępność obu odcinków podróży dla pozycji uznanej za
+wiarygodną. Pozostałe statusy to `PositionUnverified`, `NoEligibleRoute`,
+`FixtureMissing`, `RoutingUnavailable` oraz `SituationUnavailable`, a czas ma
+wtedy wartość `null`. Ranking jest zapytaniem CQRS. Routing dostarcza koszt
+dojazdu pojazdu z tego samego źródła co przydział. Rozkład ruchu pieszego z W4
+ma oddzielne przeznaczenie.
+
+Dispatch domyślnie sprawdza aktywne przydziały co pięć sekund. Gdy Routing
+potwierdzi konflikt z zapisaną trasą, Dispatch uruchamia wersjonowaną komendę
+przeliczenia. Zapis następuje po potwierdzeniu pozycji i sprawdzeniu aktualnej
+rewizji sytuacji. Przy braku objazdu albo wiarygodnej pozycji przydział pozostaje
+aktywny, a status pokazuje problem z trasą. Operator może potwierdzić pozycję
+i przeliczyć ręcznie. Ustaw `Dispatch__AutoReplan=false` na potrzeby scenariusza
+ręcznego lub `Dispatch__AutoReplanIntervalSeconds`, aby zmienić odstęp kontroli
+(1–3600 sekund).
+
+W wariancie z lokalnym RabbitMQ zbuduj rozwiązanie z
+`-p:EnableDispatchRabbitMq=true`, ustaw `ConnectionStrings__DispatchRabbitMq`
+na URI brokera i uruchom launcher z `--no-build --scenario sample`.
+Dispatch zakłada trwałą kolejkę `dispatch.events` i wiąże ją z wymianą topic
+`evacuation.events` przez klucze `situation.changed.v1` i
+`routing.route-withdrawn.v1`. Powiadomienie przyspiesza odczyt bieżących
+ograniczeń z Routing. Kontrola cykliczna ponawia odczyt po awarii zależności
+lub brokera. Duplikat lub spóźnione powiadomienie nie zmieni wersji trasy, która
+nadal przechodzi kontrolę. W bazowym demo źródłem decyzji jest zapytanie Routing
+o ograniczenia, a dostarczanie zdarzeń przez outboxy producentów jest częścią W3.
+
+Test integracyjny oparty na lokalnym brokerze publikuje oba typy zdarzeń i
+sprawdza, czy przeliczenie zachodzi przed kolejną kontrolą cykliczną:
+
+```sh
+python tests/dispatch_ors_integration.py --rabbit-management http://127.0.0.1:15672
+```
+
+Użyj dedykowanego brokera testowego z włączonym HTTP Management API.
+Ustaw `RABBITMQ_TEST_USERNAME` i `RABBITMQ_TEST_PASSWORD` dla konta testowego
+oraz `ConnectionStrings__DispatchRabbitMq` dla procesu Dispatch.
 
 ## Opcjonalna baza Dispatch
 

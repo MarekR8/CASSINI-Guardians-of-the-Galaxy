@@ -36,7 +36,7 @@ def local_url(port):
 
 
 @contextmanager
-def start_services(port, data_dir, scenario="sample", city_directory=None):
+def start_services(port, data_dir, scenario="sample", city_directory=None, *, auto_replan=None):
     data_dir.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env.update({
@@ -57,6 +57,8 @@ def start_services(port, data_dir, scenario="sample", city_directory=None):
         **{f"Services__{service}": local_url(port + offset)
            for service, _, offset in SERVICES if service != "Gateway"},
     })
+    if auto_replan is not None:
+        env["Dispatch__AutoReplan"] = str(auto_replan).lower()
     children = []
     try:
         for directory, assembly, offset in SERVICES:
@@ -128,7 +130,7 @@ def main():
         ARTIFACTS.mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="integration-", dir=ARTIFACTS) as directory:
             with start_services(args.port, Path(directory), args.scenario,
-                                city.resolve() if city else None) as url:
+                                city.resolve() if city else None, auto_replan=False) as url:
                 subprocess.run(
                     [os.sys.executable, str(ROOT / "tests" / (
                         "valencia_integration.py" if args.scenario == "valencia" else
