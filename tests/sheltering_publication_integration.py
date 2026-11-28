@@ -71,6 +71,20 @@ def publication(client):
     pending = instruction(client)
     assert pending["state"] == "PendingPublication" and pending["instruction"]["aggregateVersion"] == 0, pending
 
+    hold = held["reservation"]
+    assignment_ref = {"incidentId": INCIDENT, "caseId": CASE, "legId": LEG, "shelterId": hold["shelterId"],
+                      "reservationId": hold["reservationId"], "assignmentVersion": held["version"]}
+    publish = {"subject": {"kind": "shelter-assignment", "id": SUBJECT}, "expectedVersion": 0,
+               "route": hold["route"]}
+    for suffix, changes in (("unverified", {"reservationId": "unverified"}),
+                            ("stale", {"assignmentVersion": held["version"] - 1})):
+        client.call("routing/commands/publish-route", {**publish, "commandId": f"publish-{suffix}",
+                    "assignment": {**assignment_ref, **changes}}, 409, "ReservationChanged")
+    changed, _ = client.route(hold["shelterId"], {**hold["route"]["query"], "clearBy": "2026-11-27T19:57:00Z"})
+    client.call("routing/commands/publish-route", {**publish, "commandId": "publish-different-route",
+                "assignment": assignment_ref, "route": changed}, 422, "ReservationDoesNotCoverRoute")
+    assert route_events(client) == []
+
     # SH-A07: publication fails after booking. The shelter closes before Routing approves the instruction.
     client.configure("shelter-a", "close-a", status="closed")
     reconcile(client, "publish-a", held["version"], 422, "RouteIneligible")

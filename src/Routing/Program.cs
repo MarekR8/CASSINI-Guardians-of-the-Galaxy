@@ -166,7 +166,8 @@ if (destinationsEnabled)
     queries.MapGet("/route-outbox", (long? after, RouteInstructionStore store) => new { entries = store.Outbox(after ?? 0) });
     var publication = app.MapGroup("/commands");
     publication.MapPost("/publish-route", (PublishRouteCommand command, RouteInstructionStore store,
-        DestinationRouteQueries routes, CancellationToken cancellation) => store.Publish(command, routes, cancellation));
+        DestinationRouteQueries routes, DestinationQueries destinations, CancellationToken cancellation) =>
+        store.Publish(command, routes, destinations, cancellation));
     publication.MapPost("/withdraw-route", (WithdrawRouteCommand command, RouteInstructionStore store) => store.Withdraw(command));
 }
 queries.MapGet("/network", () => new {

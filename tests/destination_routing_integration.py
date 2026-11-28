@@ -82,6 +82,30 @@ def exercise(base):
     assert first(caseIds="case-14", reservationId="unverified")["status"] == "ShelterPending"
     assert first(caseIds="case-14", reservationId="reservation-demo-east", legId="leg-shelter")["status"] == "ShelterPending"
 
+    reference = {"incidentId": "incident-42", "legId": "leg-exit", "caseId": "case-14"}
+    opened = request("sheltering/commands/open-shelter-assignment", {
+        **reference, "commandId": "open-live-east", "needs": {"places": 1, "accessiblePlaces": 0},
+    })["assignment"]
+    route_query = {"mode": "walking", "at": at, "clearBy": travel["clearBy"], "caseIds": "case-14"}
+    live_route = destination("shelter", "shelter-a", **route_query)
+    held = request("sheltering/commands/reserve-shelter-places", {
+        "commandId": "hold-live-east", "shelterId": "shelter-a", "expectedShelterVersion": live_route["siteVersion"],
+        "holdsExpireAt": "2026-11-27T20:00:00Z", "approvalRef": "synthetic-coordinator", "assignments": [{
+            **reference, "expectedVersion": opened["version"],
+            "route": {"evidenceId": live_route["evidence"]["evidenceId"], "query": route_query},
+        }],
+    })["assignments"][0]
+    reservation_id = held["reservation"]["reservationId"]
+    owned = first(caseIds="case-14", reservationId=reservation_id)
+    assert (owned["status"], owned["reservationId"], owned["fixtureMode"]) == ("DirectShelter", reservation_id, None), owned
+    assert first(caseIds="case-14", reservationId="reservation-demo-east")["status"] == "ShelterPending"
+    request("sheltering/commands/release-shelter-reservation", {
+        **reference, "commandId": "release-live-east", "expectedVersion": held["version"], "reason": "Cancelled",
+        "stillRequired": False, "approvalRef": "synthetic-coordinator",
+    })
+    released = first(caseIds="case-14", reservationId=reservation_id)
+    assert released["status"] == "ShelterPending" and released["reservationId"] is None, released
+
     request("management/commands/register-evacuation-group", {
         "commandId": "assisted-party", "incidentId": "incident-42", "groupId": "care-party",
         "caseIds": ["case-15", "case-16"], "evidenceRef": "synthetic-group-report",
