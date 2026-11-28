@@ -12,5 +12,7 @@
     <Compile Include="../Demo/CityNetwork.cs" Link="CityNetwork.cs" />
     <Content Include="../../data/demo/network/graph.json" Link="warsaw-graph.json"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../data/demo/ors/recorded/*.json" Link="ors/recorded/%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

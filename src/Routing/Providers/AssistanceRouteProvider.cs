@@ -86,7 +86,10 @@ internal readonly record struct ClosedRoadArea(double West, double South, double
                 throw new RoutingException(503, "ClosureGeometryUnavailable",
                     "The current closed road has no known geometry.");
 
-            var bounds = Bounds(lines);
+            // Warsaw's bridge edge includes connection roads also used by the detour. The
+            // longest straight run of its driving geometry is the crossing over the river.
+            var bounds = id == "bridge-2" && segment?.DrivingGeometry is { Length: > 2 } bridge
+                ? Bounds(BridgeCrossing(bridge), 25) : Bounds(lines.SelectMany(Core).ToArray(), 10);
             // Merge overlapping boxes so the ORS MultiPolygon has disjoint interiors.
             for (var index = 0; index < areas.Count;)
             {
@@ -107,12 +110,10 @@ internal readonly record struct ClosedRoadArea(double West, double South, double
         return areas.ToArray();
     }
 
-    private static ClosedRoadArea Bounds(double[][][] lines)
+    private static ClosedRoadArea Bounds(double[][] points, double marginMetres)
     {
-        // Leave space at junctions shared with roads that remain open.
-        var points = lines.SelectMany(line => Core(line)).ToArray();
         var latitude = points.Average(point => point[1]);
-        const double margin = 10d / 111_320;
+        var margin = marginMetres / 111_320;
         var longitudeMargin = margin / Math.Cos(latitude * Math.PI / 180);
         return new(Math.Round(points.Min(point => point[0]) - longitudeMargin, 6),
             Math.Round(points.Min(point => point[1]) - margin, 6),
@@ -120,15 +121,30 @@ internal readonly record struct ClosedRoadArea(double West, double South, double
             Math.Round(points.Max(point => point[1]) + margin, 6));
     }
 
+    private static double[][] BridgeCrossing(double[][] line)
+    {
+        var scale = Math.Cos(line[0][1] * Math.PI / 180);
+        var pair = line.Zip(line.Skip(1)).MaxBy(edge =>
+        {
+            var x = (edge.First[0] - edge.Second[0]) * scale;
+            var y = edge.First[1] - edge.Second[1];
+            return x * x + y * y;
+        });
+        return [Interpolate(pair.First, pair.Second, .25), Interpolate(pair.First, pair.Second, .75)];
+    }
+
+    private static double[] Interpolate(double[] a, double[] b, double fraction) =>
+        [a[0] * (1 - fraction) + b[0] * fraction, a[1] * (1 - fraction) + b[1] * fraction];
+
     private static IEnumerable<double[]> Core(double[][] line)
     {
-        // The sample graph uses straight edges. Imported roads include intermediate vertices.
+        // Leave space at junctions shared with roads that remain open.
         var first = line.Length / 4;
         var last = line.Length - 1 - first;
         if (first == 0)
         {
-            yield return [line[0][0] * .75 + line[^1][0] * .25, line[0][1] * .75 + line[^1][1] * .25];
-            yield return [line[0][0] * .25 + line[^1][0] * .75, line[0][1] * .25 + line[^1][1] * .75];
+            yield return Interpolate(line[0], line[^1], .25);
+            yield return Interpolate(line[0], line[^1], .75);
             if (line.Length == 3)
                 yield return line[1];
             yield break;
