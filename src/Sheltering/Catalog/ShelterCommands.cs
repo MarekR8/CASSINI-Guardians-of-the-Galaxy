@@ -47,6 +47,7 @@ internal sealed class ShelterCommands(CatalogStore<Shelter> catalog, SituationCl
         }
 
         return new Shelter(command.ShelterId!, name, command.Place!, stepFree, command.Status!, command.OperatingWindow!,
-            command.Evidence!, version, limits, current?.Commitments ?? ShelterCommitments.Empty);
+            command.Evidence!, version, limits, current?.Commitments ?? ShelterCommitments.Empty,
+            current?.Reception);
     }
 }

@@ -1,4 +1,5 @@
 using Cassini.Demo.SiteCatalog;
+using Cassini.Sheltering.Allocation;
 using Cassini.Sheltering.Infrastructure;
 
 namespace Cassini.Sheltering.Catalog;
@@ -8,8 +9,9 @@ internal sealed record ShelterAvailabilityView(
     SiteEvidence Evidence, int Version, ShelterResources Resources, ShelterCommitments Commitments,
     AvailablePlaces Available, bool Overcommitted, bool Eligible, string? IneligibleReason);
 
+// Commitments include SH-T04 holds and SH-T05 admissions; AllocationRevision identifies the assignments read with them.
 internal sealed record ShelterCatalogView(int Revision, int? SituationRevision, DateTimeOffset At,
-    ShelterAvailabilityView[] Shelters);
+    ShelterAvailabilityView[] Shelters, int AllocationRevision);
 
 internal sealed class ShelterQueries(CatalogStore<Shelter> catalog, SituationClient situation, TimeProvider clock)
 {
@@ -21,12 +23,13 @@ internal sealed class ShelterQueries(CatalogStore<Shelter> catalog, SituationCli
         if (eligibleOnly && situationRevision is null)
             throw SituationClient.Unavailable();
 
-        var (revision, shelters) = catalog.Read();
+        var (revision, items, allocation) = catalog.ReadWith<AllocationState>();
+        var shelters = items.Values;
         var results = shelters.OrderBy(shelter => shelter.ShelterId, StringComparer.Ordinal)
             .Select(shelter => Evaluate(shelter, checkedAt, situationRevision));
         if (eligibleOnly)
             results = results.Where(shelter => shelter.Eligible);
-        return new ShelterCatalogView(revision, situationRevision, checkedAt, results.ToArray());
+        return new ShelterCatalogView(revision, situationRevision, checkedAt, results.ToArray(), allocation?.Revision ?? 0);
     }
 
     private static ShelterAvailabilityView Evaluate(Shelter shelter, DateTimeOffset at, int? situationRevision)

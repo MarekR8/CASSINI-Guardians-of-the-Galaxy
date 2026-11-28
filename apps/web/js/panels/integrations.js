@@ -8,6 +8,8 @@ const SVG = 'http://www.w3.org/2000/svg';
 
 const summaries = {
   'integration-copernicus': result => `${result.productId} · ${formatObservation.format(new Date(result.observedAt))} UTC`,
+  'integration-sentinel-1': result => `${result.productId} · szacunek ludności: ${result.populationEstimate.value}`,
+  'integration-copernicus-dem': result => `${result.productId} · potencjalne zagrożenie`,
   'integration-flypix': result => `${result.geoJson.features.length} detekcji do weryfikacji · raster ${result.imageProductId}`,
   'city-data': result => result.zones.map(zone => `${zone.zoneId} · liczba osób: ${zone.people}`).join(', '),
   'city-map': result => `${result.datasetId} · ${result.geoJson.features.length} obszarów w GeoJSON`,

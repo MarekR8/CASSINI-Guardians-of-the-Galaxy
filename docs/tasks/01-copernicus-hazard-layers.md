@@ -2,34 +2,38 @@
 
 **Owner:** __________
 **Directories:** `src/Situation/Hazards/`, `data/demo/hazards/`, `data/demo/population/`
-**Technologies:** Copernicus EMS Rapid Mapping, GHSL, Sentinel-1 via CDSE/openEO (or ESA APEx), PostGIS (Stage B)
+**Technologies:** archived Copernicus EMS, Sentinel-1 radar imagery, GHSL estimates, local mock HTTP responses
 
 ## What the demo shows
 
-After a flood report the map shows the observed flood extent (EMS), a Sentinel-1 water mask and the number of people in the zone (GHSL). Each layer shows its source, product ID, observation time and a `mock`/`recorded`/`live` label.
+Valencia shows the archived EMSR773 flood extent and two Sentinel-1 radar images. The **Integracje · symulacja offline** panel previews separate synthetic EMS and Sentinel-1 polygons, a synthetic population example and a mock DEM low-elevation area.
 
 ## Technology concept
 
 - **Copernicus EMS**: a ready-made flood delineation product (candidate `EMSR756`, Kłodzko Valley 2024). Download the vector, clip it to the AOI, convert to WGS 84 GeoJSON with `ogr2ogr`.
-- **Sentinel-1 SAR**: our own water mask when there is no EMS activation. An openEO process on CDSE (threshold on `VV` in dB, or a ready APEx algorithm) returns water polygons. `live` mode submits an openEO job; `mock` reads the saved result.
-- **GHSL** (`GHS-POP`): population raster. Sum the pixels inside the flood polygon. The result is an **estimate**, not confirmed people (INV-01). Publish only counts.
+- **Sentinel-1 SAR**. The radar pair is archived imagery. The water-mask endpoint supplies a deterministic synthetic polygon for the offline exercise. A prepared real polygon can be imported locally.
+- **GHSL** (`GHS-POP`). The zonal script sums the pixels inside the flood polygon. Kłodzko has a precomputed estimate. The Valencia mask preview carries a synthetic example of 42 people. The archived Valencia EMS layer carries no population estimate in Situation.
 
 ## Scope
 
 ### Stage A (demo)
-- [ ] Agree the AOI with person 2 (W0). The EMS extent must intersect the bridge and one exit; the other exit must stay dry.
-- [ ] `IHazardLayerSource` interface with `MockEmsSource`, `MockSentinel1Source` (files from `data/demo/hazards/`) and `LiveOpenEoSentinel1Source` (openEO call, URL and token from configuration).
+- [x] Share the Valencia AOI with task 02. The [task 03 package](../../data/local/valencia-task03.md) uses the shared Sentinel-1 extent and the clipped EMSR773 observation.
+- [x] Exercise W0 with a synthetic footprint on the Kłodzko graph. The sample test checks that the bridge, pickup and eastern exit fall in the test polygon and the northern exit is dry. Valencia's W0 handoff contains the historical extent and classified OSM graph for task 03.
+- [x] Serve an offline EMS preview via `ICopernicusSource` and an archived EMS layer on the map. The preview generates a synthetic polygon labeled `mock`. The Valencia snapshot uses a local seed prepared from EMSR773.
+- [x] Accept locally prepared EMS and Sentinel-1 polygons through `POST /commands/import-copernicus`. Imports retain the product ID and observation time. The sample integration test covers both sources and a per-layer population estimate.
+- [x] Provide a Sentinel-1 water-mask mock through `GET /queries/integration-sentinel-1` with product ID, observation time, GeoJSON and a synthetic population estimate. The dashboard renders it in the integration panel beside the EMS preview.
 - [x] `IPopulationEstimator`: `MockGhslEstimator` returns the precomputed value from `data/demo/population/estimate.json`; the script `experiments/eo/ghsl_zonal.py` computes it from the raster.
-- [x] Extend `GET /queries/snapshot` with layer `provenance` and `populationEstimate { value, method, source, year }`. The dashboard reads both.
-- [ ] Confirm the additive snapshot contract with the task 7 owner.
+- [x] Extend `GET /queries/snapshot` with `hazards[].provenance { source, mode, observedAt, productId }` and `populationEstimate { value, method, source, year }`. Kłodzko uses both in its sources panel. An imported layer without an estimate leaves the top-level estimate `null`.
+- [x] Verify the snapshot contract through Gateway, the Kłodzko sources panel and the Valencia mock integration panel. Acceptance of the full presentation remains part of the task 07 rehearsal.
 
-### Stage B (completion)
-- [ ] Move layers to PostGIS (`situation_db`, SRID 4326, spatial index), EF Core + NetTopologySuite.
-- [ ] Optional Copernicus DEM: low-lying segments as a *potential* hazard (does not close roads).
+### Stage B (offline substitute)
+- [x] Preview potential low elevation via `GET /queries/integration-copernicus-dem`. The synthetic polygon is read-only and has no effect on closures.
+
+For the Valencia demo, Situation uses local GeoJSON and JSON persistence. Live EMS/openEO clients, DEM processing and PostGIS are outside the offline scope.
 
 ## Dependencies
 
-- You provide **W0** together with person 2. Person 7 waits for the layer DTO. Person 3 can use the extent to exclude exits.
+- **W0** and the layer fields are available through the [Valencia handoff](../../data/local/valencia-task03.md). The choice of a Valencia planning node and verification of task 03 output are tracked in [task 03](03-route-distribution-algorithm.md).
 
 ## Where to find data
 
@@ -41,11 +45,10 @@ After a flood report the map shows the observed flood extent (EMS), a Sentinel-1
 
 ```sh
 python scripts/offline_demo.py --test               # must stay green (mock mode)
+python scripts/offline_demo.py --scenario valencia --test --valencia-inputs-only
 curl http://127.0.0.1:5080/api/situation/queries/snapshot   # layers + provenance + populationEstimate
 ```
-- Unit test: the mock returns a layer with `mode = mock`; the geometry is a `Polygon`/`MultiPolygon` within the AOI.
-- Live mode (manually, with internet): `Integrations__Sentinel1__Mode=live`, save the response to `data/demo/hazards/recorded/` and switch back to mock.
-- Check in QGIS or geojson.io that the layers line up with person 2's graph.
+- The Valencia test checks that the mock polygons fall inside the shared imagery rectangle, the mock reads leave the snapshot intact, and the exported graph and imagery use the same bounds.
 
 ## Where to save results
 
@@ -62,7 +65,7 @@ accessed on 2026-11-28. The calculation sums valid cells whose centres are insid
 python experiments/eo/ghsl_zonal.py population.tif flood.geojson --year 2025 --output estimate.json
 ```
 
-To import an estimate with a flood layer, put the resulting JSON object in `hazards[].populationEstimate`
+To import an estimate with a flood layer, put the resulting JSON object in `populationEstimate`
 in the payload of Situation's `import-copernicus` command. The top-level snapshot estimate refers to the last imported layer, or to the
 exercise polygon before any imports. A layer without an estimate returns `null`.
 

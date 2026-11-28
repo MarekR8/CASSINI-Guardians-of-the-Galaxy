@@ -18,7 +18,7 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
     AssistanceRouteProvider? routeProvider = null)
 {
     internal static readonly DateTimeOffset StartTime = new(2026, 11, 27, 19, 20, 0, TimeSpan.Zero);
-    private static readonly DateTimeOffset ScheduleCloses = StartTime.AddMinutes(40);
+    internal static readonly DateTimeOffset ScheduleCloses = StartTime.AddMinutes(40);
 
     internal async Task<Distribution> DistributionAsync(
         string node, DateTimeOffset? at, string? mode, string? destination, bool accessible,
@@ -149,8 +149,7 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
 
         foreach (var exit in destinations)
         {
-            var windowOpens = exit == "exit-north" ? StartTime.AddMinutes(2) : StartTime;
-            var departsAt = at >= windowOpens ? at : windowOpens;
+            var departsAt = SampleDeparture(at, exit);
             var path = Network.FindPath(node, exit, mode == "driving", closed);
             if (path is null)
                 continue;
@@ -165,7 +164,13 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
             options.Select(option => option with { Weight = option.Weight / total }).ToArray());
     }
 
-    private static DateTimeOffset ScenarioTime(int stage) => StartTime.AddMinutes(stage switch
+    internal static DateTimeOffset SampleDeparture(DateTimeOffset at, string exit)
+    {
+        var windowOpens = exit == "exit-north" ? StartTime.AddMinutes(2) : StartTime;
+        return at >= windowOpens ? at : windowOpens;
+    }
+
+    internal static DateTimeOffset ScenarioTime(int stage) => StartTime.AddMinutes(stage switch
     {
         0 => 0,
         1 => 10,

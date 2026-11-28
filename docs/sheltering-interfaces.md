@@ -8,7 +8,7 @@ This contract describes the communication needed for the [sheltering and groupin
 | --- | --- | --- |
 | Situation | Assembly points and incident-scoped access evidence, alongside hazard and road snapshots | The incident reference and the current Situation revision. It does not change shelter capacity. |
 | Grouping, initially hosted in Management | Group membership, required care and versioned travel parties | Management case references, relevant needs and versioned route evidence. |
-| Sheltering | Shelter configuration, usable resources, holds and actual occupancy. Later it also owns one assignment per case and leg. | Situation evidence. Allocation later uses the approved group plan and Routing's route evidence. |
+| Sheltering | Shelter configuration, usable resources, holds and actual occupancy. Since SH-T04 it also owns one assignment per case and leg. | Situation evidence. Allocation uses the approved group plan and Routing's route evidence. |
 | Routing | Route candidates, eligibility and the publication or withdrawal of instructions | Situation snapshots and the separate destination reads from Situation and Sheltering. A destination search does not publish a route. |
 | Dispatch | Assistance requests, unit bookings and pickup | The current Management case and Routing evidence. Pickup does not admit a person to a shelter. |
 | Gateway and coordinator view | Composed read views and authorized command forwarding | The owning service for each query or command. An unavailable owner is shown separately from a valid empty result. |
@@ -48,7 +48,7 @@ The [request and response examples](../contracts/http/sheltering/README.md) use 
 
 ## Draft interfaces for SH-T02 through SH-T07
 
-The following paths and fields are proposals for integration. Keep the current baseline endpoints available. Draft writes also carry `correlationId`, with `expectedVersion` or explicit expected versions for all records in a multi-aggregate command. Use the role and incident or site scope derived from authentication. Clients cannot grant authority by including a role in JSON.
+The following paths and fields are proposals for integration. SH-T04 implements the Sheltering assignment, reservation, transfer, invalidation and release rows in Stage A. The [SH-W4 examples](../contracts/http/sheltering/README.md#sh-w4-assignments-and-reservations) give their exact payloads, the candidate query and the allocation outbox. Keep the current baseline endpoints available. Draft writes also carry `correlationId`, with `expectedVersion` or explicit expected versions for all records in a multi-aggregate command. Use the role and incident or site scope derived from authentication. Clients cannot grant authority by including a role in JSON.
 
 | Caller → owner | Method and proposed Gateway path | Payload or query and outcome |
 | --- | --- | --- |

@@ -46,6 +46,10 @@ app.MapGet("/health/ready", (SituationQueries queries) => Results.Ok(new { statu
 app.MapGet("/queries/snapshot", (SituationQueries queries) => queries.Snapshot());
 app.MapGet("/queries/integration-copernicus", (ICopernicusSource source, CancellationToken cancelled) =>
     source.GetDelineation(integrationArea, cancelled));
+app.MapGet("/queries/integration-sentinel-1", (ICopernicusSource source, CancellationToken cancelled) =>
+    source.GetWaterMask(integrationArea, cancelled));
+app.MapGet("/queries/integration-copernicus-dem", (ICopernicusSource source, CancellationToken cancelled) =>
+    source.GetLowElevationArea(integrationArea, cancelled));
 app.MapGet("/queries/integration-flypix", (IFlyPixSource source, CancellationToken cancelled) =>
     source.GetDetections(integrationArea, cancelled));
 app.MapGet("/queries/city-data", (ICitySource source, CancellationToken cancelled) =>

@@ -36,7 +36,8 @@ def local_url(port):
 
 
 @contextmanager
-def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False, *, auto_replan=None):
+def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False, *,
+                   auto_replan=None, evacuation_enabled=None, shelter_holds=False):
     data_dir.mkdir(parents=True, exist_ok=True)
     services = [*SERVICES, ("Sheltering", "Cassini.Sheltering", 5)] if sheltering else SERVICES
     env = dict(os.environ)
@@ -60,6 +61,8 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
     })
     if auto_replan is not None:
         env["Dispatch__AutoReplan"] = str(auto_replan).lower()
+    if evacuation_enabled is not None:
+        env["Routing__EvacuationEnabled"] = str(evacuation_enabled).lower()
     if sheltering:
         fixture = ROOT / "data" / "demo" / "sheltering" / "sample-sites.json"
         env.update({
@@ -69,6 +72,8 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
             "Sheltering__StateFile": str(data_dir / "shelters.json"),
             "Sheltering__BaseUrl": local_url(port + 5),
         })
+        if shelter_holds:
+            env["Sheltering__HoldsFile"] = str(ROOT / "data" / "demo" / "sheltering" / "sample-holds.json")
     children = []
     try:
         for directory, assembly, offset in services:
@@ -118,12 +123,16 @@ def main():
     parser.add_argument("--city-directory", type=Path, help="Directory with the generated offline map and graph")
     parser.add_argument("--no-build", action="store_true", help="Use existing compiled services")
     parser.add_argument("--test", action="store_true", help="Run integration tests in fresh temporary state")
+    parser.add_argument("--valencia-inputs-only", action="store_true",
+                        help="With --scenario valencia --test, verify layers, graph and closures without the evacuation planner")
     parser.add_argument("--sheltering", action="store_true", help="Enable the sample assembly point and shelter catalogs")
     args = parser.parse_args()
     last_port = 65530 if args.sheltering else 65531
     if not 1024 <= args.port <= last_port:
         parser.error(f"port must be between 1024 and {last_port}")
     args.scenario = args.scenario or ("sample" if args.test or args.sheltering else "valencia")
+    if args.valencia_inputs_only and not (args.test and args.scenario == "valencia"):
+        parser.error("--valencia-inputs-only requires --scenario valencia --test")
     if args.sheltering and args.scenario != "sample":
         parser.error("--sheltering is available in the sample scenario")
     if args.city_directory and args.scenario == "sample":
@@ -146,11 +155,12 @@ def main():
             test_file = ("sheltering_integration.py" if args.sheltering else
                          "valencia_integration.py" if args.scenario == "valencia" else "offline_integration.py")
             scripts = [test_file, "connectivity_integration.py"] if test_file == "offline_integration.py" else [test_file]
+            test_options = ["--inputs-only"] if args.valencia_inputs_only else []
             with start_services(args.port, Path(directory), args.scenario,
                                 city.resolve() if city else None, sheltering=args.sheltering,
-                                auto_replan=False) as url:
+                                auto_replan=False, evacuation_enabled=False if args.valencia_inputs_only else None) as url:
                 for script in scripts:
-                    subprocess.run([os.sys.executable, str(ROOT / "tests" / script), url], cwd=ROOT, check=True)
+                    subprocess.run([os.sys.executable, str(ROOT / "tests" / script), url, *test_options], cwd=ROOT, check=True)
             if args.sheltering:
                 with start_services(args.port, Path(directory), sheltering=True) as url:
                     subprocess.run(
@@ -158,6 +168,11 @@ def main():
                         cwd=ROOT,
                         check=True,
                     )
+                reception = Path(directory) / "reception"
+                for args_tail in ([], ["--after-restart"]):
+                    with start_services(args.port, reception, sheltering=True, shelter_holds=True) as url:
+                        subprocess.run([os.sys.executable, str(ROOT / "tests" / "shelter_reception_integration.py"),
+                                        url, *args_tail], cwd=ROOT, check=True)
         return
     state_name = "sheltering-demo" if args.sheltering else "offline-demo" if args.scenario == "sample" else "valencia-demo"
     data = args.data or ARTIFACTS / state_name

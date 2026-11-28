@@ -1,0 +1,23 @@
+{
+  "eventId": "3f1c9a52-6d0e-4b7a-8c21-5e9f0a4b7d13",
+  "type": "ShelterAdmissionConfirmed.v1",
+  "producer": "sheltering",
+  "subjectId": "shelter-a",
+  "subjectVersion": 2,
+  "occurredAt": "2026-11-27T19:32:04Z",
+  "correlationId": "incident-42",
+  "causationId": "report-arrival-14",
+  "payload": {
+    "shelterId": "shelter-a",
+    "incidentId": "incident-42",
+    "admissionId": "report-arrival-14-1",
+    "caseId": "case-14",
+    "legId": "leg-shelter",
+    "reservationId": "reservation-household-14",
+    "walkIn": false,
+    "places": 1,
+    "accessiblePlaces": 0,
+    "reportId": "report-arrival-14",
+    "observedAt": "2026-11-27T19:32:00Z"
+  }
+}

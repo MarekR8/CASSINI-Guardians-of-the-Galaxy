@@ -86,11 +86,13 @@ Rozwiń **Integracje · symulacja offline** w panelu Kłodzka lub Walencji. Każ
 | Źródło | Zapytanie przez Gateway | Co pokazuje |
 | --- | --- | --- |
 | Copernicus EMS | `GET /api/situation/queries/integration-copernicus` | Kod aktywacji, numer AOI, produkt typu delineation, czas obserwacji i przykładowy poligon zalania. |
+| Sentinel‑1 | `GET /api/situation/queries/integration-sentinel-1` | Syntetyczną maskę wody i przykładowy szacunek 42 osób. |
+| Copernicus DEM | `GET /api/situation/queries/integration-copernicus-dem` | Syntetyczny obszar potencjalnego zagrożenia związanego z niskim położeniem. |
 | FlyPix AI | `GET /api/situation/queries/integration-flypix` | Przykładowe identyfikatory rastra i modelu, czas obserwacji oraz poligon detekcji z syntetyczną pewnością modelu. |
 | Miasto · `GetData` | `GET /api/situation/queries/city-data` | Syntetyczną liczbę 120 osób w jednej strefie. |
 | Miasto · `GetMap` | `GET /api/situation/queries/city-map` | Granicę tej strefy w GeoJSON WGS 84. Identyfikatory zestawu i strefy łączą oba odczyty. |
 
-Docelowy adapter Copernicus może wyszukać publiczną aktywację i AOI, wybrać wersję produktu delineation i pobrać geometrię wraz z czasem obserwacji. Docelowy adapter FlyPix AI wymaga klucza API po stronie serwera oraz dostępu do odpowiedniego rastra i modelu. Może zlecić inferencję, poczekać na wynik i skierować detekcje do istniejącej kolejki weryfikacji. Decyzja o zamknięciu pozostaje komendą operatora. [Copernicus EMS Rapid Mapping API](https://mapping.emergency.copernicus.eu/about/how-to-harvest-cems-mapping-data/emergency-response-data/) · [FlyPix AI API i operacje na modelach](https://docs.flypix.ai/docs/api/mcp) · [Uwierzytelnianie FlyPix AI](https://docs.flypix.ai/docs/api/authentication)
+Mapa Walencji korzysta z lokalnych plików archiwalnych EMSR773 i Sentinel‑1. W osobno uruchomionym ćwiczeniu `python experiments/network/import_valencia_review.py --mock` pobiera odpowiedź FlyPix z lokalnego API i dodaje syntetyczną detekcję do kolejki. Zamknięcie wymaga decyzji operatora. Ten sam skrypt przyjmuje manifest z eksportem GeoJSON z przeglądarki. [Instrukcja Walencji](../data/local/valencia.md#flypix-w-przeglądarce)
 
 `ICitySource` jest punktem podłączenia przyszłego źródła, np. systemu HR albo rejestru ludności. Szczegóły pobrania i agregacji zależą od systemu wybranego przez operatora. Kontrakt demonstracyjny używa sum według stref i granic tych stref.
 

@@ -28,6 +28,7 @@ To prove or investigate: MSA convergence on the demo graph, the effect of $\thet
 - [x] Fixtures `data/demo/routing/cases/*.json` and `expected.json` for: before closure, after the bridge closure, all exits unavailable, exit flooded before arrival, congestion at large $N$, wheelchair and steps, no re-entry into the flood. You provide **W4**.
 - [x] Port to C# in Routing: `GET /queries/distribution` also returns `expectedLoad` per exit and `model: "logit-sue"`. The draw (`POST /commands/draw`) uses the new $p_i$; the seed still works. Valencia scenario only; Kłodzko and Warsaw keep the previous formula.
 - [x] C# test that reads `expected.json` (tolerance $10^{-6}$).
+- [ ] Rehearse the Valencia planner end to end for the presentation. `--scenario valencia --test` exercises plan calculation, route distribution, drawing and withdrawal through the gateway. Add `--valencia-inputs-only` to test the 01/02 inputs and OSM route independently.
 
 ### Stage B (completion)
 - [ ] `IHazardForecast`: `MockGlofasForecast` (file) and `LiveGlofasForecast` (Open-Meteo Flood API) → $T^{safe}_e$.
@@ -66,18 +67,20 @@ python -m unittest discover -s experiments/routing      # 19 tests
 python experiments/routing/model.py --baseline           # about 20 s; writes experiments/routing/out/valencia-result.json
 ```
 
-**Model.** The GHSL estimate in the observed flood (113,980 people) is split into profiles: independent 75 %, slow 18 %, wheelchair 2 %; the assisted 5 % is counted and handed over. Each group must leave the flood before a deadline: the earlier of an EMS depth rule and 15 min + 10 min/km from the Poyo ravine. Groups are ordered by free-flow reserve into four priority waves. Each wave is a logit assignment over shelters ($\theta = 0.3$/min) on shortest paths, with BPR road costs ($\alpha = 0.15$, $\beta = 4$, linear above capacity) and shelter intake and capacity penalties, solved by MSA. Earlier waves keep their road flow and shelter places. Arcs that re-enter the flood from dry ground, closed roads and, for wheelchair users, steps, tracks and paths are excluded.
+**Model.** The GHSL estimate in the observed flood (113,980 people) is split into profiles: independent 75 %, slow 18 %, wheelchair 2 %; the assisted 5 % is counted and handed over. Each group must leave the flood before a deadline: the earlier of an EMS depth rule and 15 min + 10 min/km from the Poyo ravine. Groups are ordered by free-flow reserve into four priority waves. Each wave is a logit assignment over shelters ($\theta = 0.3$/min) on shortest paths, with BPR road costs ($\alpha = 0.15$, $\beta = 4$, linear above capacity) and a shelter intake queue, solved by MSA. Route choice counts a second on a flooded road as $\lambda = 5$ seconds on dry ground, so routes leave the water first; leave times and deadlines use real seconds. Shelter places are a hard limit enforced by a shadow price per shelter. Earlier waves keep their road flow and the places they were given. Arcs that re-enter the flood from dry ground, closed roads and, for wheelchair users, steps, tracks and paths are excluded.
 
-**Valencia, 7 synthetic shelters, no closures.**
+**Valencia, 7 synthetic shelters, no closures, everyone guided ($\rho = 1$).**
 
-| | logit SUE, priority waves | baseline $p = 1/t$ |
+| | logit SUE, $\lambda = 5$ | baseline $p = 1/t$ |
 | --- | --- | --- |
-| Leave the flood before the deadline | 68,828 (63.6 %) | 2,596 (2.4 %) |
-| Median / p95 minute of leaving the flood | 31.7 / 55.1 | 66.5 / 96.5 |
-| People over shelter capacity | 186 | 26,833 |
+| Leave the flood before the deadline | 84,359 (77.9 %) | 2,596 (2.4 %) |
+| p95 minute of leaving the flood | 39.4 | 96.5 |
+| People over shelter capacity | 0 | 26,833 |
 | No eligible exit | 433 | 433 |
 
-MSA reaches a relative cost gap below 0.01 in 4–17 iterations per wave. Without any congestion 73.6 % could make their deadline, so congestion costs about 10 points and distance alone rules out about a quarter. Staggering the waves hurts: 0 min apart gives 63.6 %, 5 min 44.9 %, 10 min 12.3 %. Priority therefore means first claim on road and shelter capacity, not a later departure.
+Without $\lambda$ the model minimised time to the shelter and kept people in the water longer: 63.6 % on time, and 78 % of the guided left the flood over 5 minutes later than they could. $\lambda$ = 3 / 5 / 10 gives 78.7 / 77.9 / 75.9 %; 5 is the only value without shelter overflow under the former soft penalty and has the shorter tail. Staggering the waves hurts (0 / 5 / 10 min apart: 63.6 / 44.9 / 12.3 % before $\lambda$), so priority means first claim on road and shelter capacity, not a later departure.
+
+**Partial reach ($\rho$, `complianceShare`).** Only a share $\rho$ receives guidance; the rest walks the free-flow shortest path to the nearest dry node, ignoring congestion and shelters, and is fixed background for the guided waves. On time for everyone: $\rho$ = 0 / 10 / 30 / 50 / 70 / 100 % gives 63.5 / 66.8 / 73.1 / 75.6 / 77.2 / 77.9 %. Guided walkers also clear streets for the uninformed, whose on-time share rises from 63.5 % to about 79 %. Run `python experiments/routing/model.py --sweep 0,0.3,0.5,1`.
 
 **Limitations.** Deadlines and evacuation road capacity (nominal × 10) are assumptions to calibrate. The assignment is static per wave, not a time-dependent simulation. Only one path per shelter is used, the shortest under current costs. Shelters are synthetic.
 

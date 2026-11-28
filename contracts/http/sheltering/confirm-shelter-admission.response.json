@@ -1,0 +1,14 @@
+{
+  "reportId": "report-arrival-14",
+  "kind": "admission",
+  "shelterId": "shelter-a",
+  "revision": 1,
+  "shelterVersion": 2,
+  "entries": [
+    { "caseId": "case-14", "legId": "leg-shelter", "admissionId": "report-arrival-14-1", "outcome": "Admitted",
+      "reservationId": "reservation-household-14", "resources": { "places": 1, "accessiblePlaces": 0 } },
+    { "caseId": "case-17", "legId": "leg-shelter", "admissionId": "report-arrival-14-2", "outcome": "WalkInAdmitted",
+      "reservationId": null, "resources": { "places": 1, "accessiblePlaces": 0 } }
+  ],
+  "releasedHolds": []
+}

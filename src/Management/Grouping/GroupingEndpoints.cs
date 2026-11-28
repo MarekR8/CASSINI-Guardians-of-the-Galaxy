@@ -47,7 +47,7 @@ internal sealed class GroupingQueries(ManagementStore store, GroupingEvidence ev
             return MissingGroup.ToResult();
 
         var cases = snapshot.Incident.Cases.Where(item => group.CaseIds.Contains(item.CaseId))
-            .Select(item => new { item.CaseId, item.Node, item.Mobility, item.Version });
+            .Select(item => new { item.CaseId, item.Node, item.Mobility, item.Version, item.PositionObservedAt });
         return Results.Ok(new
         {
             group.IncidentId, group.GroupId, group.GroupRevision, cases, group.Relationships,

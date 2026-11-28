@@ -101,13 +101,15 @@
       <div class="data-body">
         <div class="integration-sources">
           <section>
-            <h3>Copernicus EMS</h3>
-            <p>Wybór aktywacji, obszaru i produktu z zasięgiem zalania.</p>
-            <button type="button" data-integration="integration-copernicus">Pobierz zasięg zalania</button>
+            <h3>Copernicus</h3>
+            <div class="buttons">
+              <button type="button" data-integration="integration-copernicus">Zasięg zalania EMS</button>
+              <button type="button" data-integration="integration-sentinel-1">Maska wody Sentinel‑1</button>
+              <button type="button" data-integration="integration-copernicus-dem">Obszar nisko położony DEM</button>
+            </div>
           </section>
           <section>
             <h3>FlyPix AI</h3>
-            <p>Docelowo klucz API umożliwi uruchomienie modelu na rastrze i pobranie detekcji do weryfikacji.</p>
             <button type="button" data-integration="integration-flypix">Pobierz przykładową detekcję</button>
           </section>
           <section>
