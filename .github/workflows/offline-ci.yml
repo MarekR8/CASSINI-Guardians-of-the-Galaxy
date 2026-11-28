@@ -90,17 +90,19 @@ jobs:
           --health-interval 3s
           --health-timeout 5s
           --health-retries 20
-    env:
-      RABBITMQ_URI: amqp://guest:guest@127.0.0.1:${{ job.services.rabbitmq.ports[5672] }}/
-      RABBITMQ_API: http://127.0.0.1:${{ job.services.rabbitmq.ports[15672] }}
-      ConnectionStrings__Management: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=management_db;Username=management;Password=management-ci-only
-      PSQL_URL: postgresql://management:management-ci-only@127.0.0.1:${{ job.services.postgres.ports[5432] }}/management_db
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
       - name: Verify the event bus on RabbitMQ (stop, publish, start, dedup)
+        env:
+          RABBITMQ_URI: amqp://guest:guest@127.0.0.1:${{ job.services.rabbitmq.ports[5672] }}/
         run: dotnet run --project src/Shared/Messaging/tests/Cassini.Messaging.Tests.csproj -p:NuGetAudit=false -p:EnableRabbitMq=true
       - name: Verify Management on PostgreSQL with RabbitMQ
+        env:
+          RABBITMQ_URI: amqp://guest:guest@127.0.0.1:${{ job.services.rabbitmq.ports[5672] }}/
+          RABBITMQ_API: http://127.0.0.1:${{ job.services.rabbitmq.ports[15672] }}
+          ConnectionStrings__Management: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=management_db;Username=management;Password=management-ci-only
+          PSQL_URL: postgresql://management:management-ci-only@127.0.0.1:${{ job.services.postgres.ports[5432] }}/management_db
         run: python3 tests/management_full_integration.py
