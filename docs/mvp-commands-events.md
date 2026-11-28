@@ -151,3 +151,168 @@ sequenceDiagram
 ```
 
 Use the sequence to verify four outcomes in the demo. A repeated alert creates one incident record for that alert. Two concurrent assignment attempts cannot book the same unit. An instruction across the closed bridge is withdrawn before any replacement is published. A pickup report leaves the case open until exit is confirmed separately.
+
+## Sheltering and Grouping extension
+
+These proposed contracts implement SH-01 through SH-06 in the [business processes](domain/business-processes.md#detailed-sheltering-and-grouping-workflows). The [aggregate extension](domain-architecture.md#sheltering-and-grouping-extension) describes ownership. The existing command and event contracts above still apply. New writes use the same command IDs, actor authorization and concurrency conventions. For a multi-aggregate command, pass the expected assignment revisions and shelter versions for all affected records. A retry does not reserve a second place, admit a person twice or apply the same handover twice.
+
+### Extension commands
+
+| Command | Owner | Main inputs | Result or rejection |
+| --- | --- | --- | --- |
+| `SetAssemblyPoint` | Situation Data / `AssemblyPoint` | `incidentId`, `pointId`, place, access profile, operating window, status and evidence | Registers or updates the point. Activation requires a coordinator and current access and hazard evidence. |
+| `ConfigureShelter` | Sheltering / `Shelter` | `shelterId`, place, status, operating window, usable quantities by resource type, intake limits and evidence | Updates the site's availability without rewriting confirmed occupancy. A reduction below commitments makes affected reservations visible for review. |
+| `RegisterEvacuationGroup` | Grouping / `EvacuationGroup` | `incidentId`, `groupId`, case references, initial typed links and evidence | Creates an incident-scoped group after checking the case references. |
+| `UpdateGroupComposition` | Grouping / `EvacuationGroup` | Group reference, membership or relationship changes and evidence | Records a new group revision and marks any affected approved plan for review. Preserves required care unless a handover has been accepted. |
+| `RecordCareHandover` | Grouping / `EvacuationGroup` | Dependent case, outgoing and incoming caregivers, effective time and confirmation evidence | Records an authorized, confirmed transfer of care. Rejects missing confirmation or a conflict with the current caregiver. |
+| `ApproveTravelPlan` | Grouping / `EvacuationGroup` | Group revision, proposed travel parties, care assignments, shared destination preferences and routing evidence | Approves a plan revision. Rejects a plan that violates required care, access requirements or applicable clearance times. |
+| `FlagTravelPlanForReview` | Grouping / `EvacuationGroup` | Target plan revision, reason and changed evidence | Flags an affected approved plan without mutating its historical membership or withdrawing a newer plan. |
+| `OpenShelterAssignment` | Sheltering / `ShelterAssignment` | `incidentId`, `caseId`, `legId`, requirements and optional `groupPlanRef` | Opens the pending assignment for this person and leg, or returns the existing one. A first-leg exit instruction can proceed independently. |
+| `ReserveShelterPlaces` | Sheltering / `Shelter` and `ShelterAssignment` | `shelterId`, assignment references, resource quantities and expected arrival windows per person, reservation validity, evidence and approval | Commits all requested reservations and updates every affected assignment, or rejects the entire batch with a reason such as `InsufficientCapacity`, `IntakeLimitReached` or `RouteIneligible`. |
+| `ConfirmShelterAdmission` | Sheltering / `Shelter` and `ShelterAssignment` when applicable | `shelterId`, case references, admission report ID and time, reservation references if present | Converts only the confirmed arrivals' reserved resources to occupancy. For a walk-in, recheck support and capacity and reconcile any other active reservation before accepting. A repeated report returns the original result. |
+| `ConfirmShelterDeparture` | Sheltering / `Shelter` and `ShelterAssignment` when applicable | Shelter and admission references, departure report ID, observation time and evidence | Ends the stay and releases the occupied resources exactly once. |
+| `ReleaseShelterReservation` | Sheltering / `Shelter` and `ShelterAssignment` | Reservation and assignment references, reason, and either an authorized cancellation or evidence of agreed expiry | Releases an unused reservation. If shelter is still required, the assignment awaits a replacement. Confirmed admissions retain their occupied resources. |
+| `ReassignShelterPlaces` | Sheltering / affected `Shelter` and `ShelterAssignment` roots | Affected assignment revisions, new shelter, eligible route evidence, resource quantities, arrival windows and approval | Reserves the replacement and releases any unused original reservation in the same local transaction. Rejects an attempt to move confirmed occupancy; an admitted person transfers under a new leg. |
+| `InvalidateShelterAssignment` | Sheltering / `ShelterAssignment` and `Shelter` | Target assignment revision, reason and evidence that the destination or approach is no longer eligible | Withdraws the affected revision, releases its unused reservation and marks it awaiting replacement. The appropriate publisher withdraws the corresponding route version through Routing. |
+
+Read-only queries include `GetAssemblyPoints` for verified open points, `GetTravelPartyProposal` to evaluate a tentative split, `GetApprovedTravelPlan` for the current group plan and its revision, and `GetShelterAvailability` and `GetShelterAssignment` for capacity review and reconciliation. A candidate trip or capacity result is an estimate until checked by the owner on the write path. Use Routing's proposal and validation workflow for the target location and estimated arrival, whether it is a shelter or an eligible first-leg point.
+
+### Extension events
+
+| Event | Publisher and subject | Payload beyond the common envelope | Main consumers and effect |
+| --- | --- | --- | --- |
+| `AssemblyPointChanged.v1` | Situation Data / point | Incident, point, operating status, effective window and access evidence reference | Routing and the coordinator view recheck affected first-leg destinations. |
+| `EvacuationGroupChanged.v1` | Grouping / group | Incident, group, group revision and reason | The coordinator view and Sheltering reload affected group inputs. |
+| `CareHandoverRecorded.v1` | Grouping / group | Incident, group, handover reference and effective time | Authorized planners check affected parties against the current care decision. |
+| `TravelPlanApproved.v1` | Grouping / group | Incident, group, plan reference and source revisions | Sheltering can evaluate shared destinations for the approved parties. |
+| `TravelPlanReviewRequired.v1` | Grouping / group | Affected plan revision, reason and evidence reference | The coordinator and Sheltering stop using the affected plan for new decisions until reconciled. |
+| `ShelterAvailabilityChanged.v1` | Sheltering / shelter | Shelter, operating status, affected resource types, effective window and evidence reference | Coordinator and allocation handlers review capacity, intake and reservations at the affected shelter. |
+| `ShelterAssignmentChanged.v1` | Sheltering / assignment | Incident, case, leg, status, active or withdrawn assignment revision, shelter and reservation references where applicable, reason | Coordinator and authorized publication handlers reconcile the destination. A reservation event alone is neither a published route nor an arrival. |
+| `ShelterAdmissionConfirmed.v1` | Sheltering / shelter | Admission and case references, applicable assignment reference and observed arrival time | The shelter and coordinator views update occupancy and reception status. |
+| `ShelterDepartureConfirmed.v1` | Sheltering / shelter | Admission and case references, applicable assignment reference and observed departure time | The shelter and coordinator views update occupancy and transfer status. |
+
+The subject revision belongs to the publishing aggregate. A group write that invalidates a plan can emit a group change and a review event at the same revision. An admission can likewise change both a shelter and an assignment, producing one event per affected subject. Consumers deduplicate by event ID and use the subject revision to ignore older state, without dropping a distinct event at the same revision. Use references and authorized queries for personal relationships, locations and accessibility information.
+
+Sheltering rechecks affected assignments on relevant `SituationChanged.v1` and `RouteWithdrawn.v1` events. Grouping can use changed evidence to flag only the affected plan revision. The handler compares current versions before withdrawing or replacing anything. If a notification arrives after the corresponding state was superseded, reconcile with the owner and leave the current valid state in place.
+
+### State transitions
+
+**Assembly point or shelter availability.** This lifecycle applies independently to each site function. Only an open and eligible site can be selected. A limit change can also leave a site open while blocking the affected resource or intake slots.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft : Register site
+    Draft --> Open : Activate with verified evidence
+    Open --> Suspended : Eligibility or evidence is unresolved
+    Suspended --> Open : Revalidate and authorize
+    Open --> Closed : Close site
+    Suspended --> Closed : Close site
+    Closed --> Open : Authorize reopening with current evidence
+```
+
+**Group plan.** This tracks whether a group has a usable travel plan. A group may have several travelling parties with one shared destination preference.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Registered : RegisterEvacuationGroup
+    Registered --> Approved : ApproveTravelPlan
+    Approved --> ReviewRequired : Evidence or required care changes
+    ReviewRequired --> Approved : ApproveTravelPlan with current evidence
+    Approved --> Approved : Approve a newer feasible plan
+```
+
+**Shelter assignment for one person and leg.** The `Reserved` state confirms the place. Routing separately tracks instruction publication, and delivery and acknowledgement remain separate observations. A failed replacement leaves the original assignment active only while it remains eligible.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending : OpenShelterAssignment
+    Pending --> Reserved : ReserveShelterPlaces
+    Reserved --> Reserved : ReassignShelterPlaces with atomic transfer
+    Reserved --> AwaitingReplacement : InvalidateShelterAssignment
+    Reserved --> AwaitingReplacement : Release or expiry while still needed
+    AwaitingReplacement --> Reserved : ReserveShelterPlaces at an eligible site
+    Reserved --> Admitted : ConfirmShelterAdmission
+    Pending --> Admitted : Confirm eligible walk-in admission
+    AwaitingReplacement --> Admitted : Confirm eligible walk-in admission
+    Reserved --> Closed : Authorized cancellation ends need
+    AwaitingReplacement --> Closed : Authorized cancellation ends need
+    Admitted --> Closed : ConfirmShelterDeparture
+```
+
+**Resource commitment for one reservation or admission.** Partial arrivals change only the commitments of people actually received. A walk-in can consume capacity after an eligible admission check, even when no reservation existed.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Held : Reserve the required set
+    Held --> Occupied : Confirm the person arrived
+    Held --> Released : Cancel, expire or transfer unused hold
+    [*] --> Occupied : Admit an eligible walk-in
+    Occupied --> Released : Confirm the person departed
+    Released --> [*]
+```
+
+### Sequence 3 First leg, shared destination and partial arrival
+
+This example starts with an eligible first leg and no confirmed shelter. The coordinator can publish the first leg immediately while the later shelter leg is still being planned. A direct route to a shelter can be issued instead when the destination and reservation are already confirmed.
+
+```mermaid
+sequenceDiagram
+    actor C as Coordinator
+    participant G as Grouping
+    participant R as Routing
+    participant H as Sheltering
+    actor O as Shelter operator
+
+    C->>R: ProposeRoute to a verified exit or assembly point
+    alt Eligible first leg with care requirements met
+        C->>R: PublishRoute to the verified first-leg point
+        C->>G: GetTravelPartyProposal for the shelter leg
+        G-->>C: Separate parties can share a destination
+        C->>G: ApproveTravelPlan
+        G-->>H: TravelPlanApproved.v1
+        C->>H: OpenShelterAssignment for each person and shelter leg
+        C->>R: ProposeRoute for each party to the candidate shelter
+        R-->>C: Route eligibility and expected arrival windows
+        C->>H: ReserveShelterPlaces for both parties
+        alt Both parties fit at the shared destination
+            H->>H: Commit assignments, holds and outbox together
+            H-->>C: Confirmed reservation for each person
+            C->>R: PublishRoute for the shelter leg when ready
+            O->>H: ConfirmShelterAdmission for the first arrival
+            H-->>O: First place occupied, other places remain held
+        else No eligible shelter yet
+            H-->>C: Shelter allocation remains pending
+        end
+    else First leg is infeasible or care is unresolved
+        C->>C: Escalate for verification or assistance
+    end
+```
+
+### Sequence 4 Replace a destination after a shelter closes
+
+```mermaid
+sequenceDiagram
+    actor C as Coordinator
+    participant H as Sheltering
+    participant R as Routing
+
+    C->>H: ConfigureShelter as Closed
+    H-->>C: ShelterAvailabilityChanged.v1
+    C->>R: WithdrawRoute for an affected instruction
+    C->>R: ProposeRoute from the latest usable location
+    alt Eligible replacement is found for someone en route
+        C->>H: ReassignShelterPlaces with current versions
+        alt Replacement still has capacity
+            H->>H: Commit new hold, assignment revision and release of old hold
+            H-->>C: ShelterAssignmentChanged.v1
+            C->>R: PublishRoute after current eligibility checks
+        else Capacity changed before commit
+            H-->>C: Replacement rejected
+            C->>H: InvalidateShelterAssignment for the now-ineligible destination
+        end
+    else No replacement is currently available
+        C->>H: InvalidateShelterAssignment for the affected revision
+        H-->>C: Awaiting replacement and follow-up required
+    end
+    Note over C,H: Already admitted people keep occupied places until confirmed departure.
+```
