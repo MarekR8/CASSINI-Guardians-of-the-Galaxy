@@ -10,12 +10,15 @@ Every event uses the envelope in [`src/Shared/Messaging/IntegrationEvent.cs`](..
 | [`AssistanceRequested.v1`](AssistanceRequested.v1.json) | `dispatch.assistance-requested.v1` | Dispatch (task 4) | Management | Contract; producer to be wired by the owner |
 | [`AssignmentChanged.v1`](AssignmentChanged.v1.json) | `dispatch.assignment-changed.v1` | Dispatch (task 4) | **Management (implemented)** | Management records `assistance` on the case |
 | [`HazardAlertRecorded.v1`](HazardAlertRecorded.v1.json) | `management.hazard-alert-recorded.v1` | **Management (implemented)** | Situation | Published from the outbox |
-| [`CaseProgressChanged.v1`](CaseProgressChanged.v1.json) | `management.case-progress-changed.v1` | **Management (implemented)** | Not required for the MVP monitor | Published for every milestone; a position update does not publish |
+| [`CaseProgressChanged.v1`](CaseProgressChanged.v1.json) | `management.case-progress-changed.v1` | **Management (implemented)** | Not required for the MVP monitor | Published for milestones |
+| [`EvacuationGroupChanged.v1`](EvacuationGroupChanged.v1.json) | `grouping.evacuation-group-changed.v1` | Management Grouping (SH-T02) | Sheltering, coordinator | Published on registration and group revision changes |
+| [`CareHandoverRecorded.v1`](CareHandoverRecorded.v1.json) | `grouping.care-handover-recorded.v1` | Management Grouping (SH-T02) | Authorized planners | Published with an opaque handover reference |
+| [`TravelPlanApproved.v1`](TravelPlanApproved.v1.json) | `grouping.travel-plan-approved.v1` | Management Grouping (SH-T02) | Sheltering, coordinator | Published when an approved plan revision is committed |
+| [`TravelPlanReviewRequired.v1`](TravelPlanReviewRequired.v1.json) | `grouping.travel-plan-review-required.v1` | Management Grouping (SH-T02) | Sheltering, coordinator | Published on the first transition to review for the affected revision |
 | [`ShelterAdmissionConfirmed.v1`](ShelterAdmissionConfirmed.v1.json) | `sheltering.shelter-admission-confirmed.v1` | **Sheltering (SH-T05)** | Management, coordinator view | Published from the reception outbox (SH-T06 Stage B) |
 | [`ShelterDepartureConfirmed.v1`](ShelterDepartureConfirmed.v1.json) | `sheltering.shelter-departure-confirmed.v1` | **Sheltering (SH-T05)** | Management, coordinator view | Published from the reception outbox (SH-T06 Stage B) |
 | [`ShelterAssignmentChanged.v1`](ShelterAssignmentChanged.v1.json) | `sheltering.shelter-assignment-changed.v1` | **Sheltering (SH-T04)** | **Sheltering instruction board (implemented)**, coordinator view | Published from the allocation outbox; `subjectVersion` is the assignment version |
 | [`ShelterAvailabilityChanged.v1`](ShelterAvailabilityChanged.v1.json) | `sheltering.shelter-availability-changed.v1` | **Sheltering (SH-T04)** | Operator availability projection | Published from the allocation outbox |
-| [`TravelPlanApproved.v1`](TravelPlanApproved.v1.json) | `grouping.travel-plan-approved.v1` | Grouping (SH-T02) | Sheltering, coordinator view | Contract; producer to be wired by the owner |
 
 `RoutePublished.v1` and `RouteWithdrawn.v1` are also published by **Routing (SH-T06)** for `shelter-assignment` subjects. The payload carries the `subject`, the `routeVersion`, and the `assignment` with its `reservationId`, or the withdrawn `reservationId`. `subjectVersion` is the instruction's `aggregateVersion`. When a transfer supersedes a route, one commit emits `RouteWithdrawn.v1` with `reasonCode: "Superseded"` and `RoutePublished.v1`, both at the same `subjectVersion`.
 
@@ -34,6 +37,8 @@ The board applies these rules:
 1. Add the event to the outbox in the same commit as the state change. Publish it with `OutboxPublisher`, which removes the event only after the broker confirms it (at least once).
 2. Set `subjectVersion` to your revision of the subject. Keep `routeVersion` explicit in route payloads.
 3. Keep payloads minimal and use references for positions and assistance details.
+
+Grouping subject IDs contain the escaped incident and group IDs, with `/care` and `/plans` suffixes for those streams. Group and care events use `groupRevision` as `subjectVersion`. Plan approval uses `2 × planRevision − 1` and its review event uses `2 × planRevision`. Consumers can therefore discard an older review once a newer plan has been approved. Read current details through the scoped [SH-W2 endpoints](../http/grouping/README.md).
 
 ## Rules for consumers
 

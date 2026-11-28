@@ -38,9 +38,12 @@ public static class EventTypes
     public const string CaseProgressChanged = "CaseProgressChanged.v1";
     public const string ShelterAvailabilityChanged = "ShelterAvailabilityChanged.v1";
     public const string ShelterAssignmentChanged = "ShelterAssignmentChanged.v1";
+    public const string EvacuationGroupChanged = "EvacuationGroupChanged.v1";
+    public const string CareHandoverRecorded = "CareHandoverRecorded.v1";
+    public const string TravelPlanApproved = "TravelPlanApproved.v1";
+    public const string TravelPlanReviewRequired = "TravelPlanReviewRequired.v1";
     public const string ShelterAdmissionConfirmed = "ShelterAdmissionConfirmed.v1";
     public const string ShelterDepartureConfirmed = "ShelterDepartureConfirmed.v1";
-    public const string TravelPlanApproved = "TravelPlanApproved.v1";
 
     private static readonly Dictionary<string, string> Keys = new()
     {
@@ -53,9 +56,12 @@ public static class EventTypes
         [CaseProgressChanged] = "management.case-progress-changed.v1",
         [ShelterAvailabilityChanged] = "sheltering.shelter-availability-changed.v1",
         [ShelterAssignmentChanged] = "sheltering.shelter-assignment-changed.v1",
+        [EvacuationGroupChanged] = "grouping.evacuation-group-changed.v1",
+        [CareHandoverRecorded] = "grouping.care-handover-recorded.v1",
+        [TravelPlanApproved] = "grouping.travel-plan-approved.v1",
+        [TravelPlanReviewRequired] = "grouping.travel-plan-review-required.v1",
         [ShelterAdmissionConfirmed] = "sheltering.shelter-admission-confirmed.v1",
         [ShelterDepartureConfirmed] = "sheltering.shelter-departure-confirmed.v1",
-        [TravelPlanApproved] = "grouping.travel-plan-approved.v1",
     };
 
     public static IReadOnlyCollection<string> All => Keys.Keys;

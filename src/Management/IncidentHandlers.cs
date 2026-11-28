@@ -1,3 +1,5 @@
+using Cassini.Management.Grouping;
+
 namespace Cassini.Management;
 
 internal sealed record RecordAlert(string? CommandId, DateTimeOffset? ObservedAt);
@@ -48,7 +50,7 @@ internal sealed class IncidentCommands(ManagementStore store, TimeProvider clock
         }
 
         if (command.Step == "position")
-            return RecordPosition(state, index, item, command);
+            return ReviewChangedPlans(RecordPosition(state, index, item, command), command.CommandId!, clock.GetUtcNow());
 
         var outcome = command.Step switch
         {
@@ -68,9 +70,15 @@ internal sealed class IncidentCommands(ManagementStore store, TimeProvider clock
 
         var updated = (EvacuationCase)outcome.Payload;
         var now = clock.GetUtcNow();
-        return outcome with { Changed = changed.Publish(ManagementEvents.ProgressChanged(
+        var milestone = outcome with { Changed = changed.Publish(ManagementEvents.ProgressChanged(
             changed.Incident, updated, command.CommandId!, fix?.ObservedAt ?? command.ObservedAt ?? now, now)) };
+        return ReviewChangedPlans(milestone, command.CommandId!, now);
     });
+
+    private static Outcome ReviewChangedPlans(Outcome outcome, string commandId, DateTimeOffset now) =>
+        outcome.Changed is { } state && outcome.Payload is EvacuationCase updated
+            ? outcome with { Changed = GroupingEvents.FlagChangedCase(state, updated, commandId, now) }
+            : outcome;
 
     private Outcome RecordPosition(ManagementState state, int index, EvacuationCase item, RecordProgress command)
     {

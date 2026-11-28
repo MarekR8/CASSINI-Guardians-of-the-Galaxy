@@ -26,8 +26,8 @@ Two household members start on opposite sides of an obstruction. They can leave 
 
 ### Stage B (completion)
 
-- [ ] Add durable Grouping persistence and emit group, care and travel-plan events through the owning outbox. Verify that stale evidence flags only the affected plan revision.
-- [ ] Enforce incident scope for group reads and writes. Use references or scoped queries for care details.
+- [x] Persist groups, care handovers, plan revisions, receipts and events together in Management JSON or PostgreSQL. Publish the four Grouping events through Management’s outbox. A case-version change flags only an approved plan that references that case. A delayed route review for a superseded plan leaves the current revision intact.
+- [x] Enforce incident scope on all Grouping reads and commands in authenticated mode. Scoped bearer roles supply the handover operator identity. Reads and events use care evidence references. The offline exercise retains synthetic actors and recorded routes.
 
 ## Dependencies and verification
 
@@ -36,5 +36,6 @@ Receive SH-W0 and Management case/mobility reads. Deliver SH-W2 to SH-T03, SH-T0
 ## Results
 
 - Synthetic evidence in [sample-grouping.json](../../../data/demo/sheltering/sample-grouping.json) uses `incident-42`, cases `case-14`–`case-16`, the provisional `leg-shelter` ID, and the SH-T01 sample shelter IDs and clock.
-- The [integration replay](../../../tests/grouping_integration.py) covers independent departures and a recorded closure (SH-A02), rejected care separation and a confirmed handover (SH-A03), command replay, group and plan revisions, stale evidence and local restart recovery.
-- Grouping runs on recorded route candidates and synthetic roles. Confirm SH-W0 and SH-W2 with other owners before the joint exercise. The replay uses local HTTP without Routing candidates computed live, shelter capacity checks, or hardware.
+- The [Gateway replay](../../../tests/grouping_integration.py) covers SH-A02 and SH-A03, command replay, stale revisions, restart recovery and bearer scope with temporary credentials.
+- The Management tests cover restart with pending events, publication to the in-memory bus and the revision-specific review transition. The [full-profile integration](../../../tests/management_full_integration.py) exercises PostgreSQL restart and RabbitMQ delivery on CI.
+- The exercise uses recorded route candidates and synthetic actors. Cloud identity, live route evidence and downstream event reconciliation belong to the shared handoff. [Scope, roles and service credentials](../../../contracts/http/grouping/README.md#incident-scope-and-events)

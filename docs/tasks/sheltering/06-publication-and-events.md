@@ -42,7 +42,7 @@ All data in the tests is synthetic: `incident-42`, `case-31`, `leg-shelter`, `sh
   - A stale assignment version returns `409`. A change during publication returns `409 AssignmentChanged`.
   - `shelter-instruction` reports `PendingPublication`, `Current`, `WithdrawalPending`, `Withdrawn`, `NoInstruction` or `PublicationUnknown`. A capacity hold counts as `Current` only once Routing has committed an instruction for exactly that reservation.
 - **Envelopes and replay:**
-  - New examples for `ShelterAssignmentChanged.v1`, `ShelterAvailabilityChanged.v1` and `TravelPlanApproved.v1`.
+  - New examples for `ShelterAssignmentChanged.v1` and `ShelterAvailabilityChanged.v1`. The group facts (`TravelPlanApproved.v1` and others) come from Grouping (#30).
   - [`contracts/events/replay/sh-w5-instructions.replay.json`](../../../contracts/events/replay/sh-w5-instructions.replay.json) has 18 events for one leg, with group, site and admission facts, a duplicate, a replayed old publication, a reordered pair at one revision and two gaps.
   - `src/Sheltering/tests` applies it to the instruction board without a broker: in order, redelivered, reversed and through `InMemoryEventBus`.
 
@@ -93,5 +93,4 @@ On Windows with .NET SDK 10.0.404, Docker 28.5.1, RabbitMQ 4.4 and PostgreSQL 17
 - The board is an in-memory projection. After a restart it is rebuilt lazily from the owners, so its counts are rebuilt rather than recovered from a store.
 - An admission does not change the assignment version. The board shows `Admitted` only after an owner read.
 - Management and Dispatch do not consume the shelter events yet.
-- `TravelPlanApproved.v1` is a contract example. Grouping does not publish it yet.
 - The workflow does not publish automatically after a booking. The coordinator, or a future job, calls `reconcile-shelter-instruction`.

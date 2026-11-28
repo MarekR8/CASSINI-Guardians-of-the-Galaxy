@@ -1,21 +1,12 @@
 {
-  "eventId": "00000000-0000-4000-8000-000000000010",
+  "eventId": "29d65866-dc9a-49ca-9a01-611a400ec0bb",
   "type": "TravelPlanApproved.v1",
-  "producer": "grouping",
-  "subjectId": "group-household",
-  "subjectVersion": 2,
-  "occurredAt": "2026-11-27T19:20:00Z",
-  "correlationId": "corr-sh-t06",
-  "causationId": "cmd-10",
-  "payload": {
-    "incidentId": "incident-42",
-    "groupId": "group-household",
-    "planRevision": 2,
-    "groupRevision": 3,
-    "caseIds": [
-      "case-14",
-      "case-15",
-      "case-16"
-    ]
-  }
+  "producer": "management",
+  "subjectId": "incident-42/group-household/plans",
+  "subjectVersion": 5,
+  "occurredAt": "2026-11-27T19:21:00Z",
+  "correlationId": "incident-42",
+  "causationId": "group-approve-care",
+  "payload": {"incidentId": "incident-42", "groupId": "group-household", "groupRevision": 3, "legId": "leg-shelter",
+              "planRevision": 3, "evidenceId": "care-handover", "situationRevision": 1}
 }

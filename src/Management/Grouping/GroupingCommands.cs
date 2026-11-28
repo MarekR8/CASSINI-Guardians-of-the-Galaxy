@@ -2,12 +2,10 @@ using static Cassini.Management.Grouping.GroupingQueries;
 
 namespace Cassini.Management.Grouping;
 
-internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence evidence)
+internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence evidence, TimeProvider clock)
 {
     public IResult Register(RegisterEvacuationGroup command) => store.ExecuteState(command.CommandId, command, snapshot =>
     {
-        if (snapshot.Incident.IncidentId != command.IncidentId)
-            return Reject("IncidentNotFound", "Unknown demo incident.", 404);
         if (string.IsNullOrWhiteSpace(command.GroupId) || string.IsNullOrWhiteSpace(command.EvidenceRef))
             return Reject("InvalidGroup", "Provide a group ID and composition evidence.", 400);
         if (FindGroup(snapshot, command.IncidentId, command.GroupId) is not null)
@@ -17,7 +15,7 @@ internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence e
 
         var group = new EvacuationGroup(snapshot.Incident.IncidentId, command.GroupId, 1, command.CaseIds!,
             command.Relationships!, command.EvidenceRef, [], []);
-        return Save(snapshot, group, GroupReceipt(group));
+        return Save(snapshot, group, GroupReceipt(group), command.CommandId!, "Registered");
     });
 
     public IResult UpdateComposition(UpdateGroupComposition command) =>
@@ -41,7 +39,7 @@ internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence e
                 GroupRevision = group.GroupRevision + 1, CaseIds = command.CaseIds!,
                 Relationships = command.Relationships!, CompositionEvidenceRef = command.EvidenceRef
             }).RequireReview("CompositionChanged", command.EvidenceRef);
-            return Save(snapshot, next, GroupReceipt(next));
+            return Save(snapshot, next, GroupReceipt(next), command.CommandId!, "CompositionChanged");
         });
 
     public IResult RecordHandover(RecordCareHandover command) =>
@@ -73,7 +71,7 @@ internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence e
                     ? item with { RelatedCaseId = handover.ToCaregiverCaseId, EvidenceRef = handover.EvidenceRef } : item).ToArray(),
                 Handovers = [.. group.Handovers, handover]
             }).RequireReview("CareHandoverRecorded", handover.EvidenceRef);
-            return Save(snapshot, next, GroupReceipt(next));
+            return Save(snapshot, next, GroupReceipt(next), command.CommandId!, "CareHandoverRecorded");
         });
 
     public IResult Approve(ApproveTravelPlan command) => store.ExecuteState(command.CommandId, command, snapshot =>
@@ -93,7 +91,7 @@ internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence e
             return Reject(proposal.Reason, "The supplied evidence does not support an approvable travel plan.", 422);
 
         var plan = new ApprovedTravelPlan(planRevision + 1, "Approved", evidence.ExerciseAt, proposal);
-        return Save(snapshot, group with { Plans = [.. group.Plans, plan] }, plan);
+        return Save(snapshot, group with { Plans = [.. group.Plans, plan] }, plan, command.CommandId!);
     });
 
     public IResult Flag(FlagTravelPlanForReview command) =>
@@ -107,7 +105,7 @@ internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence e
                 return Reject("EvidenceRequired", "Provide a review reason and changed evidence reference.", 400);
 
             var next = group.RequireReview(command.Reason, command.EvidenceRef, invalidateRouteEvidence: true);
-            return Save(snapshot, next, next.CurrentPlan!);
+            return Save(snapshot, next, next.CurrentPlan!, command.CommandId!);
         });
 
     private static GroupingError? ValidateComposition(
@@ -116,7 +114,8 @@ internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence e
         if (caseIds is not { Length: > 0 } || caseIds.Distinct().Count() != caseIds.Length ||
             caseIds.Any(id => !snapshot.Incident.Cases.Any(item => item.CaseId == id)))
             return new("InvalidCaseReferences", "Provide distinct case IDs from the incident.", 422);
-        if (snapshot.Groups?.Values.Any(group => group.GroupId != groupId && group.CaseIds.Intersect(caseIds).Any()) == true)
+        if (snapshot.Groups?.Values.Any(group => group.IncidentId == snapshot.Incident.IncidentId &&
+            group.GroupId != groupId && group.CaseIds.Intersect(caseIds).Any()) == true)
             return new("CaseAlreadyGrouped", "A case already belongs to another group in the incident.", 409);
         if (relationships is null || relationships.Any(link => link is null ||
             link.Kind is not ("household" or "institution" or "required-care") || link.CaseId == link.RelatedCaseId ||
@@ -135,11 +134,9 @@ internal sealed class GroupingCommands(ManagementStore store, GroupingEvidence e
     private static object GroupReceipt(EvacuationGroup group) =>
         new { group.IncidentId, group.GroupId, group.GroupRevision };
 
-    private static (ManagementState, object, int) Save(ManagementState snapshot, EvacuationGroup group, object payload)
-    {
-        var groups = new Dictionary<string, EvacuationGroup>(snapshot.Groups ?? []) { [group.GroupId] = group };
-        return (snapshot with { Groups = groups }, payload, 200);
-    }
+    private (ManagementState, object, int) Save(ManagementState snapshot, EvacuationGroup group, object payload,
+        string commandId, string? compositionReason = null) =>
+        (GroupingEvents.Save(snapshot, group, commandId, clock.GetUtcNow(), compositionReason), payload, 200);
 
     private static (ManagementState?, object, int) RejectGroupRevision() =>
         Reject("GroupRevisionConflict", "Read the current group revision and retry with a new command ID.", 409);

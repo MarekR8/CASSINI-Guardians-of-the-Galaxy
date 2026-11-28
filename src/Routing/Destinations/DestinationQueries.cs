@@ -1,9 +1,10 @@
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace Cassini.Routing.Destinations;
 
-internal sealed record DestinationSources(Uri Situation, Uri Sheltering, Uri Management);
+internal sealed record DestinationSources(Uri Situation, Uri Sheltering, Uri Management, string? GroupingReadToken = null);
 internal sealed record AssemblyPointCatalog(int? Revision, int? SituationRevision, DateTimeOffset? At,
     JsonElement[]? AssemblyPoints);
 internal sealed record ShelterAvailabilityCatalog(int? Revision, int? SituationRevision, DateTimeOffset? At,
@@ -53,7 +54,8 @@ internal sealed class DestinationQueries(HttpClient http, DestinationSources sou
     {
         var path = groupId is null ? "queries/incident"
             : $"queries/evacuation-groups/{Uri.EscapeDataString(groupId)}?incidentId={Uri.EscapeDataString(incidentId)}";
-        return Read<TravelSubject>(new Uri(sources.Management, path), cancellation, "TravelSubjectUnavailable");
+        return Read<TravelSubject>(new Uri(sources.Management, path), cancellation, "TravelSubjectUnavailable",
+            groupId is null ? null : sources.GroupingReadToken);
     }
 
     private static string Time(DateTimeOffset at) => Uri.EscapeDataString(at.ToString("O"));
@@ -61,11 +63,17 @@ internal sealed class DestinationQueries(HttpClient http, DestinationSources sou
     internal static bool ValidId(string? value) => value is { Length: > 0 and <= 120 } &&
         value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
 
-    private async Task<T> Read<T>(Uri uri, CancellationToken cancellation, string code = "DestinationCatalogUnavailable")
+    private async Task<T> Read<T>(Uri uri, CancellationToken cancellation, string code = "DestinationCatalogUnavailable",
+        string? bearer = null)
     {
         try
         {
-            return await http.GetFromJsonAsync<T>(uri, cancellation) ?? throw Unavailable(code);
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            if (!string.IsNullOrEmpty(bearer))
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
+            using var response = await http.SendAsync(request, cancellation);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<T>(cancellation) ?? throw Unavailable(code);
         }
         catch (Exception error) when (error is HttpRequestException or JsonException or NotSupportedException ||
             (error is OperationCanceledException && !cancellation.IsCancellationRequested))

@@ -9,6 +9,7 @@ var clock = new FixedClock(DateTimeOffset.Parse("2026-11-27T19:40:00Z"));
 var directory = Path.Combine(Path.GetTempPath(), $"cassini-management-{Guid.NewGuid():N}");
 try
 {
+    await GroupingDurabilityTests.RunAsync(clock, Path.Combine(directory, "grouping"));
     var persistence = new FileManagementPersistence(directory);
     var store = new ManagementStore(persistence);
     var commands = new IncidentCommands(store, clock);
