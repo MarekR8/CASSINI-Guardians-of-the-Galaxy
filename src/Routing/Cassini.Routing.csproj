@@ -7,5 +7,9 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Cassini.Routing.Tests" />
+    <Compile Include="../Demo/DemoNetwork.cs" Link="DemoNetwork.cs" />
+    <Compile Include="../Demo/CityNetwork.cs" Link="CityNetwork.cs" />
+    <Content Include="../../data/demo/network/graph.json" Link="warsaw-graph.json"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

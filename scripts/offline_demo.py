@@ -36,7 +36,7 @@ def local_url(port):
 
 
 @contextmanager
-def start_services(port, data_dir):
+def start_services(port, data_dir, scenario="sample", city_directory=None):
     data_dir.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env.update({
@@ -47,6 +47,8 @@ def start_services(port, data_dir):
         "HTTPS_PROXY": "",
         "ALL_PROXY": "",
         "Demo__DataDirectory": str(data_dir),
+        "Demo__Scenario": scenario,
+        "Demo__CityDirectory": str(city_directory) if city_directory else "",
         "Situation__StateFile": str(data_dir / "situation.json"),
         "Routing__StatePath": str(data_dir / "routing-draws.json"),
         "Situation__BaseUrl": local_url(port + 2),
@@ -98,25 +100,36 @@ def wait_ready(url, process, log):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=5080, help="Gateway port (uses this port and the next four)")
-    parser.add_argument("--data", type=Path, default=ARTIFACTS / "offline-demo", help="Local state/log directory")
+    parser.add_argument("--data", type=Path, help="Local state/log directory")
+    parser.add_argument("--scenario", choices=("sample", "warsaw"), default="sample")
+    parser.add_argument("--city-directory", type=Path, help="Directory produced by prepare_warsaw_osm.py")
     parser.add_argument("--no-build", action="store_true", help="Use existing compiled services")
     parser.add_argument("--test", action="store_true", help="Run integration tests in fresh temporary state")
     args = parser.parse_args()
     if not 1024 <= args.port <= 65531:
         parser.error("port must be between 1024 and 65531")
+    if args.city_directory and args.scenario != "warsaw":
+        parser.error("--city-directory requires --scenario warsaw")
     if not args.no_build:
         build()
     if args.test:
         ARTIFACTS.mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="integration-", dir=ARTIFACTS) as directory:
-            with start_services(args.port, Path(directory)) as url:
+            with start_services(args.port, Path(directory), args.scenario, args.city_directory) as url:
                 subprocess.run(
-                    [os.sys.executable, str(ROOT / "tests" / "offline_integration.py"), url],
+                    [os.sys.executable, str(ROOT / "tests" / (
+                        "warsaw_city_integration.py" if args.city_directory else
+                        "warsaw_integration.py" if args.scenario == "warsaw" else "offline_integration.py")), url],
                     cwd=ROOT,
                     check=True,
                 )
         return
-    with start_services(args.port, args.data.resolve()) as url:
+    data = args.data or ARTIFACTS / ("offline-demo" if args.scenario == "sample" else "warsaw-demo")
+    city = args.city_directory
+    default_city = ARTIFACTS / "warsaw-city"
+    if city is None and args.scenario == "warsaw" and (default_city / "city-network.json.gz").is_file():
+        city = default_city
+    with start_services(args.port, data.resolve(), args.scenario, city.resolve() if city else None) as url:
         print("CASSINI Offline: " + url, flush=True)
         print("Ctrl+C zatrzymuje lokalne mikroserwisy.", flush=True)
         try:

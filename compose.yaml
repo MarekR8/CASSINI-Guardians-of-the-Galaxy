@@ -28,6 +28,7 @@ services:
     command: ["Situation.dll"]
     environment:
       Situation__StateFile: /state/situation.json
+      Demo__Scenario: ${CASSINI_SCENARIO:-sample}
     volumes: [situation:/state]
 
   routing:
@@ -41,6 +42,7 @@ services:
     environment:
       Situation__BaseUrl: http://situation:8080
       Routing__StatePath: /state/routing-draws.json
+      Demo__Scenario: ${CASSINI_SCENARIO:-sample}
     depends_on: [situation]
     volumes: [routing:/state]
 

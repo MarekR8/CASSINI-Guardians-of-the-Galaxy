@@ -55,4 +55,8 @@ python experiments/network/osm_to_graph.py --check data/demo/network/graph.json 
 
 ## Results
 
-_(fill in)_
+Warsaw is available as a separate offline scenario. The graph uses OpenStreetMap road geometry and contains Most Świętokrzyski, a pedestrian exit inland in Praga, and a separate approach for the response unit. Situation matches FlyPix polygons to corridor geometry and applies an approved decision atomically. The Routing validation query checks segment IDs against the current situation revision. See the [Warsaw area and data handoff](../../data/local/README.md) and [graph provenance](../../data/demo/network/README.md).
+
+Verification commands are `python scripts/offline_demo.py --test` and `python scripts/offline_demo.py --scenario warsaw --test`. The exercise detection is synthetic. The model, a real FlyPix run and satellite observations for this area need to be verified with the team’s data. The demo keeps closures active until authorized reopening. RabbitMQ, PostGIS and ORS geometry validation remain Stage B work.
+
+The Warsaw-wide AOI is [20.830, 52.080, 21.300, 52.390]. The PBF preparation script builds a local city graph and basemap. The city route query excludes approved OSM closures. The Copernicus task connects through the [Warsaw sync manifest](../../data/local/warsaw-sync.example.json).

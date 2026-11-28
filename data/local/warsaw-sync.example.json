@@ -1,0 +1,31 @@
+{
+  "imagery": {
+    "source": "file",
+    "requireFullCoverage": true,
+    "maxTiles": 64,
+    "images": [
+      {
+        "geoTiff": "imagery/scene.tif",
+        "imageProductId": "",
+        "observedAt": "",
+        "sourceUrl": ""
+      }
+    ]
+  },
+  "hazards": [
+    {
+      "source": "ems",
+      "productId": "",
+      "observedAt": "",
+      "sourceUrl": "",
+      "geoJson": "hazards/flood.geojson"
+    }
+  ],
+  "flypix": {
+    "tenantId": "",
+    "projectId": "",
+    "modelId": "",
+    "classIds": [],
+    "minConfidence": 0
+  }
+}

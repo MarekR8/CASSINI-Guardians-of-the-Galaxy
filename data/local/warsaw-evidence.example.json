@@ -1,0 +1,29 @@
+{
+  "hazards": [
+    {
+      "source": "ems",
+      "productId": "",
+      "observedAt": "",
+      "sourceUrl": "",
+      "geoJson": "flood.geojson",
+      "bbox": [20.830, 52.080, 21.300, 52.390],
+      "resolutionMetres": null,
+      "method": ""
+    }
+  ],
+  "flypix": {
+    "imageProductId": "",
+    "observedAt": "",
+    "sourceUrl": "",
+    "geoTiff": "flypix-image.tif",
+    "resolutionMetres": null,
+    "modelId": null,
+    "tenantId": null,
+    "projectId": null,
+    "rasterId": null,
+    "classIds": [],
+    "layerId": "",
+    "mode": "recorded",
+    "geoJson": "flypix-detections.geojson"
+  }
+}

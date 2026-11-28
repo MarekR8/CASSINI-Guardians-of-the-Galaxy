@@ -38,6 +38,16 @@ app.Use(async (context, next) =>
 });
 app.UseDefaultFiles();
 app.UseStaticFiles();
+var cityDirectory = builder.Configuration["Demo:CityDirectory"];
+if (!string.IsNullOrWhiteSpace(cityDirectory))
+{
+    var cityMap = Path.GetFullPath(Path.Combine(cityDirectory, "city-map.svg"));
+    app.MapGet("/maps/warsaw.svg", (HttpContext context) =>
+    {
+        context.Response.Headers.CacheControl = "private,max-age=86400";
+        return Results.File(cityMap, "image/svg+xml");
+    });
+}
 app.MapGet("/health", () => Results.Ok(new { service = "gateway" }));
 app.MapGet("/api/{service}/queries/{operation}/{id?}", (
     string service, string operation, string? id, HttpContext context, IHttpClientFactory clients) =>

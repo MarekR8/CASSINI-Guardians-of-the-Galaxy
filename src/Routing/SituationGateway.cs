@@ -18,7 +18,7 @@ internal sealed class SituationGateway(HttpClient client)
             var snapshot = await client.GetFromJsonAsync<SituationSnapshot>("queries/snapshot", cancellationToken);
             if (snapshot is null || snapshot.Revision < 0 || snapshot.Stage is < 0 or > 2 ||
                 snapshot.ClosedSegments is null || snapshot.ClosedSegments.Any(segment =>
-                    !Network.Segments.Any(link => link.Id == segment)) ||
+                    !Network.ContainsSegment(segment) && !ValidRetiredCitySegment(segment)) ||
                 snapshot.SegmentRevisions?.Values.Any(revision => revision < 0 || revision > snapshot.Revision) == true)
                 throw new RoutingException(503, "SituationUnavailable", "Migawka warunków przejścia jest niepełna.");
             return snapshot;
@@ -28,6 +28,14 @@ internal sealed class SituationGateway(HttpClient client)
         {
             throw new RoutingException(503, "SituationUnavailable", "Lokalny serwis sytuacji jest niedostępny.");
         }
+    }
+
+    // Active audit records can refer to roads removed or split in a refreshed OSM snapshot.
+    private static bool ValidRetiredCitySegment(string segment)
+    {
+        var parts = segment.Split('-');
+        return parts.Length == 4 && parts[0] == "osm" && parts.Skip(1).All(part =>
+            part.Length > 0 && part.All(char.IsAsciiDigit));
     }
 }
 

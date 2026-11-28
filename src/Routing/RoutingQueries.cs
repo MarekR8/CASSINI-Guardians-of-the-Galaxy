@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Cassini.Routing;
 
 internal sealed record RouteOption(
@@ -57,6 +59,45 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
         if (ScenarioTime(snapshot.Stage) > saved.Route.ArrivesAt)
             return new("Expired", null, snapshot.Revision);
         return new("Active", saved.Route, snapshot.Revision);
+    }
+
+    internal async Task<object> ValidateRouteAsync(string segments, DateTimeOffset? at, CancellationToken cancellationToken)
+    {
+        var ids = segments.Split(',', StringSplitOptions.TrimEntries);
+        if (ids.Length > 5000 || ids.Any(id => !Network.ContainsSegment(id)))
+            throw new RoutingException(400, "InvalidSegment", "Podaj znane odcinki oddzielone przecinkami.");
+
+        var snapshot = await situation.ReadAsync(cancellationToken);
+        var checkedAt = at ?? ScenarioTime(snapshot.Stage);
+        if (checkedAt < ScenarioTime(snapshot.Stage))
+            throw new RoutingException(400, "InvalidTime", "Aktualna migawka nie potwierdza stanu w przeszłości.");
+        var blocked = ids.Where(snapshot.ClosedSegments.Contains).Distinct().ToArray();
+        return new { ok = blocked.Length == 0, reason = blocked.Length == 0 ? null : "ClosedSegment",
+            closedSegments = blocked, snapshot.Revision, at = checkedAt };
+    }
+
+    internal async Task<object> CityRouteAsync(string from, string to, string? mode, CancellationToken cancellationToken)
+    {
+        var city = Network.City
+            ?? throw new RoutingException(503, "CityMapUnavailable", "Przygotuj lokalny wycinek OSM Warszawy.");
+        if (mode is not (null or "walking" or "driving"))
+            throw new RoutingException(400, "InvalidRequest", "Tryb musi mieć wartość walking lub driving.");
+        var start = ReadPoint(from);
+        var destination = ReadPoint(to);
+        var snapshot = await situation.ReadAsync(cancellationToken);
+        var route = city.Route(start, destination, mode == "driving", snapshot.ClosedSegments.ToHashSet(StringComparer.Ordinal));
+        return new { snapshot.Revision, mode = mode ?? "walking", route };
+
+        double[] ReadPoint(string value)
+        {
+            var parts = value.Split(',');
+            if (parts.Length != 2 ||
+                !double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var longitude) ||
+                !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var latitude) ||
+                !city.InBounds(longitude, latitude))
+                throw new RoutingException(400, "InvalidPoint", "Podaj długość i szerokość w granicach obszaru Warszawy.");
+            return [longitude, latitude];
+        }
     }
 
     internal static void ValidateDistribution(string? node, string? mode, string? destination)
