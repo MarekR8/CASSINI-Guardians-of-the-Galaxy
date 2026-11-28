@@ -1,9 +1,13 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Cassini.Demo.SiteCatalog;
 using Cassini.Messaging;
 using Cassini.Sheltering.Catalog;
 using Cassini.Sheltering.Infrastructure;
+using Cassini.Sheltering.Reception;
+using ReceptionHold = Cassini.Sheltering.Reception.ShelterHold;
 
 namespace Cassini.Sheltering.Allocation;
 
@@ -49,7 +53,7 @@ internal sealed record ShelterAvailabilityChangedPayload(
     string ShelterId, int ShelterVersion, int AllocationRevision, PlaceNeeds? Held, string Reason);
 
 internal sealed class AllocationCommands(
-    AllocationStore store, CatalogStore<Shelter> catalog, RoutingClient routing, GroupingClient grouping, TimeProvider clock)
+    AllocationStore store, RoutingClient routing, GroupingClient grouping, TimeProvider clock)
 {
     private const string Producer = "sheltering";
     private const int MaxBatch = 32;
@@ -77,12 +81,12 @@ internal sealed class AllocationCommands(
                     existing.GroupPlanRef != command.GroupPlanRef)
                     throw new SiteCatalogError(409, "AssignmentAlreadyOpen",
                         "This case and leg already has an assignment with different requirements.");
-                return (new AllocationChange([], []), revision => new AssignmentWrite(state.Revision, existing));
+                return (new AllocationChange([], [], []), revision => new AssignmentWrite(state.State.Revision, existing));
             }
 
             var opened = new ShelterAssignment(reference.IncidentId, reference.CaseId, reference.LegId, 1,
                 AssignmentStatus.Pending, needs, command.GroupPlanRef, null, null, null);
-            return (new AllocationChange([opened], [AssignmentChanged(opened, command, state.Revision + 1, "Opened")]),
+            return (new AllocationChange([opened], [], [AssignmentChanged(opened, command, "Opened")]),
                 revision => new AssignmentWrite(revision, opened));
         });
     }
@@ -115,13 +119,13 @@ internal sealed class AllocationCommands(
                 return assignment;
             }).ToArray();
 
-            var shelter = RequireShelter(command.ShelterId!, command.ExpectedShelterVersion!.Value);
-            var held = PlaceHolds(state, shelter, current, targets, checks, plan, command.GroupPlanRef,
+            var shelter = RequireShelter(state, command.ShelterId!, command.ExpectedShelterVersion!.Value);
+            var (held, booked) = PlaceHolds(state, shelter, current, targets, checks, plan, command.GroupPlanRef,
                 command.HoldsExpireAt!.Value, command.ApprovalRef!, command.CommandId!, _ => null);
-            var revision = state.Revision + 1;
-            var events = held.Select(item => AssignmentChanged(item, command, revision, "Reserved"))
-                .Append(AvailabilityChanged(shelter, state, held, [], command, revision, "Reserved")).ToArray();
-            return (new AllocationChange(held, events), next => new BatchWrite(next, shelter.ShelterId, null, held));
+            var revision = state.State.Revision + 1;
+            var events = held.Select(item => AssignmentChanged(item, command, "Reserved"))
+                .Append(AvailabilityChanged(booked, command, revision, "Reserved")).ToArray();
+            return (new AllocationChange(held, [booked], events), next => new BatchWrite(next, shelter.ShelterId, null, held));
         });
     }
 
@@ -155,17 +159,20 @@ internal sealed class AllocationCommands(
                 return assignment;
             }).ToArray();
 
-            var from = RequireShelter(command.FromShelterId!, command.ExpectedFromShelterVersion!.Value);
-            var shelter = RequireShelter(command.ShelterId!, command.ExpectedShelterVersion!.Value);
-            var moved = PlaceHolds(state, shelter, current, targets, checks, plan, command.GroupPlanRef,
+            var from = RequireShelter(state, command.FromShelterId!, command.ExpectedFromShelterVersion!.Value);
+            var shelter = RequireShelter(state, command.ShelterId!, command.ExpectedShelterVersion!.Value);
+            var (moved, booked) = PlaceHolds(state, shelter, current, targets, checks, plan, command.GroupPlanRef,
                 command.HoldsExpireAt!.Value, command.ApprovalRef!, command.CommandId!,
                 previous => new WithdrawnHold(previous.Version, previous.Reservation!.ReservationId,
                     previous.Reservation.ShelterId, command.Reason!, null));
-            var revision = state.Revision + 1;
-            var events = moved.Select(item => AssignmentChanged(item, command, revision, command.Reason!))
-                .Append(AvailabilityChanged(from, state, [], current, command, revision, "TransferredOut"))
-                .Append(AvailabilityChanged(shelter, state, moved, [], command, revision, "TransferredIn")).ToArray();
-            return (new AllocationChange(moved, events), next => new BatchWrite(next, shelter.ShelterId, from.ShelterId, moved));
+            // The new holds and the release of the unused original holds commit together.
+            var released = current.Aggregate(from, (site, item) => ShelterLedger.RemoveHold(site, item.Reservation!.ReservationId));
+            var revision = state.State.Revision + 1;
+            var events = moved.Select(item => AssignmentChanged(item, command, command.Reason!))
+                .Append(AvailabilityChanged(released, command, revision, "TransferredOut"))
+                .Append(AvailabilityChanged(booked, command, revision, "TransferredIn")).ToArray();
+            return (new AllocationChange(moved, [released, booked], events),
+                next => new BatchWrite(next, shelter.ShelterId, from.ShelterId, moved));
         });
     }
 
@@ -197,12 +204,15 @@ internal sealed class AllocationCommands(
                 Version = assignment.Version + 1, Status = AssignmentStatus.AwaitingReplacement, Reservation = null,
                 Withdrawn = withdrawn, Reason = finding,
             };
-            var revision = state.Revision + 1;
-            var shelter = catalog.Read().Items.FirstOrDefault(item => item.ShelterId == hold.ShelterId);
-            var events = new List<IntegrationEvent> { AssignmentChanged(next, command, revision, command.Reason!) };
-            if (shelter is not null)
-                events.Add(AvailabilityChanged(shelter, state, [], [assignment], command, revision, "Invalidated"));
-            return (new AllocationChange([next], events), version => new AssignmentWrite(version, next));
+            var revision = state.State.Revision + 1;
+            var events = new List<IntegrationEvent> { AssignmentChanged(next, command, command.Reason!) };
+            var shelters = new List<Shelter>();
+            if (state.Shelter(hold.ShelterId) is { } shelter)
+            {
+                shelters.Add(ShelterLedger.RemoveHold(shelter, hold.ReservationId));
+                events.Add(AvailabilityChanged(shelters[0], command, revision, "Invalidated"));
+            }
+            return (new AllocationChange([next], shelters, events), version => new AssignmentWrite(version, next));
         });
     }
 
@@ -242,20 +252,24 @@ internal sealed class AllocationCommands(
                     : new WithdrawnHold(assignment.Version, hold.ReservationId, hold.ShelterId, command.Reason!, command.ApprovalRef),
                 Reason = command.Reason,
             };
-            var revision = state.Revision + 1;
-            var events = new List<IntegrationEvent> { AssignmentChanged(next, command, revision, command.Reason!) };
-            if (hold is not null && catalog.Read().Items.FirstOrDefault(item => item.ShelterId == hold.ShelterId) is { } shelter)
-                events.Add(AvailabilityChanged(shelter, state, [], [assignment], command, revision, "Released"));
-            return (new AllocationChange([next], events), version => new AssignmentWrite(version, next));
+            var revision = state.State.Revision + 1;
+            var events = new List<IntegrationEvent> { AssignmentChanged(next, command, command.Reason!) };
+            var shelters = new List<Shelter>();
+            if (hold is not null && state.Shelter(hold.ShelterId) is { } shelter)
+            {
+                shelters.Add(ShelterLedger.RemoveHold(shelter, hold.ReservationId));
+                events.Add(AvailabilityChanged(shelters[0], command, revision, "Released"));
+            }
+            return (new AllocationChange([next], shelters, events), version => new AssignmentWrite(version, next));
         }));
     }
 
     /// <summary>
     /// Rechecks capacity, intake, opening, care and route evidence for the whole batch at one shelter and returns
-    /// every updated assignment. Any failure throws, so the caller commits nothing.
+    /// every updated assignment with the shelter carrying the new holds. Any failure throws, so nothing commits.
     /// </summary>
-    private static ShelterAssignment[] PlaceHolds(
-        AllocationState state, Shelter shelter, ShelterAssignment[] current, AssignmentTarget[] targets,
+    private static (ShelterAssignment[] Assignments, Shelter Shelter) PlaceHolds(
+        AllocationView state, Shelter shelter, ShelterAssignment[] current, AssignmentTarget[] targets,
         IReadOnlyDictionary<string, RouteCheck> checks, ApprovedPlan? plan, GroupPlanRef? planRef,
         DateTimeOffset holdsExpireAt, string approvalRef, string commandId, Func<ShelterAssignment, WithdrawnHold?> withdrawn)
     {
@@ -296,14 +310,10 @@ internal sealed class AllocationCommands(
 
         RequireCareTogether(state, shelter.ShelterId, current, plan);
 
-        var held = state.HeldResources(shelter.ShelterId);
-        var committed = new ShelterCommitments(
-            shelter.Commitments.HeldPlaces + held.Places, shelter.Commitments.HeldAccessiblePlaces + held.AccessiblePlaces,
-            shelter.Commitments.OccupiedPlaces, shelter.Commitments.OccupiedAccessiblePlaces);
-        var effective = shelter with { Commitments = committed };
-        if (effective.IsOvercommitted)
+        // Commitments already include every hold and admission recorded in the shelter's reception ledger.
+        if (shelter.IsOvercommitted)
             throw new SiteCatalogError(422, "Overcommitted", "The shelter has more commitments than usable places.");
-        var free = effective.CalculateAvailability();
+        var free = shelter.CalculateAvailability();
         var demand = current.Aggregate(PlaceNeeds.Zero, (sum, item) => sum.Add(item.Needs));
         if (demand.Places > free.Places)
             throw new SiteCatalogError(422, "InsufficientCapacity",
@@ -314,33 +324,46 @@ internal sealed class AllocationCommands(
 
         if (shelter.Resources.IntakePerHour is { } intake)
         {
-            var batch = current.Select((item, index) => (Hour: Hour(checksByIndex[index].ArrivalWindow!.Earliest), item.Needs.Places));
+            var batch = current.Select((item, index) =>
+                (Hour: ShelterLedger.Hour(checksByIndex[index].ArrivalWindow!.Earliest), item.Needs.Places));
             foreach (var bucket in batch.GroupBy(entry => entry.Hour))
             {
-                var expected = state.HeldAt(shelter.ShelterId)
-                    .Where(item => Hour(item.Reservation!.ArrivalWindow.Earliest) == bucket.Key)
-                    .Sum(item => item.Reservation!.Resources.Places);
-                if (expected + bucket.Sum(entry => entry.Places) > intake)
+                if (ShelterLedger.ArrivalsInHour(shelter, bucket.Key) + bucket.Sum(entry => entry.Places) > intake)
                     throw new SiteCatalogError(422, "IntakeLimitReached",
                         $"The shelter accepts {intake} arrivals in the hour starting {bucket.Key:O}.");
             }
         }
 
-        return current.Select((item, index) =>
+        var booked = shelter;
+        var assignments = current.Select((item, index) =>
         {
             var check = checksByIndex[index];
-            var hold = new ShelterHold($"{commandId}:{item.CaseId}", shelter.ShelterId, shelter.Version, item.Needs,
-                check.ArrivalWindow!, holdsExpireAt, targets[index].Route!, check.SituationRevision, approvalRef, commandId);
+            var arrival = check.ArrivalWindow!;
+            var reservationId = ReservationId(commandId, item.CaseId);
+            booked = ShelterLedger.AddHold(booked, new ReceptionHold(reservationId, item.IncidentId, item.CaseId, item.LegId,
+                new PlaceNeed(item.Needs.Places, item.Needs.AccessiblePlaces),
+                new SiteWindow(arrival.Earliest, arrival.LatestExclusive), holdsExpireAt));
+            var hold = new AssignmentHold(reservationId, shelter.ShelterId, shelter.Version, item.Needs, arrival,
+                holdsExpireAt, targets[index].Route!, check.SituationRevision, approvalRef, commandId);
             return item with
             {
                 Version = item.Version + 1, Status = AssignmentStatus.Reserved, Reservation = hold,
                 Withdrawn = withdrawn(item) ?? item.Withdrawn, Reason = null,
             };
         }).ToArray();
+        return (assignments, booked);
+    }
+
+    /// <summary>A reservation ID the shelter operator can quote in an admission report.</summary>
+    private static string ReservationId(string commandId, string caseId)
+    {
+        var id = $"{commandId}-{caseId}";
+        return id.Length <= 120 ? id
+            : "res-" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(id)))[..40];
     }
 
     /// <summary>Both members of a required-care link travel to the same shelter on the same leg.</summary>
-    private static void RequireCareTogether(AllocationState state, string shelterId, ShelterAssignment[] batch, ApprovedPlan? plan)
+    private static void RequireCareTogether(AllocationView state, string shelterId, ShelterAssignment[] batch, ApprovedPlan? plan)
     {
         if (plan?.Proposal?.RequiredCare is not { } links)
             return;
@@ -351,7 +374,8 @@ internal sealed class AllocationCommands(
             if (moving.Contains(link.CaseId) == moving.Contains(link.RelatedCaseId))
                 continue;
             var partner = moving.Contains(link.CaseId) ? link.RelatedCaseId : link.CaseId;
-            if (state.Find(new(sample.IncidentId, partner, sample.LegId))?.HoldsAt(shelterId) != true)
+            var other = state.Find(new(sample.IncidentId, partner, sample.LegId));
+            if (other?.HoldsAt(shelterId) != true && other?.Reason != $"AdmittedAt:{shelterId}")
                 throw new SiteCatalogError(422, "RequiredCareSplit",
                     "Reserve a required-care pair together or at the shelter where the other person is already held.");
         }
@@ -384,10 +408,10 @@ internal sealed class AllocationCommands(
     }
 
     /// <summary>Returns why the held destination is no longer usable, or null when it remains eligible.</summary>
-    private async Task<string?> CurrentIneligibility(AssignmentRef reference, ShelterHold hold, DateTimeOffset? at,
+    private async Task<string?> CurrentIneligibility(AssignmentRef reference, AssignmentHold hold, DateTimeOffset? at,
         CancellationToken cancellation)
     {
-        var shelter = catalog.Read().Items.FirstOrDefault(item => item.ShelterId == hold.ShelterId);
+        var shelter = store.Read().Shelter(hold.ShelterId);
         if (shelter is null)
             return "ShelterNotFound";
         if (shelter.Status != "open")
@@ -403,16 +427,16 @@ internal sealed class AllocationCommands(
         return null;
     }
 
-    private Shelter RequireShelter(string shelterId, int expectedVersion)
+    private static Shelter RequireShelter(AllocationView state, string shelterId, int expectedVersion)
     {
-        var shelter = catalog.Read().Items.FirstOrDefault(item => item.ShelterId == shelterId)
+        var shelter = state.Shelter(shelterId)
             ?? throw new SiteCatalogError(404, "ShelterNotFound", "The shelter is not in the catalog.");
         if (shelter.Version != expectedVersion)
             throw new SiteCatalogError(409, "ShelterVersionConflict", "Read the current shelter before deciding again.");
         return shelter;
     }
 
-    private static ShelterAssignment RequireAssignment(AllocationState state, AssignmentTarget target)
+    private static ShelterAssignment RequireAssignment(AllocationView state, AssignmentTarget target)
     {
         var assignment = state.Find(new(target.IncidentId!, target.CaseId!, target.LegId!)) ?? throw NotFound();
         if (assignment.Version != target.ExpectedVersion)
@@ -479,13 +503,7 @@ internal sealed class AllocationCommands(
     private static string RouteKey(AssignmentTarget target) =>
         $"{target.IncidentId}/{target.LegId}/{target.Route!.EvidenceId}/{JsonSerializer.Serialize(target.Route.Query, Json)}";
 
-    private static DateTimeOffset Hour(DateTimeOffset at)
-    {
-        var utc = at.ToUniversalTime();
-        return new DateTimeOffset(utc.Year, utc.Month, utc.Day, utc.Hour, 0, 0, TimeSpan.Zero);
-    }
-
-    private IntegrationEvent AssignmentChanged(ShelterAssignment assignment, object command, int revision, string reason)
+    private IntegrationEvent AssignmentChanged(ShelterAssignment assignment, object command, string reason)
     {
         var (correlation, causation) = Trace(command);
         return IntegrationEvent.Create(EventTypes.ShelterAssignmentChanged, Producer, assignment.Ref.Key,
@@ -496,13 +514,10 @@ internal sealed class AllocationCommands(
                 reason), correlation, causation);
     }
 
-    private IntegrationEvent AvailabilityChanged(Shelter shelter, AllocationState state, IEnumerable<ShelterAssignment> added,
-        IEnumerable<ShelterAssignment> removed, object command, int revision, string reason)
+    /// <summary>Reports the shelter's held places after the change, from its updated commitments.</summary>
+    private IntegrationEvent AvailabilityChanged(Shelter shelter, object command, int revision, string reason)
     {
-        var addedKeys = added.ToArray();
-        var removedKeys = removed.Select(item => item.Ref.Key).ToHashSet(StringComparer.Ordinal);
-        var remaining = state.HeldAt(shelter.ShelterId).Where(item => !removedKeys.Contains(item.Ref.Key))
-            .Concat(addedKeys).Aggregate(PlaceNeeds.Zero, (sum, item) => sum.Add(item.Reservation!.Resources));
+        var remaining = new PlaceNeeds(shelter.Commitments.HeldPlaces, shelter.Commitments.HeldAccessiblePlaces);
         var (correlation, causation) = Trace(command);
         return IntegrationEvent.Create(EventTypes.ShelterAvailabilityChanged, Producer, shelter.ShelterId,
             revision, clock.GetUtcNow(), new ShelterAvailabilityChangedPayload(shelter.ShelterId, shelter.Version, revision,

@@ -37,7 +37,8 @@ Stage A is implemented in `src/Sheltering/Allocation/`. The [SH-W4 contract and 
   - using route evidence from before a catalog change: `RouteIneligible`;
   - adding `case-14` after `shelter-b` reached three arrivals in that hour: `IntakeLimitReached`.
 - **Transfers.** A transfer to a shelter at its intake limit fails, and the original hold and assignment stay unchanged. A fresh Routing check confirms that the original route is still eligible, and invalidation is refused with `AssignmentStillEligible`. After `shelter-a` closes, `ReassignShelterPlaces` moves the hold to `shelter-b` in one commit, and the withdrawn reservation is recorded. Baseline occupancy at `shelter-a` is unchanged. After `shelter-b` also closes, no candidate remains. `InvalidateShelterAssignment` sets the assignment to `AwaitingReplacement` with the reason `SiteClosed` and releases its hold. The outbox holds the `ShelterAssignmentChanged.v1` events with withdrawn shelter references for SH-T06.
-- **Storage.** Assignments, holds, receipts and outbox entries are written as one JSON state file per command (`Sheltering:AllocationFile`, a temporary file then an atomic rename). Shelter configuration changes take the same lock. After a restart the receipt, the assignment version, the hold counts and the outbox sequence are unchanged.
+- **Storage.** Holds are written into each shelter's `reception.holds` and commitments (the SH-T05 ledger). Assignments, receipts and the allocation outbox are stored in the same catalog state file. `CatalogStore.Mutate` commits all of them in one write: a temporary file, then an atomic rename. Shelter configuration, admissions and departures take the same lock. After a restart the receipt, the assignment version, the hold counts and the outbox sequence are unchanged.
+- **Admission handoff.** An SH-T05 admission of an SH-T04 hold converts exactly that hold, and the free places do not change. The assignment then reads as `Admitted`, and invalidating or releasing it is refused with `OccupancyRequiresDeparture`.
 - **Regression.** These all pass: `offline_demo.py --test`, `offline_demo.py --sheltering --test`, `destination_routing_integration.py`, `grouping_integration.py`, and the Routing, Management, Gateway and Messaging test projects.
 
 Unresolved limits:
@@ -45,8 +46,9 @@ Unresolved limits:
 - Stage B has not started. There is no PostgreSQL store, migrations or two-instance concurrency check. One Sheltering writer is assumed.
 - Routing is called before the lock. A Situation change between that call and the commit is caught only by the shelter evidence revision.
 - Routing evidence IDs include the shelter catalog revision, so any shelter edit invalidates outstanding candidates and they must be read again.
-- Intake is counted per clock hour of expected arrival. Baseline holds from the catalog fixture have no arrival time and do not count toward intake.
+- Intake is counted per clock hour: holds with an arrival window plus admissions observed in that hour. Seeded baseline commitments without a ledger entry do not count.
 - Hold expiry is not applied automatically. It takes an explicit `HoldExpired` release with an observation time.
-- `Admitted` is reserved for SH-T05, and publication or withdrawal through Routing belongs to SH-T06.
+- `Admitted` and `Closed` after departure are derived from the reception ledger and not stored. Publication or withdrawal through Routing belongs to SH-T06.
+- SH-T04 holds do not change the catalog revision or the shelter version. `allocationRevision` tracks them.
 - Node-routed synthetic people are not bound to a Management case.
 - The Docker image was not built because the engine was unavailable.

@@ -1,0 +1,39 @@
+{
+  "revision": 2,
+  "at": "2026-11-27T19:51:00Z",
+  "shelters": [
+    {
+      "shelterId": "shelter-a",
+      "name": "Schronienie wschodnie A",
+      "status": "open",
+      "version": 3,
+      "counters": {
+        "awaitingAdmission": { "people": 1, "places": 1, "accessiblePlaces": 1 },
+        "overdueArrivals": 1,
+        "present": { "people": 0, "places": 0, "accessiblePlaces": 0 },
+        "admissionsConfirmed": 1,
+        "departuresConfirmed": 1,
+        "commitments": { "heldPlaces": 2, "heldAccessiblePlaces": 1, "occupiedPlaces": 2, "occupiedAccessiblePlaces": 1 },
+        "available": { "places": 4, "accessiblePlaces": 0 },
+        "untrackedHeld": { "places": 1, "accessiblePlaces": 0 },
+        "untrackedOccupied": { "places": 2, "accessiblePlaces": 1 }
+      },
+      "awaiting": [
+        {
+          "reservationId": "reservation-household-14", "caseId": "case-15", "legId": "leg-shelter",
+          "resources": { "places": 1, "accessiblePlaces": 1 },
+          "arrivalWindow": { "opensAt": "2026-11-27T19:30:00Z", "closesAt": "2026-11-27T19:50:00Z" },
+          "expiresAt": "2026-11-27T20:15:00Z", "overdue": true
+        }
+      ],
+      "admissions": [
+        {
+          "admissionId": "report-arrival-14-1", "caseId": "case-14", "legId": "leg-shelter",
+          "reservationId": "reservation-household-14", "walkIn": false,
+          "resources": { "places": 1, "accessiblePlaces": 0 },
+          "admittedAt": "2026-11-27T19:32:00Z", "departedAt": "2026-11-27T19:55:00Z"
+        }
+      ]
+    }
+  ]
+}

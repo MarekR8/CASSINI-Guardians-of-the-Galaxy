@@ -28,7 +28,6 @@ services:
       Management__BaseUrl: http://management:8080
       Sheltering__SeedFile: /app/sample-sites.json
       Sheltering__StateFile: /state/shelters.json
-      Sheltering__AllocationFile: /state/shelter-allocations.json
     depends_on: [situation]
     volumes: [sheltering:/state]
 

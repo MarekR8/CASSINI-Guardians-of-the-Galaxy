@@ -18,7 +18,7 @@ internal sealed record CandidateView(
     string IncidentId, string LegId, string[] CaseIds, int AllocationRevision, PlaceNeeds Demand,
     ShelterCandidate[] Candidates, RejectedShelter[] Rejected);
 
-internal sealed class AllocationQueries(AllocationStore store, CatalogStore<Shelter> catalog, RoutingClient routing)
+internal sealed class AllocationQueries(AllocationStore store, RoutingClient routing)
 {
     internal object GetAssignment(string? incidentId, string? caseId, string? legId)
     {
@@ -27,7 +27,7 @@ internal sealed class AllocationQueries(AllocationStore store, CatalogStore<Shel
         var state = store.Read();
         var assignment = state.Find(new(incidentId!, caseId!, legId!))
             ?? throw new SiteCatalogError(404, "AssignmentNotFound", "No shelter assignment exists for this case and leg.");
-        return new { revision = state.Revision, assignment };
+        return new { revision = state.State.Revision, assignment };
     }
 
     internal object GetAssignments(string? incidentId)
@@ -35,15 +35,15 @@ internal sealed class AllocationQueries(AllocationStore store, CatalogStore<Shel
         if (!SiteRules.IsId(incidentId))
             throw new SiteCatalogError(400, "InvalidIncident", "Specify a valid incidentId.");
         var state = store.Read();
-        var assignments = state.Assignments.Values.Where(item => item.IncidentId == incidentId)
+        var assignments = state.State.Assignments.Values.Where(item => item.IncidentId == incidentId)
             .OrderBy(item => item.CaseId, StringComparer.Ordinal).ThenBy(item => item.LegId, StringComparer.Ordinal)
             .ToArray();
-        return new { revision = state.Revision, assignments };
+        return new { revision = state.State.Revision, assignments };
     }
 
     internal object GetOutbox(long? after)
     {
-        var state = store.Read();
+        var state = store.Read().State;
         return new { revision = state.Revision, entries = state.Outbox.Where(entry => entry.Sequence > (after ?? 0)).ToArray() };
     }
 
@@ -74,7 +74,7 @@ internal sealed class AllocationQueries(AllocationStore store, CatalogStore<Shel
             request.ClearBy, request.StepFree, request.GroupId, request.GroupRevision, request.TransportId, null);
         var feasible = new List<(ShelterCandidate Candidate, DateTimeOffset Arrival)>();
         var rejected = new List<RejectedShelter>();
-        foreach (var shelter in catalog.Read().Items.OrderBy(item => item.ShelterId, StringComparer.Ordinal))
+        foreach (var shelter in state.Shelters.Values.OrderBy(item => item.ShelterId, StringComparer.Ordinal))
         {
             if (current.Contains(shelter.ShelterId))
             {
@@ -83,15 +83,15 @@ internal sealed class AllocationQueries(AllocationStore store, CatalogStore<Shel
             }
 
             var check = await routing.CheckShelterRoute(party[0].Ref, shelter.ShelterId, query, null, cancellation);
-            var available = Available(state, shelter);
-            var reason = Infeasible(state, shelter, check, demand, available);
+            var available = shelter.CalculateAvailability();
+            var reason = Infeasible(shelter, check, demand, available);
             if (reason is not null)
             {
                 rejected.Add(new(shelter.ShelterId, reason));
                 continue;
             }
 
-            var shared = groupId is null ? 0 : state.Assignments.Values.Count(item =>
+            var shared = groupId is null ? 0 : state.State.Assignments.Values.Count(item =>
                 item.GroupPlanRef?.GroupId == groupId && item.LegId == request.LegId &&
                 !partyKeys.Contains(item.Ref.Key) && item.HoldsAt(shelter.ShelterId));
             feasible.Add((new ShelterCandidate(0, shelter.ShelterId, shelter.Version, shared, check.DepartsAt,
@@ -101,28 +101,10 @@ internal sealed class AllocationQueries(AllocationStore store, CatalogStore<Shel
         var ranked = feasible.OrderByDescending(item => item.Candidate.SharedWithGroup).ThenBy(item => item.Arrival)
             .ThenBy(item => item.Candidate.ShelterId, StringComparer.Ordinal)
             .Select((item, index) => item.Candidate with { Rank = index + 1 }).ToArray();
-        return new CandidateView(request.IncidentId!, request.LegId!, ids, state.Revision, demand, ranked, rejected.ToArray());
+        return new CandidateView(request.IncidentId!, request.LegId!, ids, state.State.Revision, demand, ranked, rejected.ToArray());
     }
 
-    internal static AvailablePlaces Available(AllocationState state, Shelter shelter) =>
-        WithAllocations(state, shelter).CalculateAvailability();
-
-    /// <summary>Adds this service's active holds to the shelter's configured baseline commitments.</summary>
-    internal static Shelter WithAllocations(AllocationState state, Shelter shelter)
-    {
-        var held = state.HeldResources(shelter.ShelterId);
-        return shelter with
-        {
-            Commitments = shelter.Commitments with
-            {
-                HeldPlaces = shelter.Commitments.HeldPlaces + held.Places,
-                HeldAccessiblePlaces = shelter.Commitments.HeldAccessiblePlaces + held.AccessiblePlaces,
-            },
-        };
-    }
-
-    private static string? Infeasible(AllocationState state, Shelter shelter, RouteCheck check, PlaceNeeds demand,
-        AvailablePlaces available)
+    private static string? Infeasible(Shelter shelter, RouteCheck check, PlaceNeeds demand, AvailablePlaces available)
     {
         if (!check.Eligible)
             return check.Reason ?? "RouteIneligible";
@@ -133,7 +115,7 @@ internal sealed class AllocationQueries(AllocationStore store, CatalogStore<Shel
             checked((int)check.SituationRevision));
         if (reason is not null)
             return reason;
-        if (WithAllocations(state, shelter).IsOvercommitted)
+        if (shelter.IsOvercommitted)
             return "Overcommitted";
         if (demand.Places > available.Places)
             return "InsufficientCapacity";
@@ -141,11 +123,7 @@ internal sealed class AllocationQueries(AllocationStore store, CatalogStore<Shel
             return "InsufficientAccessiblePlaces";
         if (shelter.Resources.IntakePerHour is { } intake)
         {
-            var hour = arrival.Earliest.ToUniversalTime();
-            var expected = state.HeldAt(shelter.ShelterId).Where(item =>
-                item.Reservation!.ArrivalWindow.Earliest.ToUniversalTime() is var other &&
-                other.Date == hour.Date && other.Hour == hour.Hour).Sum(item => item.Reservation!.Resources.Places);
-            if (expected + demand.Places > intake)
+            if (ShelterLedger.ArrivalsInHour(shelter, arrival.Earliest) + demand.Places > intake)
                 return "IntakeLimitReached";
         }
         return null;

@@ -7,7 +7,7 @@ internal static class AssignmentStatus
     internal const string Pending = "Pending";
     internal const string Reserved = "Reserved";
     internal const string AwaitingReplacement = "AwaitingReplacement";
-    // Written by the admission workflow (SH-T05). Allocation commands never move admitted occupancy.
+    // Derived from SH-T05 admission reports in the reception ledger. Allocation commands never move admitted occupancy.
     internal const string Admitted = "Admitted";
     internal const string Closed = "Closed";
 }
@@ -41,7 +41,8 @@ internal sealed record RouteQuery(
 
 internal sealed record RouteEvidenceRef(string? EvidenceId, RouteQuery? Query);
 
-internal sealed record ShelterHold(
+/// <summary>Assignment-side record of a hold; the hold itself lives in the shelter's reception ledger.</summary>
+internal sealed record AssignmentHold(
     string ReservationId, string ShelterId, int ShelterVersion, PlaceNeeds Resources, ArrivalWindow ArrivalWindow,
     DateTimeOffset HoldsExpireAt, RouteEvidenceRef Route, long SituationRevision, string ApprovalRef, string CommandId);
 
@@ -50,7 +51,7 @@ internal sealed record WithdrawnHold(
 
 internal sealed record ShelterAssignment(
     string IncidentId, string CaseId, string LegId, int Version, string Status, PlaceNeeds Needs,
-    GroupPlanRef? GroupPlanRef, ShelterHold? Reservation, WithdrawnHold? Withdrawn, string? Reason)
+    GroupPlanRef? GroupPlanRef, AssignmentHold? Reservation, WithdrawnHold? Withdrawn, string? Reason)
 {
     internal AssignmentRef Ref => new(IncidentId, CaseId, LegId);
 

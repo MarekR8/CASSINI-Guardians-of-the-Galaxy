@@ -15,7 +15,7 @@
       },
       "groupPlanRef": null,
       "reservation": {
-        "reservationId": "cmd-reserve-case-14:case-14",
+        "reservationId": "cmd-reserve-case-14-case-14",
         "shelterId": "shelter-a",
         "shelterVersion": 1,
         "resources": {

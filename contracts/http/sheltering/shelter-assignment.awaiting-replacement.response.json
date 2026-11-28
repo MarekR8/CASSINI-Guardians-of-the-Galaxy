@@ -14,7 +14,7 @@
     "reservation": null,
     "withdrawn": {
       "assignmentVersion": 3,
-      "reservationId": "cmd-reassign-case-14:case-14",
+      "reservationId": "cmd-reassign-case-14-case-14",
       "shelterId": "shelter-b",
       "reason": "ShelterClosed",
       "evidenceRef": "synthetic-closure-report"

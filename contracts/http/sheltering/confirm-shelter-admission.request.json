@@ -1,0 +1,12 @@
+{
+  "commandId": "cmd-report-arrival-14",
+  "expectedVersion": 1,
+  "shelterId": "shelter-a",
+  "incidentId": "incident-42",
+  "reportId": "report-arrival-14",
+  "observedAt": "2026-11-27T19:32:00Z",
+  "arrivals": [
+    { "caseId": "case-14", "legId": "leg-shelter" },
+    { "caseId": "case-17", "legId": "leg-shelter", "resources": { "places": 1, "accessiblePlaces": 0 } }
+  ]
+}

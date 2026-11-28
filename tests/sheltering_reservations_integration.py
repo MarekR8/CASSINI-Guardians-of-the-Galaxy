@@ -82,6 +82,12 @@ class Client:
         result = self.query("routing/queries/destination-route", args)
         return {"evidenceId": result["evidence"]["evidenceId"] if result["evidence"] else None, "query": query}, result
 
+    def version(self, shelter_id):
+        return self.shelters()[shelter_id]["version"]
+
+    def reception(self, shelter_id):
+        return self.query("sheltering/queries/shelter-reception", {"shelterId": shelter_id, "at": AT})["shelters"][0]
+
     def configure(self, shelter_id, command_id, **changes):
         site = next(item for item in SITES["shelters"] if item["shelterId"] == shelter_id)
         current = self.shelters()[shelter_id]
@@ -207,20 +213,43 @@ def exercise(client):
     assert [item["status"] for item in booked["assignments"]] == ["Reserved", "Reserved"], booked
     assert client.shelters()["shelter-b"]["commitments"]["heldAccessiblePlaces"] == 2
 
+    # SH-W4 -> SH-T05: the holds sit in shelter-b's reception ledger, so admission converts exactly this hold.
+    awaiting = {item["caseId"]: item["reservationId"] for item in client.reception("shelter-b")["awaiting"]}
+    assert awaiting == {loser: f"loser-{loser}-{loser}", "case-15": "party-b-case-15", "case-16": "party-b-case-16"}, awaiting
+    before_admission = client.shelters()["shelter-b"]
+    admitted = client.command("confirm-shelter-admission", {
+        "commandId": "admit-16", "expectedVersion": before_admission["version"], "shelterId": "shelter-b",
+        "incidentId": INCIDENT, "reportId": "report-admit-16", "observedAt": "2026-11-27T19:30:00Z",
+        "arrivals": [{"caseId": "case-16", "legId": LEG, "reservationId": "party-b-case-16"}]})
+    assert admitted["entries"][0]["outcome"] == "Admitted", admitted
+    after_admission = client.shelters()["shelter-b"]
+    assert after_admission["available"] == before_admission["available"], "admission keeps free places unchanged"
+    assert after_admission["commitments"]["occupiedPlaces"] == before_admission["commitments"]["occupiedPlaces"] + 1
+    admitted_16 = client.assignment("case-16")
+    assert admitted_16["status"] == "Admitted", admitted_16
+    client.command("invalidate-shelter-assignment", {
+        "commandId": "invalidate-admitted", "incidentId": INCIDENT, "caseId": "case-16", "legId": LEG,
+        "expectedVersion": admitted_16["version"], "reason": "ShelterClosed"}, 422, "OccupancyRequiresDeparture")
+    client.command("release-shelter-reservation", {
+        "commandId": "release-admitted", "incidentId": INCIDENT, "caseId": "case-16", "legId": LEG,
+        "expectedVersion": admitted_16["version"], "reason": "Cancelled", "stillRequired": False,
+        "approvalRef": "synthetic-coordinator"}, 422, "OccupancyRequiresDeparture")
+
     # Intake window: shelter-b accepts three arrivals in the 19:00 hour and has a free place for case-14.
     late = client.candidates(["case-14"], mode="walking")
     assert {item["shelterId"]: item["reason"] for item in late["rejected"]} == {
         "shelter-a": "InsufficientCapacity", "shelter-b": "IntakeLimitReached"}, late
     walk_route, _ = client.route("shelter-b", {"mode": "walking", "at": AT, "caseIds": "case-14", "clearBy": CLEAR_BY})
-    reserve(client, "case-14-b", "shelter-b", 2, [target(client.assignment("case-14"), walk_route)], plan,
-            422, "IntakeLimitReached")
+    reserve(client, "case-14-b", "shelter-b", client.version("shelter-b"),
+            [target(client.assignment("case-14"), walk_route)], plan, 422, "IntakeLimitReached")
     assert client.assignment("case-14")["status"] == "Pending"
 
     # SH-A06 failed transfer: shelter-b cannot take the winner, so the original hold and route remain current.
     held = client.assignment(winner)
     move_route, _ = client.route("shelter-b", walker_query(winner))
     transfer = {"commandId": "move-winner-early", "correlationId": "corr-transfer", "fromShelterId": "shelter-a",
-                "expectedFromShelterVersion": 2, "shelterId": "shelter-b", "expectedShelterVersion": 2,
+                "expectedFromShelterVersion": 2, "shelterId": "shelter-b",
+                "expectedShelterVersion": client.version("shelter-b"),
                 "reason": "CoordinatorTransfer", "groupPlanRef": None, "holdsExpireAt": EXPIRES,
                 "approvalRef": "synthetic-coordinator", "assignments": [target(held, move_route)]}
     client.command("reassign-shelter-places", transfer, 422, "IntakeLimitReached")
@@ -248,7 +277,8 @@ def exercise(client):
     rows = client.shelters()
     assert rows["shelter-a"]["commitments"]["heldPlaces"] == baseline["shelter-a"]["commitments"]["heldPlaces"]
     assert rows["shelter-a"]["commitments"]["occupiedPlaces"] == occupied_a, "occupancy stays until departure"
-    assert rows["shelter-b"]["commitments"]["heldPlaces"] == 4
+    assert rows["shelter-b"]["commitments"]["heldPlaces"] == 3
+    assert client.assignment("case-16")["status"] == "Admitted"
 
     # SH-A06 without a replacement: shelter-b also closes; the loser awaits replacement and its hold is released.
     client.configure("shelter-b", "close-b", status="closed")
@@ -261,7 +291,7 @@ def exercise(client):
         "evidenceRef": "synthetic-closure-report"})["assignment"]
     assert (invalidated["status"], invalidated["reason"], invalidated["reservation"]) == (
         "AwaitingReplacement", "SiteClosed", None), invalidated
-    assert client.shelters()["shelter-b"]["commitments"]["heldPlaces"] == 3
+    assert client.shelters()["shelter-b"]["commitments"]["heldPlaces"] == 2
 
     # ReleaseShelterReservation: an agreed expiry needs evidence; a cancellation ends the need.
     release = {"commandId": "release-early", "incidentId": INCIDENT, "caseId": winner, "legId": LEG,
@@ -271,6 +301,7 @@ def exercise(client):
     closed = client.command("release-shelter-reservation", {**release, "commandId": "cancel-winner",
                                                              "reason": "Cancelled", "stillRequired": False})
     assert closed["assignment"]["status"] == "Closed"
+    assert client.shelters()["shelter-b"]["commitments"]["heldPlaces"] == 1
     client.command("reserve-shelter-places", {"commandId": "empty", "shelterId": "shelter-b", "expectedShelterVersion": 4,
                                               "holdsExpireAt": EXPIRES, "approvalRef": "x", "assignments": []},
                    400, "InvalidBatch")
@@ -291,7 +322,8 @@ def after_restart(client, saved):
     restored = client.assignment(saved["loser"])
     assert (restored["status"], restored["version"]) == ("AwaitingReplacement", saved["loserVersion"]), restored
     assert len(client.query("sheltering/queries/allocation-outbox", {"after": 0})["entries"]) == saved["outbox"]
-    assert client.shelters()["shelter-b"]["commitments"]["heldPlaces"] == 2
+    assert client.shelters()["shelter-b"]["commitments"]["heldPlaces"] == 1
+    assert client.assignment("case-16")["status"] == "Admitted"
 
 
 def main():
@@ -310,8 +342,8 @@ def main():
         with start_services(args.port, Path(directory), sheltering=True) as base:
             after_restart(Client(base), saved)
     print(f"SH-T04 reservations passed: {saved['winner']} took the final place, batches stayed all-or-nothing, "
-          "a failed transfer kept the original hold, closure produced a transfer and an unresolved assignment, "
-          "and state survived a restart.")
+          "an SH-T05 admission converted an SH-T04 hold, a failed transfer kept the original hold, closure produced "
+          "a transfer and an unresolved assignment, and state survived a restart.")
 
 
 if __name__ == "__main__":

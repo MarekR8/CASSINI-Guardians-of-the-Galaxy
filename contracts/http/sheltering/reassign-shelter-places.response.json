@@ -15,7 +15,7 @@
       },
       "groupPlanRef": null,
       "reservation": {
-        "reservationId": "cmd-reassign-case-14:case-14",
+        "reservationId": "cmd-reassign-case-14-case-14",
         "shelterId": "shelter-b",
         "shelterVersion": 1,
         "resources": {
@@ -48,7 +48,7 @@
       },
       "withdrawn": {
         "assignmentVersion": 2,
-        "reservationId": "cmd-reserve-case-14:case-14",
+        "reservationId": "cmd-reserve-case-14-case-14",
         "shelterId": "shelter-a",
         "reason": "ShelterClosed",
         "evidenceRef": null
