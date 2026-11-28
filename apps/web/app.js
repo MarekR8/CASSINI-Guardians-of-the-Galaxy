@@ -7,7 +7,7 @@ const state = {
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null, reviewSignature: null,
   cityOverview: true, cityPicking: false, cityPoints: [], cityPath: null,
-  satelliteScene: null,
+  satelliteScene: null, satelliteDetail: false,
 };
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
@@ -137,7 +137,6 @@ async function refresh(epoch) {
   $('map-credit').hidden = !warsaw;
   $('city-tools').hidden = !warsaw || !(network.city || scene);
   $('city-routing').hidden = !network.city;
-  $('satellite-credit').hidden = !scene;
   if (scene) {
     $('satellite-source').href = scene.sourceUrl;
     text('satellite-source', 'Contains modified Copernicus Sentinel data ' + scene.observedAt.slice(0, 4));
@@ -253,6 +252,13 @@ function renderMap(route) {
   const city = state.network.city;
   const cityBounds = city?.bounds ?? (warsaw ? scene?.bounds : null);
   const overview = Boolean(cityBounds && state.cityOverview);
+  const ortho = !overview && !state.satelliteDetail ? scene?.detail : null;
+  const background = ortho ?? scene;
+  $('satellite-credit').hidden = !scene || Boolean(ortho);
+  $('ortho-credit').hidden = !ortho;
+  if (ortho) $('ortho-source').href = ortho.sourceUrl;
+  $('map-layer-tools').hidden = overview || !scene?.detail;
+  text('map-layer', ortho ? 'Pokaż Sentinel-2' : 'Pokaż ortofotomapę');
   const bounds = overview ? cityBounds : scene?.viewBounds ?? state.network.bounds;
   $('city-overview').setAttribute('aria-pressed', overview);
   $('city-detail').setAttribute('aria-pressed', !overview);
@@ -278,9 +284,9 @@ function renderMap(route) {
   grid.append(svg('path', { d: 'M 34 0 H 0 V 34', fill: 'none', stroke: '#294049', 'stroke-width': 1 }));
   defs.append(grid);
   map.replaceChildren(defs, svg('rect', { width: 760, height: 420, fill: 'url(#grid)' }));
-  if (scene) {
-    const image = mapImage(scene.bounds, '/maps/' + scene.image, .83);
-    image.id = 'satellite-background';
+  if (background) {
+    const image = mapImage(background.bounds, '/maps/' + background.image, .83);
+    image.id = ortho ? 'orthophoto-background' : 'satellite-background';
     map.append(image);
   }
   if (overview && city) {
@@ -419,6 +425,10 @@ function showCityPath(path) {
 
 $('city-overview').addEventListener('click', () => { state.cityOverview = true; redrawMap(); });
 $('city-detail').addEventListener('click', () => { state.cityOverview = false; redrawMap(); });
+$('map-layer').addEventListener('click', () => {
+  state.satelliteDetail = !state.satelliteDetail;
+  redrawMap();
+});
 $('city-pick').addEventListener('click', () => {
   state.cityPicking = !state.cityPicking;
   state.cityPoints = [];

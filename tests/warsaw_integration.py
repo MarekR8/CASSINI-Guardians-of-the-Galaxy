@@ -44,6 +44,7 @@ scene = request("/maps/satellite.json")["warsaw"]
 assert scene["bounds"] == [20.830, 52.080, 21.300, 52.390]
 assert "floodArchive" not in scene
 assert request("/maps/" + scene["image"]).startswith(b"\xff\xd8\xff")
+assert request("/maps/" + scene["detail"]["image"]).startswith(b"\xff\xd8\xff")
 network = request("/api/routing/queries/network")
 assert network["scenario"] == "warsaw" and "OpenStreetMap" in network["attribution"]
 assert len(network["contextRoads"]) > 50 and network["waterways"]

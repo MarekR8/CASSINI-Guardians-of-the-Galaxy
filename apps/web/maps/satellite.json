@@ -8,7 +8,12 @@
       50.45
     ],
     "observedAt": "2026-11-05T10:06:47.543000Z",
-    "viewBounds": [16.642, 50.423, 16.664, 50.442],
+    "viewBounds": [
+      16.642,
+      50.423,
+      16.664,
+      50.442
+    ],
     "products": [
       "S2B_T33UXR_20261105T100207_L2A"
     ],
@@ -652,6 +657,16 @@
           ]
         ]
       }
+    },
+    "detail": {
+      "image": "klodzko-ortho.jpg",
+      "bounds": [
+        16.62134925,
+        50.421311111,
+        16.68465075,
+        50.443688889
+      ],
+      "sourceUrl": "https://www.geoportal.gov.pl/pl/dane/ortofotomapa-orto/"
     }
   },
   "warsaw": {
@@ -669,6 +684,16 @@
       "S2B_T34UDD_20261109T094127_L2A",
       "S2B_T34UED_20261109T094127_L2A"
     ],
-    "sourceUrl": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2B_T34UDC_20261109T094127_L2A"
+    "sourceUrl": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2B_T34UDC_20261109T094127_L2A",
+    "detail": {
+      "image": "warsaw-ortho.jpg",
+      "bounds": [
+        21.006772129,
+        52.234577778,
+        21.062227871,
+        52.253422222
+      ],
+      "sourceUrl": "https://www.geoportal.gov.pl/pl/dane/ortofotomapa-orto/"
+    }
   }
 }

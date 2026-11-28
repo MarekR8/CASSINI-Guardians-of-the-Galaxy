@@ -47,6 +47,9 @@ assert archive["observedAt"] == "2024-09-15T05:01:00Z" and archive["geometry"]["
 with LOCAL_HTTP.open(BASE + "/maps/" + scene["image"], timeout=10) as image:
     assert image.headers.get_content_type() == "image/jpeg"
     assert image.read(3) == b"\xff\xd8\xff"
+with LOCAL_HTTP.open(BASE + "/maps/" + scene["detail"]["image"], timeout=10) as image:
+    assert image.headers.get_content_type() == "image/jpeg"
+    assert image.read(3) == b"\xff\xd8\xff"
 
 initial = get("situation", "snapshot")
 assert initial["revision"] == 0 and initial["closedSegments"] == []
