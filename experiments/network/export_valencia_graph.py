@@ -6,7 +6,7 @@ import gzip
 import json
 from pathlib import Path
 from uuid import uuid4
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from shapely import prepare
 from shapely.geometry import LineString, box, mapping, shape
@@ -113,14 +113,20 @@ def write_package(output, graph):
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = output.with_name(f".{output.name}.{uuid4().hex}.tmp")
     try:
-        with ZipFile(staging, "w", compression=ZIP_DEFLATED) as archive:
-            archive.write(ROOT / "data/local/valencia-task03.md", "README.md")
+        with ZipFile(staging, "w") as archive:
+            def add(name, content):
+                entry = ZipInfo(name)
+                entry.create_system = 3
+                entry.external_attr = 0o644 << 16
+                archive.writestr(entry, content, compress_type=ZIP_DEFLATED)
+
+            add("README.md", (ROOT / "data/local/valencia-task03.md").read_bytes())
             for name in ("evacuation-input.v1.schema.json", "evacuation-input.v1.example.json"):
-                archive.write(ROOT / "data/demo/routing" / name, name)
-            archive.writestr("valencia-graph.json", json.dumps(graph, ensure_ascii=False, separators=(",", ":")))
+                add(name, (ROOT / "data/demo/routing" / name).read_bytes())
+            add("valencia-graph.json", json.dumps(graph, ensure_ascii=False, separators=(",", ":")))
             for name, features in (("nodes", node_features(graph["nodes"])), ("roads", road_features(graph["roads"]))):
                 geojson = {"type": "FeatureCollection", "features": list(features)}
-                archive.writestr(f"{name}.geojson", json.dumps(geojson, separators=(",", ":")))
+                add(f"{name}.geojson", json.dumps(geojson, separators=(",", ":")))
         staging.replace(output)
     finally:
         staging.unlink(missing_ok=True)
@@ -131,7 +137,7 @@ def main():
     parser.add_argument("--city", type=Path, default=OUTPUT)
     parser.add_argument("--evidence", type=Path, default=EVIDENCE)
     parser.add_argument("--state", type=Path, default=ROOT / "artifacts/valencia-demo/situation.json")
-    parser.add_argument("--output", type=Path, default=ROOT / "artifacts/valencia-task03.zip")
+    parser.add_argument("--output", type=Path, default=ROOT / "data/demo/routing/valencia-task03.zip")
     args = parser.parse_args()
     try:
         graph = build_graph(args.city, args.evidence, args.state)
