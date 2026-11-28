@@ -29,6 +29,12 @@ jobs:
         run: python3 tests/dispatch_ors_integration.py
       - name: Verify Routing rules
         run: dotnet run --no-build --project src/Routing/tests/Cassini.Routing.Tests.csproj
+      - name: Verify Management progress, counters and EWSS
+        run: dotnet run --no-build --project src/Management/tests/Cassini.Management.Tests.csproj
+      - name: Verify the Gateway link simulator
+        run: dotnet run --no-build --project src/Gateway/tests/Gateway.Tests.csproj
+      - name: Verify the in-memory event bus and outbox
+        run: dotnet run --no-build --project src/Shared/Messaging/tests/Cassini.Messaging.Tests.csproj
       - name: Verify Android offline logic without an emulator
         run: dotnet run --project apps/offline-android/tests/Offline.Tests.csproj -p:NuGetAudit=false
 
@@ -91,3 +97,47 @@ jobs:
         env:
           ConnectionStrings__Dispatch: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=dispatch;Username=dispatch;Password=dispatch-ci-only
         run: python3 tests/dispatch_postgres_integration.py
+
+  verify-management-full:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: management
+          POSTGRES_PASSWORD: management-ci-only
+          POSTGRES_DB: management_db
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U management -d management_db"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+      rabbitmq:
+        image: rabbitmq:4.4-management
+        ports:
+          - 5672/tcp
+          - 15672/tcp
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Verify the event bus on RabbitMQ (stop, publish, start, dedup)
+        env:
+          RABBITMQ_URI: amqp://guest:guest@127.0.0.1:${{ job.services.rabbitmq.ports[5672] }}/
+        run: dotnet run --project src/Shared/Messaging/tests/Cassini.Messaging.Tests.csproj -p:NuGetAudit=false -p:EnableRabbitMq=true
+      - name: Verify Management on PostgreSQL with RabbitMQ
+        env:
+          RABBITMQ_URI: amqp://guest:guest@127.0.0.1:${{ job.services.rabbitmq.ports[5672] }}/
+          RABBITMQ_API: http://127.0.0.1:${{ job.services.rabbitmq.ports[15672] }}
+          ConnectionStrings__Management: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=management_db;Username=management;Password=management-ci-only
+          PSQL_URL: postgresql://management:management-ci-only@127.0.0.1:${{ job.services.postgres.ports[5432] }}/management_db
+        run: python3 tests/management_full_integration.py

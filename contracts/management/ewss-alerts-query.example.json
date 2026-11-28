@@ -1,0 +1,16 @@
+{
+  "alerts": [
+    {
+      "broadcastId": "ewss-1",
+      "level": "severe",
+      "text": "Powódź. Opuść strefę trasą z aplikacji.",
+      "zone": {
+        "type": "Polygon",
+        "coordinates": [[[16.640, 50.430], [16.660, 50.430], [16.660, 50.440], [16.640, 50.440], [16.640, 50.430]]]
+      },
+      "issuedAt": "2026-11-27T19:31:00Z",
+      "delivery": "simulated",
+      "provenance": { "source": "ewss-mock", "mode": "mock", "observedAt": "2026-11-27T19:31:00Z" }
+    }
+  ]
+}

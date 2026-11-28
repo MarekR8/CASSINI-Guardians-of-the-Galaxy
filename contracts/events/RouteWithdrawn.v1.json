@@ -1,0 +1,21 @@
+{
+  "eventId": "a3c9e1f7-4b2d-4e6a-b8f0-1d2c3e4f5a60",
+  "type": "RouteWithdrawn.v1",
+  "producer": "routing",
+  "subjectId": "civilian-case/case-14",
+  "subjectVersion": 1,
+  "occurredAt": "2026-11-27T19:31:05Z",
+  "correlationId": "incident-42",
+  "causationId": "close-bridge",
+  "payload": {
+    "subject": {
+      "kind": "civilian-case",
+      "id": "case-14"
+    },
+    "routeVersion": 1,
+    "drawId": "east-draw",
+    "reasonCode": "SegmentClosed",
+    "situationRevision": 1,
+    "evidenceRef": "situation/revision/1"
+  }
+}
