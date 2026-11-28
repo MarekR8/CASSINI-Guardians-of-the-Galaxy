@@ -2,6 +2,9 @@ const $ = id => document.getElementById(id);
 const satelliteScenes = fetch('/maps/satellite.json')
   .then(response => response.ok ? response.json() : null)
   .catch(() => null);
+const companionConfig = fetch('/ui/companion')
+  .then(response => response.ok ? response.json() : null)
+  .catch(() => null);
 const state = {
   network: null, situation: null, distribution: null, draw: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
@@ -101,12 +104,13 @@ function invalidateRead() {
 }
 
 async function refresh(epoch) {
-  const [network, situation, incident, dispatch, scenes] = await Promise.all([
+  const [network, situation, incident, dispatch, scenes, companion] = await Promise.all([
     state.network ?? api('routing', 'queries/network'),
     api('situation', 'queries/snapshot'),
     api('management', 'queries/incident'),
     api('dispatch', 'queries/assignments'),
     satelliteScenes,
+    companionConfig,
   ]);
   if (state.epoch !== epoch) return;
   const node = $('node').value;
@@ -128,6 +132,14 @@ async function refresh(epoch) {
   if (draw) state.draw = { id: state.draw.id, ...draw };
   if (cityPath && state.cityPath === previousCityPath) showCityPath(cityPath);
   const warsaw = network.scenario === 'warsaw';
+  const scenarioLink = $('scenario-switch');
+  const destination = new URL('/', window.location.origin);
+  scenarioLink.hidden = !companion?.port || String(companion.port) === destination.port;
+  if (!scenarioLink.hidden) {
+    destination.port = companion.port;
+    scenarioLink.href = destination.href;
+    scenarioLink.textContent = warsaw ? 'Przełącz na Kłodzko' : 'Przełącz na Warszawę';
+  }
   const scene = scenes?.[warsaw ? 'warsaw' : 'sample'];
   state.satelliteScene = scene;
   text('incident', warsaw ? 'DEMO · POWÓDŹ · WARSZAWA' : 'DEMO · POWÓDŹ · ' + incident.incidentId);

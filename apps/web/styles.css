@@ -25,6 +25,10 @@ h3 { font-size: 1rem; }
 .brand { display: flex; align-items: center; gap: .75rem; }
 .brand strong { display: block; font-size: 1rem; letter-spacing: .16em; }
 .brand span, .timestamp span { display: block; font-size: .875rem; color: var(--muted); }
+.masthead-actions { display: flex; flex-wrap: wrap; justify-content: end; align-items: center; gap: .55rem 1rem; }
+.scenario-link { color: var(--text); background: var(--raised); border: 1px solid var(--line);
+  border-radius: .55rem; padding: .4rem .7rem; font-size: .875rem; font-weight: 650; text-decoration: none; }
+.scenario-link:hover { border-color: var(--accent); }
 .connection { color: var(--accent); display: flex; align-items: center; gap: .55rem; font-size: .875rem; }
 .beacon { width: .55rem; height: .55rem; border-radius: 100%; background: currentColor; }
 main { padding: 2rem 1rem .75rem; max-width: 82rem; margin: auto; }

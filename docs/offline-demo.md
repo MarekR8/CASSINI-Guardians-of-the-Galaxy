@@ -30,6 +30,28 @@ Do pierwszej budowy potrzeba obrazów bazowych .NET dostępnych w lokalnym cache
 
 ## Przebieg prezentacji
 
+### Przełączanie między Kłodzkiem a Warszawą
+
+Uruchom dwa lokalne projekty Compose na osobnych portach, aby każde ćwiczenie zachowało swój stan.
+W PowerShellu uruchom z katalogu repozytorium:
+
+```powershell
+$env:CASSINI_SCENARIO = 'sample'
+$env:CASSINI_PORT = '5080'
+$env:CASSINI_COMPANION_PORT = '5180'
+docker compose up -d --build
+
+$env:CASSINI_SCENARIO = 'warsaw'
+$env:CASSINI_PORT = '5180'
+$env:CASSINI_COMPANION_PORT = '5080'
+docker compose -p cassini-warsaw-satellite up -d --no-build --pull never
+```
+
+Otwórz [Kłodzko](http://127.0.0.1:5080) i wybierz **Przełącz na Warszawę** w nagłówku. Panel
+Warszawy pokazuje w tym samym miejscu odnośnik do Kłodzka.
+
+### Ćwiczenie
+
 1. Wybierz **Zgłoś zalanie**. Licznik zgłoszeń wzrośnie. Lokalna mapa pokazuje zasięg ćwiczenia i dostępne odcinki.
 2. Wybierz **Pokaż rozkład** obok mieszkańca 14 lub wybierz węzeł startowy. Przy starcie o 19:20 UTC wschodnia trasa ma około 61% szansy, północna około 39%. Rozkład zawiera planowane godziny startu i przybycia.
 3. Wybierz **Wylosuj trasę w węźle**. System losuje z rozkładu obowiązującego w danej rewizji. Wynik widać na mapie. W pierwszym losowaniu może wypaść dowolna z dwóch opcji.
