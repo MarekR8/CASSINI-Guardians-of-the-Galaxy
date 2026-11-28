@@ -15,7 +15,7 @@ The coordinator opens sites, sees separate household departures, reserves a comm
 
 - [x] Add Gateway routes and dashboard views for site status, travel-party decisions, availability, admission and withdrawal. Distinguish verified exit, point check-in, reservation, published route and confirmed reception.
 - [x] Provide an opt-in sheltering Compose overlay and launcher support. Keep the current sample and Valencia startup paths. Document the exact run and test commands after implementing them.
-- [ ] Own the shared integration script, confirm fresh state for each run, and walk through the full matrix in the [guide](../../sheltering-implementation-guide.md#acceptance-checks). Run the rehearsal on prebuilt images without internet.
+- [x] Own the shared integration script, confirm fresh state for each run, and walk through the full matrix in the [guide](../../sheltering-implementation-guide.md#acceptance-checks). Run the rehearsal on prebuilt images without internet.
 
 ### Stage B (completion)
 
@@ -49,7 +49,7 @@ A withdrawn assignment reads "wycofana · czeka na zastępstwo". The coordinator
 
 **Launcher and overlay.** `compose.sheltering.yaml` and `offline_demo.py --sheltering` (SH-T01) are unchanged and keep the `sample` and Valencia paths. `start_services` takes `shelter_operators=True` to enable the Stage B reception accounts. Their tokens are generated per state directory.
 
-**Rehearsal** (`python tests/sheltering_rehearsal.py --browser --images`, Windows 11, local processes, 28 Nov 2026). Each suite ran on a new state directory.
+**Rehearsal** ([tests/sheltering_rehearsal.py](../../../tests/sheltering_rehearsal.py)). Each suite runs on a new state directory or new Compose volumes, and the report goes to `artifacts/sheltering-rehearsal.json`. Local processes: `python tests/sheltering_rehearsal.py --browser` (Windows 11, 28 Nov 2026, after SH-T06 merged).
 
 | Check | Suites | Result |
 | --- | --- | --- |
@@ -57,11 +57,23 @@ A withdrawn assignment reads "wycofana · czeka na zastępstwo". The coordinator
 | SH-A02, SH-A03 | `grouping_integration.py` | Pass |
 | SH-A04 | `sheltering_reservations_integration.py` | Pass |
 | SH-A05 | `offline_demo.py --sheltering --test` (catalog, reception, restart) | Pass |
-| SH-A06 | reservations and reception | Pass |
-| SH-A07 | none | **Blocked**: route publication and event replay belong to SH-T06, which is not implemented |
-| SH-A08 | `offline_demo.py --test` and the sheltering suites on local processes | Pass on processes. The image path (`--images`) was **not run**: no container engine here. |
+| SH-A06 | reservations, reception and `sheltering_publication_integration.py` | Pass |
+| SH-A07 | `sheltering_publication_integration.py` (publication fails after booking; retries and stale commands add no route version and restore no withdrawn guidance). Broker redelivery and replay: `sheltering_events_integration.py`, which runs when `RABBITMQ_URI` is set and in CI job `verify-sheltering-events` | Pass |
+| SH-A08 | Local processes: `offline_demo.py --test` and the sheltering suites. Prebuilt images: CI job `verify-sheltering-images` (`--images-only`) | Pass on processes. The image path has no container engine here, so its result comes from CI. |
 
-The sample regression failed once in the rehearsal and passed on two reruns. `connectivity_integration.py` (task 6) compares measured wall-clock milliseconds, and the first terrestrial request took 93 ms, longer than the simulated IRIS² delay. That timing assertion is flaky on a loaded machine. It is left to the task 6 owner.
+**Prebuilt images without internet** (`--images-only`). The images are built once beforehand: `docker compose -f compose.yaml -f compose.sheltering.yaml build`. The rehearsal then never builds or pulls (`up --no-build --pull never --wait`) and starts from empty volumes (`down -v`).
+
+1. It runs `offline_integration.py` and `connectivity_integration.py` on `compose.yaml`. A generated override sets `Dispatch__AutoReplan=false`, as `offline_demo.py --test` does.
+2. It runs `sheltering_integration.py` on `compose.yaml` + `compose.sheltering.yaml`.
+3. It restarts Situation and Sheltering and repeats the check with `--after-restart`.
+4. It checks that the Sheltering container cannot open an outbound connection, because the owners sit on the `internal: true` network.
+
+The service logs are kept as CI artifacts.
+
+**Fixed on the way.**
+
+- The rehearsal's first suite failed on a cold start. `connectivity_integration.py` measured one field command per link profile, and the first one also paid for warm-up (93–94 ms, slower than the simulated IRIS² delay). It now keeps the fastest of three samples. The ordering it checks is unchanged.
+- The merge of PR #32 with PR #33 had moved every step of `verify-site-catalog-stage-b` into `verify-sheltering-browser`. That left a job without steps, so GitHub rejected the whole workflow and develop CI failed from `5f36983` on. The steps are back in their job, and no step from the last green workflow (`fe970aa`) or from PR #32 is missing.
 
 **Stage B.** `tests/sheltering_browser.py` (Playwright 1.49.1, headless Chromium) is the CI job `verify-sheltering-browser`. It replays the SH-T04 exercise and restarts on the same state with the reception accounts. Then it checks in the dashboard:
 
@@ -76,7 +88,6 @@ Screenshots are written to `artifacts/sheltering-browser/` and kept by CI.
 
 **Limits.**
 
-- SH-A07 waits for SH-T06.
 - No owner records a point check-in yet.
 - The Stage B accounts are Sheltering's exercise tokens, not Keycloak users, and the two are not combined.
 - The prebuilt-image rehearsal must still be run on a machine with Docker.

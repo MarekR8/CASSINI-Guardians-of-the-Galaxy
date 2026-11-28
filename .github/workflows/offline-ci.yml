@@ -69,10 +69,6 @@ jobs:
           --health-interval 2s
           --health-timeout 3s
           --health-retries 15
-  verify-sheltering-browser:
-    # SH-T07 Stage B: coordinator and shelter operator journey in headless Chromium.
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
@@ -111,6 +107,16 @@ jobs:
           python3 tests/sheltering_stage_b.py --postgres
           query="SELECT (SELECT count(*) FROM sheltering_catalog_audit) || ':' || (SELECT count(*) FROM sheltering_catalog_outbox)"
           test "$(docker exec "$POSTGRES_CONTAINER" psql -XAt -U catalog_ci -d shelter_catalog -c "$query")" = "2:2"
+
+  verify-sheltering-browser:
+    # SH-T07 Stage B: coordinator and shelter operator journey in headless Chromium.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -126,6 +132,27 @@ jobs:
         with:
           name: sheltering-browser
           path: artifacts/sheltering-browser
+          if-no-files-found: ignore
+
+  verify-sheltering-images:
+    # SH-T07 / SH-A08: the sample regression and the sheltering exercise on prebuilt images, without pulls or
+    # builds at run time, from empty volumes. The owners run on the internal network (no internet).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build the images (the only step with network access to registries)
+        run: docker compose -f compose.yaml -f compose.sheltering.yaml build
+      - name: Rehearse on prebuilt images
+        run: python3 tests/sheltering_rehearsal.py --images-only
+      - name: Keep the rehearsal report and service logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sheltering-rehearsal
+          path: |
+            artifacts/sheltering-rehearsal.json
+            artifacts/rehearsal-*.log
           if-no-files-found: ignore
 
   verify-routing-model:
