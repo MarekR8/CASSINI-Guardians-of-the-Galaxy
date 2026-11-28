@@ -45,6 +45,21 @@ aby przesunąć widok. **Resetuj widok** wraca do początkowego położenia i sk
 6. Po przywróceniu dostępności i przydzieleniu jednostki przejdź przez potwierdzenie zadania, przyjazd i odbiór. Potwierdzenie wyjścia mieszkańca jest odrębną operacją.
 7. Na głównej mapie widać dołączone zobrazowanie Sentinel‑2 oraz datę obserwacji. Rozwiń **Źródła danych**, aby sprawdzić, z czego pochodzi poligon zalania i szacunek ludności.
 
+### Integracje w trybie próbnym
+
+Rozwiń **Integracje · symulacja offline** w panelu Kłodzka lub Walencji. Każdy przycisk odczytuje lokalny przykład oznaczony `mode: mock`. Wyniki zawierają podgląd geometrii i odpowiedź JSON. Odczyt zachowuje bieżącą rewizję sytuacji, trasy i zamknięcia dróg.
+
+| Źródło | Zapytanie przez Gateway | Co pokazuje |
+| --- | --- | --- |
+| Copernicus EMS | `GET /api/situation/queries/integration-copernicus` | Kod aktywacji, numer AOI, produkt typu delineation, czas obserwacji i przykładowy poligon zalania. |
+| FlyPix AI | `GET /api/situation/queries/integration-flypix` | Przykładowe identyfikatory rastra i modelu, czas obserwacji oraz poligon detekcji z syntetyczną pewnością modelu. |
+| Miasto · `GetData` | `GET /api/situation/queries/city-data` | Syntetyczną liczbę 120 osób w jednej strefie. |
+| Miasto · `GetMap` | `GET /api/situation/queries/city-map` | Granicę tej strefy w GeoJSON WGS 84. Identyfikatory zestawu i strefy łączą oba odczyty. |
+
+Docelowy adapter Copernicus może wyszukać publiczną aktywację i AOI, wybrać wersję produktu delineation i pobrać geometrię wraz z czasem obserwacji. Docelowy adapter FlyPix AI wymaga klucza API po stronie serwera oraz dostępu do odpowiedniego rastra i modelu. Może zlecić inferencję, poczekać na wynik i skierować detekcje do istniejącej kolejki weryfikacji. Decyzja o zamknięciu pozostaje komendą operatora. [Copernicus EMS Rapid Mapping API](https://mapping.emergency.copernicus.eu/about/how-to-harvest-cems-mapping-data/emergency-response-data/) · [FlyPix AI API i operacje na modelach](https://docs.flypix.ai/docs/api/mcp) · [Uwierzytelnianie FlyPix AI](https://docs.flypix.ai/docs/api/authentication)
+
+`ICitySource` jest punktem podłączenia przyszłego źródła, np. systemu HR albo rejestru ludności. Szczegóły pobrania i agregacji zależą od systemu wybranego przez operatora. Kontrakt demonstracyjny używa sum według stref i granic tych stref.
+
 ## Usługi i CQRS
 
 | Serwis | Zapytania | Komendy |
