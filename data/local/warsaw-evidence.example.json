@@ -6,7 +6,7 @@
       "observedAt": "",
       "sourceUrl": "",
       "geoJson": "flood.geojson",
-      "bbox": [20.995, 52.225, 21.065, 52.260],
+      "bbox": [20.830, 52.080, 21.300, 52.390],
       "resolutionMetres": null,
       "method": ""
     }

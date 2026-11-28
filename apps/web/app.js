@@ -3,6 +3,7 @@ const state = {
   network: null, situation: null, distribution: null, draw: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null, reviewSignature: null,
+  cityOverview: true, cityPicking: false, cityPoints: [], cityPath: null,
 };
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
@@ -101,22 +102,30 @@ async function refresh(epoch) {
   ]);
   if (state.epoch !== epoch) return;
   const node = $('node').value;
-  const [distribution, draw] = await Promise.all([
+  const previousCityPath = state.cityPath;
+  const [distribution, draw, cityPath] = await Promise.all([
     api('routing', 'queries/distribution?node=' + encodeURIComponent(node)),
     state.draw ? api('routing', 'queries/draws/' + state.draw.id) : null,
+    previousCityPath && (previousCityPath.revision !== situation.revision || !state.distribution)
+      ? requestCityPath() : null,
   ]);
   if (state.epoch !== epoch) return;
-  if (situation.revision !== distribution.revision || (draw && draw.revision !== distribution.revision))
+  if (situation.revision !== distribution.revision || (draw && draw.revision !== distribution.revision) ||
+      (cityPath && cityPath.revision !== distribution.revision))
     throw new Error('Sytuacja zmieniła się podczas odczytu.');
 
   state.network = network;
   state.situation = situation;
   state.distribution = distribution;
   if (draw) state.draw = { id: state.draw.id, ...draw };
+  if (cityPath && state.cityPath === previousCityPath) showCityPath(cityPath);
   const warsaw = network.scenario === 'warsaw';
   text('incident', warsaw ? 'DEMO · POWÓDŹ · WARSZAWA' : 'DEMO · POWÓDŹ · ' + incident.incidentId);
-  text('map-area', warsaw ? 'Warszawa · Wisła i Praga' : 'Schemat obszaru ćwiczeń');
+  text('map-area', network.city
+    ? 'Warszawa · ' + network.city.roadCount.toLocaleString('pl-PL') + ' odcinków OSM'
+    : warsaw ? 'Warszawa · lokalne ćwiczenie nad Wisłą' : 'Schemat obszaru ćwiczeń');
   $('map-credit').hidden = !warsaw;
+  $('city-tools').hidden = !network.city;
   $('review-panel').hidden = !warsaw;
   text('clock', time(distribution.at) + ' UTC');
   text('revision', 'Rewizja ' + situation.revision);
@@ -208,11 +217,16 @@ function renderMap(route) {
   const map = $('map');
   if (!state.network) return;
   const warsaw = state.network.scenario === 'warsaw';
-  const [west, south, east, north] = state.network.bounds || [16.646, 50.431, 16.660, 50.442];
+  const city = state.network.city;
+  const overview = city && state.cityOverview;
+  const bounds = overview ? city.bounds : state.network.bounds;
+  const [west, south, east, north] = bounds || [16.646, 50.431, 16.660, 50.442];
   const ratio = Math.cos((south + north) * Math.PI / 360);
   const scale = Math.min(680 / ((east - west) * ratio), 360 / (north - south));
   const project = (lon, lat) => [380 + (lon - (west + east) / 2) * ratio * scale,
     210 + ((south + north) / 2 - lat) * scale];
+  state.unproject = (x, y) => [(x - 380) / (ratio * scale) + (west + east) / 2,
+    (south + north) / 2 - (y - 210) / scale];
   const pointsOnMap = line => line.map(([lon, lat]) => project(lon, lat).join(',')).join(' ');
   const shape = polygon => polygon.map(ring => 'M ' + pointsOnMap(ring).split(' ').join(' L ') + ' Z').join(' ');
   const points = new Map(state.network.nodes.map(node => [node.id, project(node.longitude, node.latitude)]));
@@ -223,11 +237,19 @@ function renderMap(route) {
   grid.append(svg('path', { d: 'M 34 0 H 0 V 34', fill: 'none', stroke: '#294049', 'stroke-width': 1 }));
   defs.append(grid);
   map.replaceChildren(defs, svg('rect', { width: 760, height: 420, fill: 'url(#grid)' }));
-  for (const line of state.network.waterways || []) {
-    map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#285469', 'stroke-width': 18 }));
-  }
-  for (const line of state.network.contextRoads || []) {
-    map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#38525a', 'stroke-width': 1.15 }));
+  if (overview) {
+    const [left, bottom, right, top] = city.bounds;
+    const [x, y] = project(left, top);
+    const [x2, y2] = project(right, bottom);
+    map.append(svg('image', { href: '/maps/warsaw.svg?v=' + encodeURIComponent(city.osmTimestamp),
+      x, y, width: x2 - x, height: y2 - y, preserveAspectRatio: 'none' }));
+  } else {
+    for (const line of state.network.waterways || []) {
+      map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#285469', 'stroke-width': 18 }));
+    }
+    for (const line of state.network.contextRoads || []) {
+      map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#38525a', 'stroke-width': 1.15 }));
+    }
   }
   const hazards = state.situation.hazards || [];
   $('observed-legend').hidden = !warsaw || !hazards.some(h => h.productId);
@@ -248,6 +270,15 @@ function renderMap(route) {
         stroke: '#e0abff', 'stroke-width': 2.4, 'stroke-dasharray': '5 4' }));
     }
   }
+  if (city) {
+    for (const feature of (state.situation.reviewFeatures || []).filter(item =>
+      item.status === 'Approved' && item.segmentIds.some(id => id.startsWith('osm-') && closed.has(id)))) {
+      for (const polygon of polygons(feature.geometry)) {
+        map.append(svg('path', { d: shape(polygon), 'fill-rule': 'evenodd', fill: '#e27169', 'fill-opacity': .35,
+          stroke: '#ff9e8f', 'stroke-width': 2, 'stroke-dasharray': '4 3' }));
+      }
+    }
+  }
   map.append(svg('path', { d: 'M 713 62 V 29 M 706 38 L 713 29 L 720 38', stroke: '#a4babf', fill: 'none', 'stroke-width': 2 }));
   map.append(svg('text', { x: 708, y: 82, class: 'map-caption' }, 'N'));
   for (const segment of state.network.segments) {
@@ -262,7 +293,7 @@ function renderMap(route) {
       'stroke-dasharray': inaccessible ? '10 7' : 'none',
     }));
   }
-  for (const [id, [x, y]] of points) {
+  for (const [id, [x, y]] of (overview ? [] : points)) {
     const isExit = state.network.exits.includes(id);
     const isStart = id === $('node').value;
     map.append(svg('circle', { cx: x, cy: y, r: isStart ? 9 : 6,
@@ -276,6 +307,17 @@ function renderMap(route) {
         class: isExit || isStart ? '' : 'minor-label' }, name));
     }
   }
+  if (state.distribution && state.cityPath?.revision === state.situation.revision && state.cityPath.route?.geometry.length) {
+    map.append(svg('polyline', { points: pointsOnMap(state.cityPath.route.geometry), fill: 'none',
+      stroke: '#8df0ce', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+  }
+  for (const point of state.cityPoints) {
+    const [cx, cy] = project(...point);
+    map.append(svg('circle', { cx, cy, r: 5, fill: '#fbd47e', stroke: '#12232a', 'stroke-width': 2 }));
+  }
+  if (state.cityPath && !state.distribution) {
+    text('city-status', 'Trasa oczekuje na ponowną weryfikację.');
+  }
 }
 
 function renderReviews(reviews) {
@@ -288,7 +330,10 @@ function renderReviews(reviews) {
     const confidence = feature.confidence == null ? '' : ' · ' + Math.round(feature.confidence * 100) + '% pewności';
     const status = { Pending: 'Do weryfikacji', Approved: 'Zatwierdzona', Rejected: 'Odrzucona' }[feature.status];
     const provenance = feature.mode === 'synthetic' ? 'Symulacja' : 'FlyPix AI · ' + (feature.mode === 'live' ? 'API' : 'zapis');
-    details.append(element('b', feature.segmentIds.map(segmentLabel).join(', ') || 'Poza korytarzami ćwiczenia'),
+    const corridors = feature.segmentIds.filter(id => !id.startsWith('osm-')).map(segmentLabel);
+    const roads = feature.segmentIds.length - corridors.length;
+    if (roads) corridors.push(roads + ' odc. OSM');
+    details.append(element('b', corridors.join(' · ') || 'Brak dopasowania do dróg'),
       element('p', status + ' · ' + provenance + confidence),
       element('p', feature.imageProductId + ' · ' + feature.observedAt));
     item.append(details);
@@ -304,6 +349,61 @@ function renderReviews(reviews) {
     list.append(item);
   }
 }
+
+function redrawMap() {
+  renderMap(state.draw?.state === 'Active' ? state.draw.route : null);
+}
+
+function requestCityPath() {
+  const [from, to] = state.cityPoints.map(value => value.map(number => number.toFixed(6)).join(','));
+  const query = new URLSearchParams({ from, to, mode: $('city-mode').value });
+  return api('routing', 'queries/city-route?' + query);
+}
+
+function showCityPath(path) {
+  state.cityPath = path;
+  const found = path.route;
+  text('city-status', found ? 'Trasa orientacyjna · ' + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
+}
+
+$('city-overview').addEventListener('click', () => { state.cityOverview = true; redrawMap(); });
+$('city-detail').addEventListener('click', () => { state.cityOverview = false; redrawMap(); });
+$('city-pick').addEventListener('click', () => {
+  state.cityPicking = !state.cityPicking;
+  state.cityPoints = [];
+  state.cityPath = null;
+  $('city-pick').setAttribute('aria-pressed', state.cityPicking);
+  text('city-status', state.cityPicking ? 'Wskaż punkt startowy na mapie.' : '');
+  redrawMap();
+});
+$('city-mode').addEventListener('change', () => {
+  state.cityPicking = false;
+  state.cityPoints = [];
+  state.cityPath = null;
+  $('city-pick').setAttribute('aria-pressed', 'false');
+  text('city-status', 'Wskaż punkty trasy dla wybranego trybu.');
+  redrawMap();
+});
+$('map').addEventListener('click', event => {
+  if (!state.cityPicking || state.busy) return;
+  const svgPoint = new DOMPoint(event.clientX, event.clientY).matrixTransform($('map').getScreenCTM().inverse());
+  const point = state.unproject(svgPoint.x, svgPoint.y);
+  const [w, s, e, n] = state.network.city.bounds;
+  if (point[0] < w || point[0] > e || point[1] < s || point[1] > n) return;
+  state.cityPoints.push(point);
+  redrawMap();
+  if (state.cityPoints.length === 1) {
+    text('city-status', 'Wskaż cel na mapie.');
+    return;
+  }
+  state.cityPicking = false;
+  $('city-pick').setAttribute('aria-pressed', 'false');
+  run(async () => {
+    const path = await requestCityPath();
+    if (state.cityPoints.length === 2) showCityPath(path);
+    return 'Sprawdzono dojazd w bieżącej rewizji.';
+  });
+});
 
 function renderOperations(incident, dispatch) {
   text('alert-count', 'Liczba zgłoszeń: ' + incident.alerts.length);

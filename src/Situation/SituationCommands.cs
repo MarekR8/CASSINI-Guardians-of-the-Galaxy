@@ -18,11 +18,15 @@ internal sealed class SituationCommands(SituationStore store, ReviewNetwork revi
     internal SituationSnapshot SetClosure(ClosureCommand command)
     {
         var (id, revision) = CheckVersion(command.CommandId, command.ExpectedRevision);
-        if (command.SegmentId is not { } segment || !KnownSegments.Contains(segment) || command.Closed is not { } closed)
+        if (command.SegmentId is not { } segment || command.Closed is not { } closed ||
+            (closed && !KnownSegments.Contains(segment) && !reviewNetwork.ContainsCitySegment(segment)))
             throw Invalid("Specify a known segmentId and whether it is closed.");
 
         return store.Apply(id, revision, Fingerprint("closure", command), snapshot =>
         {
+            if (!closed && !KnownSegments.Contains(segment) && !reviewNetwork.ContainsCitySegment(segment)
+                && !snapshot.ClosedSegments.Contains(segment))
+                throw Invalid("Specify a known segmentId and whether it is closed.");
             var evidence = new ClosureEvidence("operator", null, null, DateTimeOffset.UtcNow);
             return UpdateClosures(snapshot, [segment], closed, evidence);
         });

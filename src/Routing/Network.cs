@@ -33,11 +33,13 @@ internal static class Network
 
     internal static readonly string[] Exits = ["exit-east", "exit-north"];
     internal static DemoNetwork? Warsaw { get; private set; }
+    internal static CityNetwork? City { get; private set; }
 
-    internal static void Configure(DemoNetwork? network)
+    internal static void Configure(DemoNetwork? network, CityNetwork? city = null)
     {
         if (network is null) return;
         Warsaw = network;
+        City = city;
         Nodes = network.Nodes.Select(node => new Node(node.Id, node.Label, node.Longitude, node.Latitude)).ToArray();
         Segments = network.Segments.Select(link => new Segment(link.Id, link.From, link.To, link.WalkingSeconds,
             link.DrivingSeconds, link.BothWays, link.Geometry, link.DrivingGeometry, link.ReverseDrivingGeometry,
@@ -45,6 +47,8 @@ internal static class Network
     }
 
     internal static bool Contains(string? node) => Nodes.Any(candidate => candidate.Id == node);
+    internal static bool ContainsSegment(string id) => Segments.Any(segment => segment.Id == id)
+        || City?.Contains(id) == true;
 
     internal static GraphPath? FindPath(string start, string destination, bool driving, IReadOnlySet<string> closed)
     {

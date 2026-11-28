@@ -14,8 +14,9 @@ internal sealed record ReviewFeature(string Id, string Source, string Mode, stri
 internal sealed record ClosureEvidence(string Source, string? ReviewFeatureId, DateTimeOffset? ObservedAt,
     DateTimeOffset DecidedAt);
 
-internal sealed class ReviewNetwork(DemoNetwork? network)
+internal sealed class ReviewNetwork(DemoNetwork? network, CityNetwork? city = null)
 {
+    internal bool ContainsCitySegment(string id) => city?.Contains(id) == true;
     internal static ReviewFeature ExerciseFeature(DemoNetwork network)
     {
         var geometry = JsonSerializer.SerializeToElement(new
@@ -78,9 +79,16 @@ internal sealed class ReviewNetwork(DemoNetwork? network)
     {
         var boundaries = polygons.Select(polygon => polygon.EnumerateArray().Select(ring => ring.EnumerateArray()
             .Select(point => (X: point[0].GetDouble(), Y: point[1].GetDouble())).ToArray()).ToArray()).ToArray();
-        return network!.Segments.Where(segment =>
+        var demo = network!.Segments.Where(segment =>
             new[] { segment.Geometry, segment.DrivingGeometry, segment.ReverseDrivingGeometry }
-                .Any(line => line is not null && Intersects(line, boundaries))).Select(segment => segment.Id).ToArray();
+                .Any(line => line is not null && Intersects(line, boundaries))).Select(segment => segment.Id);
+        if (city is null) return demo.ToArray();
+
+        var points = boundaries.SelectMany(polygon => polygon[0]).ToArray();
+        var candidates = city.IntersectingBounds(points.Min(point => point.X), points.Min(point => point.Y),
+            points.Max(point => point.X), points.Max(point => point.Y));
+        return demo.Concat(candidates.Where(road => Intersects(road.Geometry, boundaries))
+            .Select(road => road.Id).Order(StringComparer.Ordinal)).ToArray();
     }
 
     private static bool Intersects(double[][] line, (double X, double Y)[][][] polygons)

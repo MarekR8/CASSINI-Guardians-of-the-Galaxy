@@ -26,7 +26,32 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 LOCAL = build_opener(ProxyHandler({}), NoRedirect())
-CLOUD = build_opener(NoRedirect())
+
+
+def setting(name):
+    if name in os.environ:
+        return os.environ[name].strip()
+    env_file = ROOT / ".env"
+    if env_file.is_file():
+        for line in env_file.read_text(encoding="utf-8-sig").splitlines():
+            prefix, separator, value = line.strip().removeprefix("export ").partition("=")
+            if separator and prefix.strip() == name:
+                value = value.split(" #", 1)[0].strip()
+                if len(value) >= 2 and value[0] in "\"'" and value[-1] == value[0]:
+                    return value[1:-1]
+                return value
+    return ""
+
+
+class FlyPixHttpError(ValueError):
+    def __init__(self, status, path):
+        self.status = status
+        details = {
+            401: "The API rejected FLYPIX_API_KEY. Check that the key is valid for this FlyPix tenant.",
+            403: "FlyPix denied access. Check tenant permissions and FlyPix API availability.",
+            402: "FlyPix rejected the operation because of the account balance.",
+        }
+        super().__init__(f"FlyPix HTTP {status} at {path}. {details.get(status, '')}".rstrip())
 
 
 def request(opener, url, payload=None, headers=None, timeout=15):
@@ -52,10 +77,25 @@ def request(opener, url, payload=None, headers=None, timeout=15):
 
 
 def flypix(path, payload=None, headers=None, timeout=25):
-    key = os.environ.get("FLYPIX_API_KEY")
+    import requests
+
+    key = setting("FLYPIX_API_KEY")
     if not key:
-        raise ValueError("Set FLYPIX_API_KEY in the current shell to use the FlyPix API.")
-    return request(CLOUD, FLYPIX + path, payload, {"ApiKey": key, **(headers or {})}, timeout)
+        raise ValueError("Set FLYPIX_API_KEY in .env or the current shell to use the FlyPix API.")
+    try:
+        with requests.request("POST" if payload is not None else "GET", FLYPIX + path,
+                              json=payload if isinstance(payload, dict) else None,
+                              data=None if isinstance(payload, dict) else payload,
+                              headers={"Accept": "application/json", "ApiKey": key, **(headers or {})},
+                              timeout=timeout, allow_redirects=False, stream=True) as response:
+            if response.status_code not in range(200, 300):
+                raise FlyPixHttpError(response.status_code, urlsplit(path).path)
+            data = response.raw.read(8 * LIMIT + 1, decode_content=True)
+            if len(data) > 8 * LIMIT:
+                raise ValueError("The FlyPix response exceeds 64 MiB. Use a smaller imagery tile.")
+            return json.loads(data)
+    except requests.RequestException:
+        raise ValueError("Could not connect to the FlyPix API.") from None
 
 
 def api_id(value):
@@ -76,6 +116,7 @@ def upload_raster(config, directory):
                          "Content-Length": str(os.fstat(stream.fileno()).st_size)}, timeout=180)
     print(f"FlyPix raster ID: {result['raster_id']} (status {result['status']}). "
           "Set flypix.rasterId after processing.", flush=True)
+    return result["raster_id"]
 
 
 def wait_for_inference(inference_id, timeout):

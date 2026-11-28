@@ -1,0 +1,18 @@
+services:
+  situation:
+    environment:
+      Demo__Scenario: warsaw
+      Demo__CityDirectory: /city
+    volumes:
+      - ./artifacts/warsaw-city:/city:ro
+  routing:
+    environment:
+      Demo__Scenario: warsaw
+      Demo__CityDirectory: /city
+    volumes:
+      - ./artifacts/warsaw-city:/city:ro
+  gateway:
+    environment:
+      Demo__CityDirectory: /city
+    volumes:
+      - ./artifacts/warsaw-city:/city:ro

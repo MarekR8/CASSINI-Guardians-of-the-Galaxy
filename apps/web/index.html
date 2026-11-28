@@ -25,6 +25,17 @@
       <section class="card map-card" aria-labelledby="map-title">
         <div class="card-heading"><div><h2 id="map-title">Mapa sytuacji</h2><p id="map-area">Schemat obszaru ćwiczeń</p></div><span class="badge" id="revision">Rewizja —</span></div>
         <svg id="map" viewBox="0 0 760 420" role="img" aria-label="Graf przejść, wyjścia i obszar zalania"></svg>
+        <div class="scenario" id="city-tools" hidden>
+          <div class="buttons">
+            <button id="city-overview" type="button">Cała Warszawa</button>
+            <button id="city-detail" type="button">Most Świętokrzyski</button>
+            <label for="city-mode">Tryb trasy
+              <select id="city-mode"><option value="walking">Pieszo</option><option value="driving">Samochodem</option></select>
+            </label>
+            <button id="city-pick" type="button" aria-pressed="false">Wskaż punkty trasy</button>
+          </div>
+          <p id="city-status" role="status"></p>
+        </div>
         <div class="legend"><span><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span id="review-legend" hidden><i class="legend-review"></i> Detekcja do weryfikacji</span><span><i class="legend-path"></i> Wylosowana trasa</span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span><i class="legend-exit"></i> Wyjście</span></div>
         <p class="map-credit" id="map-credit" hidden><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors · ODbL</a></p>
         <div class="scenario">
