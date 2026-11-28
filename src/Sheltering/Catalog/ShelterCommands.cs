@@ -12,18 +12,22 @@ internal sealed record ConfigureShelterCommand(
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 internal sealed record ConfigureShelterResources(int? Places, int? AccessiblePlaces, int? IntakePerHour);
 
-internal sealed class ShelterCommands(CatalogStore<Shelter> catalog, SituationClient situation)
+internal sealed class ShelterCommands(CatalogStore<Shelter> catalog, SituationClient situation, TimeProvider clock)
 {
-    internal async Task<CatalogWrite<Shelter>> ConfigureShelter(ConfigureShelterCommand command, CancellationToken cancellation)
+    internal async Task<CatalogWrite<Shelter>> ConfigureShelter(ConfigureShelterCommand command, CatalogActor actor,
+        string incidentId, CancellationToken cancellation)
     {
         // Resolve evidence outside the catalog lock. Examinations and failures run in the callback so a
         // retry can still return its prior receipt if the Situation revision changed or became unavailable.
-        var situationRevision = command.Status == "open" ? await situation.GetRevision(cancellation) : null;
+        var situationRevision = actor.CanConfigureSite && command.Status == "open"
+            ? await situation.GetRevision(cancellation) : null;
         return catalog.Save(command.CommandId, command.ExpectedVersion, command.ShelterId ?? string.Empty, command,
-            (current, version) => Apply(command, current, version, situationRevision));
+            actor, clock.GetUtcNow(), (current, version) => Apply(command, current, version, situationRevision, actor),
+            (previous, shelter) => DescribeChange(incidentId, previous, shelter));
     }
 
-    private static Shelter Apply(ConfigureShelterCommand command, Shelter? current, int version, int? situationRevision)
+    private static Shelter Apply(ConfigureShelterCommand command, Shelter? current, int version, int? situationRevision,
+        CatalogActor actor)
     {
         if (!SiteRules.IsId(command.ShelterId) || command.Name?.Trim() is not { Length: > 0 and <= 120 } name ||
             command.StepFree is not { } stepFree)
@@ -38,6 +42,16 @@ internal sealed class ShelterCommands(CatalogStore<Shelter> catalog, SituationCl
                 "Specify non-negative place limits, accessible places within the total, and a positive or unlimited intake rate.");
         }
 
+        if (!actor.CanConfigureSite)
+        {
+            if (current is null || name != current.Name || command.Place != current.Place ||
+                stepFree != current.StepFree || command.Status != current.Status ||
+                command.OperatingWindow != current.OperatingWindow || command.Evidence != current.Evidence)
+                throw SiteCatalogAccess.Forbidden();
+
+            return current with { Version = version, Resources = limits };
+        }
+
         SiteRules.Validate(command.Place, command.OperatingWindow, command.Evidence, command.Status);
         if (command.Status == "open")
         {
@@ -49,5 +63,26 @@ internal sealed class ShelterCommands(CatalogStore<Shelter> catalog, SituationCl
         return new Shelter(command.ShelterId!, name, command.Place!, stepFree, command.Status!, command.OperatingWindow!,
             command.Evidence!, version, limits, current?.Commitments ?? ShelterCommitments.Empty,
             current?.Reception);
+    }
+
+    private static SiteChange DescribeChange(string incidentId, Shelter? previous, Shelter shelter)
+    {
+        var affectedResources = new List<string>();
+        if (previous?.Resources.Places != shelter.Resources.Places)
+            affectedResources.Add("places");
+        if (previous?.Resources.AccessiblePlaces != shelter.Resources.AccessiblePlaces)
+            affectedResources.Add("accessiblePlaces");
+        if (previous is null || previous.Resources.IntakePerHour != shelter.Resources.IntakePerHour)
+            affectedResources.Add("intakePerHour");
+
+        return new("ShelterAvailabilityChanged.v1", "sheltering.shelter-availability-changed.v1", shelter.ShelterId, new
+        {
+            incidentId,
+            shelter.ShelterId,
+            shelter.Status,
+            shelter.OperatingWindow,
+            affectedResources,
+            evidenceRef = new { shelter.Evidence.Source, shelter.Evidence.SituationRevision },
+        });
     }
 }

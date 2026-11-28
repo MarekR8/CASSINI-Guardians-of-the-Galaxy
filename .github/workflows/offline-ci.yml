@@ -50,6 +50,23 @@ jobs:
       - name: Verify Android offline logic without an emulator
         run: dotnet run --project apps/offline-android/tests/Offline.Tests.csproj -p:NuGetAudit=false
 
+  verify-site-catalog-stage-b:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: catalog_ci
+          POSTGRES_PASSWORD: catalog-ci-only
+          POSTGRES_DB: assembly_catalog
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U catalog_ci -d assembly_catalog"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
   verify-sheltering-browser:
     # SH-T07 Stage B: coordinator and shelter operator journey in headless Chromium.
     runs-on: ubuntu-24.04
@@ -59,6 +76,39 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
+      - name: Build the optional authenticated catalogs
+        run: dotnet build Cassini.Offline.slnx -m:1 -p:EnableSiteCatalogStageB=true -p:EnableShelteringPostgres=true
+      - name: Verify OIDC scopes and durable local outboxes
+        run: python3 tests/sheltering_stage_b.py
+      - name: Migrate both catalog databases
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker exec "$POSTGRES_CONTAINER" createdb -U catalog_ci shelter_catalog
+          for db in assembly_catalog shelter_catalog; do
+            docker exec -i "$POSTGRES_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U catalog_ci -d "$db" < src/Demo/SiteCatalog/001-site-catalog.sql
+          done
+      - name: Verify PostgreSQL restart and pending events
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+          ConnectionStrings__AssemblyPointCatalog: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=assembly_catalog;Username=catalog_ci;Password=catalog-ci-only
+          ConnectionStrings__ShelterCatalog: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=shelter_catalog;Username=catalog_ci;Password=catalog-ci-only
+        run: |
+          python3 tests/sheltering_stage_b.py --postgres
+          query="SELECT (snapshot->>'revision') || ':' || jsonb_array_length(snapshot->'audit') || ':' || jsonb_array_length(snapshot->'outbox') FROM cassini_site_catalog"
+          test "$(docker exec "$POSTGRES_CONTAINER" psql -XAt -U catalog_ci -d assembly_catalog -c "$query")" = "1:1:1"
+          test "$(docker exec "$POSTGRES_CONTAINER" psql -XAt -U catalog_ci -d shelter_catalog -c "$query")" = "2:2:2"
+      - name: Verify SH-T01 with the allocation database
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+          ConnectionStrings__AssemblyPointCatalog: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=assembly_integrated;Username=catalog_ci;Password=catalog-ci-only
+          ConnectionStrings__Sheltering: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=shelter_catalog;Username=catalog_ci;Password=catalog-ci-only
+        run: |
+          docker exec "$POSTGRES_CONTAINER" createdb -U catalog_ci assembly_integrated
+          docker exec -i "$POSTGRES_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U catalog_ci -d assembly_integrated < src/Demo/SiteCatalog/001-site-catalog.sql
+          python3 tests/sheltering_stage_b.py --postgres
+          query="SELECT (SELECT count(*) FROM sheltering_catalog_audit) || ':' || (SELECT count(*) FROM sheltering_catalog_outbox)"
+          test "$(docker exec "$POSTGRES_CONTAINER" psql -XAt -U catalog_ci -d shelter_catalog -c "$query")" = "2:2"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -92,6 +142,7 @@ jobs:
         run: python -m unittest discover -s experiments/routing -v
       - name: Verify expected.json is reproduced by the model
         run: python experiments/routing/fixtures.py --check
+
   verify-dispatch-notifications:
     runs-on: ubuntu-24.04
     timeout-minutes: 10

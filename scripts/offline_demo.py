@@ -69,13 +69,16 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
         env["Routing__EvacuationEnabled"] = str(evacuation_enabled).lower()
     if sheltering:
         fixture = ROOT / "data" / "demo" / "sheltering" / "sample-sites.json"
-        env.update({
+        catalog_defaults = {
+            "SiteCatalog__AccessMode": "demo",
             "AssemblyPoints__SeedFile": str(fixture),
             "AssemblyPoints__StateFile": str(data_dir / "assembly-points.json"),
             "Sheltering__SeedFile": str(fixture),
             "Sheltering__StateFile": str(data_dir / "shelters.json"),
-            "Sheltering__BaseUrl": local_url(port + 5),
-        })
+        }
+        configured_names = {name.casefold() for name in env}
+        env.update({name: value for name, value in catalog_defaults.items() if name.casefold() not in configured_names})
+        env["Sheltering__BaseUrl"] = local_url(port + 5)
         if shelter_holds:
             env["Sheltering__HoldsFile"] = str(ROOT / "data" / "demo" / "sheltering" / "sample-holds.json")
         # Stage B reception accounts (SH-T05): on with the hold fixture unless set explicitly.

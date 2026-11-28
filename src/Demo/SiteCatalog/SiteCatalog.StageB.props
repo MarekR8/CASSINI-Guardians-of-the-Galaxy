@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup Condition="'$(EnableSiteCatalogStageB)' == 'true'">
+    <DefineConstants>$(DefineConstants);SITE_CATALOG_STAGE_B</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableSiteCatalogStageB)' == 'true'">
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
+    <PackageReference Include="Npgsql" Version="10.0.4"
+                      Condition="'$(MSBuildProjectName)' != 'Cassini.Sheltering' Or '$(EnableShelteringPostgres)' != 'true'" />
+  </ItemGroup>
+</Project>

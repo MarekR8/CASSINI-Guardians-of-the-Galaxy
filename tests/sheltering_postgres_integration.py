@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sheltering_reservations_integration import (AT, EXPIRES, INCIDENT, LEG, Client, after_restart, exercise,
@@ -44,8 +45,10 @@ def second_sheltering(port, gateway_port, folder):
 
 @contextmanager
 def deployment(port, folder):
-    with start_services(port, folder, sheltering=True) as base, second_sheltering(port + 10, port, folder) as peer:
-        yield Client(base), Client(base, sheltering=peer)
+    # Both instances handle synthetic writes in this exercise, including the peer started outside the launcher.
+    with patch.dict(os.environ, {"SiteCatalog__AccessMode": "demo"}):
+        with start_services(port, folder, sheltering=True) as base, second_sheltering(port + 10, port, folder) as peer:
+            yield Client(base), Client(base, sheltering=peer)
 
 
 def decisions(client, case_id):

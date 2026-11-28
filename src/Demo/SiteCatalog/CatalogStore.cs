@@ -4,13 +4,25 @@ using System.Text.Json;
 namespace Cassini.Demo.SiteCatalog;
 
 internal sealed record CatalogWrite<T>(int Revision, T Item);
-internal sealed record CatalogReceipt<T>(string Fingerprint, CatalogWrite<T> Result);
+internal sealed record CatalogReceipt<T>(string Fingerprint, CatalogWrite<T> Result, CatalogActor? Actor = null);
 internal sealed record CatalogOutcome(string Fingerprint, JsonElement Result);
+internal sealed record CatalogActor(string Issuer, string Subject, string Role)
+{
+    internal static CatalogActor Demo { get; } = new("cassini-offline", "exercise", "demo");
+    internal bool CanConfigureSite => Role is "coordinator" or "demo";
+}
+internal sealed record CatalogAudit<T>(int CatalogRevision, string CommandId, CatalogActor Actor, DateTimeOffset At,
+    string SubjectId, int SubjectVersion, T? Before, T After);
+internal sealed record CatalogOutboxEntry(string RoutingKey, CatalogEvent Event, DateTimeOffset? PublishedAt = null);
+internal sealed record CatalogEvent(Guid EventId, string Type, string Producer, string SubjectId, int SubjectVersion,
+    DateTimeOffset OccurredAt, string CorrelationId, string CausationId, JsonElement Payload);
+internal sealed record SiteChange(string Type, string RoutingKey, string SubjectId, object Payload);
 
 /// <summary>Everything one catalog commits at once. Aux is an optional owner-defined document (see Mutate).</summary>
 internal sealed record CatalogState<T>(
     int Revision, Dictionary<string, T> Items, Dictionary<string, CatalogReceipt<T>> Receipts,
-    Dictionary<string, CatalogOutcome>? Outcomes = null, JsonElement? Aux = null);
+    Dictionary<string, CatalogOutcome>? Outcomes = null, JsonElement? Aux = null,
+    CatalogAudit<T>[]? Audit = null, CatalogOutboxEntry[]? Outbox = null);
 
 /// <summary>
 /// Where a catalog keeps its state. <c>Update</c> runs <c>apply</c> on the current committed state and commits the
@@ -74,23 +86,26 @@ internal sealed class FileCatalogPersistence<T> : ICatalogPersistence<T> where T
 }
 
 // The two owner services each instantiate this store with their own domain type and persistence.
-internal sealed class CatalogStore<T> where T : class
+internal sealed partial class CatalogStore<T> : IDisposable where T : class
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private readonly ICatalogPersistence<T> persistence;
     private readonly Func<T, string> key;
     private readonly Func<T, int> version;
+    private readonly string? owner;
 
     internal CatalogStore(string? path, Func<T[]> seed, Func<T, string> key, Func<T, int> version)
         : this(new FileCatalogPersistence<T>(path, () => Initial(seed, key)), key, version)
     {
     }
 
-    internal CatalogStore(ICatalogPersistence<T> persistence, Func<T, string> key, Func<T, int> version)
+    internal CatalogStore(ICatalogPersistence<T> persistence, Func<T, string> key, Func<T, int> version,
+        string? owner = null)
     {
         this.persistence = persistence;
         this.key = key;
         this.version = version;
+        this.owner = owner;
     }
 
     internal static CatalogState<T> Initial(Func<T[]> seed, Func<T, string> key) =>
@@ -103,7 +118,8 @@ internal sealed class CatalogStore<T> where T : class
     }
 
     internal CatalogWrite<T> Save<TCommand>(string? commandId, int? expectedVersion, string key,
-        TCommand command, Func<T?, int, T> change)
+        TCommand command, CatalogActor actor, DateTimeOffset at, Func<T?, int, T> change,
+        Func<T?, T, SiteChange> describe)
     {
         if (!SiteRules.IsId(commandId) || expectedVersion is null or < 0)
             throw new SiteCatalogError(400, "InvalidCommand", "Specify a commandId and a non-negative expectedVersion.");
@@ -114,7 +130,11 @@ internal sealed class CatalogStore<T> where T : class
             if (state.Outcomes?.ContainsKey(commandId!) == true)
                 throw Conflict();
             if (state.Receipts.TryGetValue(commandId!, out var receipt))
+            {
+                if ((receipt.Actor ?? CatalogActor.Demo) != actor)
+                    throw new SiteCatalogError(403, "SiteScopeForbidden", "The command receipt belongs to another actor.");
                 return (null, receipt.Fingerprint == fingerprint ? receipt.Result : throw Conflict());
+            }
 
             var previous = state.Items.GetValueOrDefault(key);
             var currentVersion = previous is null ? 0 : version(previous);
@@ -123,14 +143,21 @@ internal sealed class CatalogStore<T> where T : class
 
             var item = change(previous, checked(currentVersion + 1));
             var result = new CatalogWrite<T>(checked(state.Revision + 1), item);
+            var fact = describe(previous, item);
+            var audit = new CatalogAudit<T>(result.Revision, commandId!, actor, at, fact.SubjectId, version(item), previous, item);
+            var message = new CatalogEvent(Guid.NewGuid(), fact.Type,
+                owner ?? throw new InvalidOperationException("A site catalog event requires its owner."),
+                fact.SubjectId, version(item), at, commandId!, commandId!, JsonSerializer.SerializeToElement(fact.Payload, Json));
             return (state with
             {
                 Revision = result.Revision,
                 Items = WithItems(state.Items, [item]),
                 Receipts = new Dictionary<string, CatalogReceipt<T>>(state.Receipts, StringComparer.Ordinal)
                 {
-                    [commandId!] = new(fingerprint, result),
+                    [commandId!] = new(fingerprint, result, actor),
                 },
+                Audit = [.. state.Audit ?? [], audit],
+                Outbox = [.. state.Outbox ?? [], new(fact.RoutingKey, message)],
             }, result);
         });
     }
@@ -200,6 +227,8 @@ internal sealed class CatalogStore<T> where T : class
 
     private static SiteCatalogError Conflict() =>
         new(409, "CommandConflict", "This commandId was used with different inputs.");
+
+    public void Dispose() => (persistence as IDisposable)?.Dispose();
 }
 
 internal static class SiteSeed

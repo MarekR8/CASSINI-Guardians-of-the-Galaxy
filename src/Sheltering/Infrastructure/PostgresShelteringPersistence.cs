@@ -73,6 +73,18 @@ internal sealed class PostgresShelteringPersistence : ICatalogPersistence<Shelte
         (2, "outbox-publication", """
             CREATE TABLE sheltering_published (event_id text PRIMARY KEY);
             """),
+        (3, "site-configuration-audit", """
+            ALTER TABLE sheltering_receipts ADD COLUMN actor jsonb;
+            CREATE TABLE sheltering_catalog_audit (
+                catalog_revision integer PRIMARY KEY,
+                document jsonb NOT NULL
+            );
+            CREATE TABLE sheltering_catalog_outbox (
+                catalog_revision integer PRIMARY KEY REFERENCES sheltering_catalog_audit (catalog_revision),
+                event_id uuid NOT NULL UNIQUE,
+                document jsonb NOT NULL
+            );
+            """),
     ];
 
     private sealed record Loaded(
@@ -165,14 +177,15 @@ internal sealed class PostgresShelteringPersistence : ICatalogPersistence<Shelte
         var catalogReceipts = new Dictionary<string, CatalogReceipt<Shelter>>(StringComparer.Ordinal);
         var outcomes = new Dictionary<string, CatalogOutcome>(StringComparer.Ordinal);
         var allocationReceipts = new Dictionary<string, AllocationReceipt>(StringComparer.Ordinal);
-        foreach (var (scope, id, fingerprint, result) in Query(connection, transaction,
-            "SELECT scope, command_id, fingerprint, result::text FROM sheltering_receipts",
-            reader => (reader.GetString(0), reader.GetString(1), reader.GetString(2), Parse<JsonElement>(reader.GetString(3)))))
+        foreach (var (scope, id, fingerprint, result, actor) in Query(connection, transaction,
+            "SELECT scope, command_id, fingerprint, result::text, actor::text FROM sheltering_receipts",
+            reader => (reader.GetString(0), reader.GetString(1), reader.GetString(2), Parse<JsonElement>(reader.GetString(3)),
+                reader.IsDBNull(4) ? null : Parse<CatalogActor>(reader.GetString(4)))))
         {
             switch (scope)
             {
                 case "catalog":
-                    catalogReceipts[id] = new(fingerprint, result.Deserialize<CatalogWrite<Shelter>>(Json)!);
+                    catalogReceipts[id] = new(fingerprint, result.Deserialize<CatalogWrite<Shelter>>(Json)!, actor);
                     break;
                 case "outcome":
                     outcomes[id] = new(fingerprint, result);
@@ -200,8 +213,12 @@ internal sealed class PostgresShelteringPersistence : ICatalogPersistence<Shelte
         var published = Query(connection, transaction, "SELECT event_id FROM sheltering_published ORDER BY event_id",
             reader => reader.GetString(0)).ToArray();
         var allocation = new AllocationState(meta.Allocation, assignments, allocationReceipts, outbox, evidence, published);
+        var catalogAudit = Query(connection, transaction, "SELECT document::text FROM sheltering_catalog_audit ORDER BY catalog_revision",
+            reader => Parse<CatalogAudit<Shelter>>(reader.GetString(0))).ToArray();
+        var catalogOutbox = Query(connection, transaction, "SELECT document::text FROM sheltering_catalog_outbox ORDER BY catalog_revision",
+            reader => Parse<CatalogOutboxEntry>(reader.GetString(0))).ToArray();
         var state = new CatalogState<Shelter>(meta.Catalog, shelters, catalogReceipts, outcomes,
-            JsonSerializer.SerializeToElement(allocation, Json));
+            JsonSerializer.SerializeToElement(allocation, Json), catalogAudit, catalogOutbox);
         return new(state, allocation, meta.Seq, shelterRows, assignmentRows);
     }
 
@@ -222,10 +239,30 @@ internal sealed class PostgresShelteringPersistence : ICatalogPersistence<Shelte
                     """, id, shelter.Version, document, loaded.ShelterRows[id]));
         }
 
-        InsertReceipts(connection, transaction, "catalog", loaded.State.Receipts, next.Receipts,
-            receipt => (receipt.Fingerprint, JsonSerializer.Serialize(receipt.Result, Json)));
+        foreach (var (id, receipt) in next.Receipts.Where(entry => !loaded.State.Receipts.ContainsKey(entry.Key)))
+            Execute(connection, transaction, """
+                INSERT INTO sheltering_receipts (scope, command_id, fingerprint, result, actor)
+                VALUES ('catalog', $1, $2, $3::jsonb, NULLIF($4::jsonb, 'null'::jsonb))
+                """, id, receipt.Fingerprint, JsonSerializer.Serialize(receipt.Result, Json),
+                JsonSerializer.Serialize(receipt.Actor, Json));
         InsertReceipts(connection, transaction, "outcome", loaded.State.Outcomes ?? new(), next.Outcomes ?? new(),
             outcome => (outcome.Fingerprint, outcome.Result.GetRawText()));
+
+        var audit = next.Audit ?? [];
+        var catalogOutbox = next.Outbox ?? [];
+        if (audit.Length != catalogOutbox.Length)
+            throw new InvalidDataException("Site configuration audit and outbox must be committed together.");
+        for (var index = loaded.State.Audit?.Length ?? 0; index < audit.Length; index++)
+        {
+            var change = audit[index];
+            var fact = catalogOutbox[index];
+            Execute(connection, transaction,
+                "INSERT INTO sheltering_catalog_audit (catalog_revision, document) VALUES ($1, $2::jsonb)",
+                change.CatalogRevision, JsonSerializer.Serialize(change, Json));
+            Execute(connection, transaction, """
+                INSERT INTO sheltering_catalog_outbox (catalog_revision, event_id, document) VALUES ($1, $2, $3::jsonb)
+                """, change.CatalogRevision, fact.Event.EventId, JsonSerializer.Serialize(fact, Json));
+        }
 
         if (next.Aux?.Deserialize<AllocationState>(Json) is not { } allocation)
             return loaded.Allocation.Revision;

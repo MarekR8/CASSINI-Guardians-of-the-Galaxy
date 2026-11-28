@@ -16,17 +16,25 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
 var seedFile = builder.Configuration["Sheltering:SeedFile"] ?? Path.Combine(AppContext.BaseDirectory, "sample-sites.json");
 var holdsFile = builder.Configuration["Sheltering:HoldsFile"];
 var stateFile = builder.Configuration["Sheltering:StateFile"] ?? Path.Combine("artifacts", "sheltering", "catalog.json");
+var authenticateCatalog = SiteCatalogAccess.Configure(builder);
+var incidentId = builder.Configuration["Sheltering:IncidentId"] ?? (authenticateCatalog ? null : "incident-42");
+if (!SiteRules.IsId(incidentId))
+    throw new InvalidOperationException("Configure Sheltering:IncidentId for the shelter catalog.");
 Shelter[] Seed() => ShelterSeed.WithHolds(ShelterSeed.Read(seedFile), holdsFile);
 static string ShelterKey(Shelter shelter) => shelter.ShelterId;
 static int ShelterVersion(Shelter shelter) => shelter.Version;
 var connectionString = builder.Configuration.GetConnectionString("Sheltering");
+var snapshotConnection = builder.Configuration.GetConnectionString("ShelterCatalog");
+if (!string.IsNullOrWhiteSpace(connectionString) && !string.IsNullOrWhiteSpace(snapshotConnection))
+    throw new InvalidOperationException("Select one PostgreSQL backend for the Sheltering catalog.");
 if (string.IsNullOrWhiteSpace(connectionString))
-    builder.Services.AddSingleton(new CatalogStore<Shelter>(stateFile, Seed, ShelterKey, ShelterVersion));
+    builder.Services.AddSingleton(_ => new CatalogStore<Shelter>("sheltering", stateFile, snapshotConnection,
+        Seed, ShelterKey, ShelterVersion));
 else
 {
 #if SHELTERING_POSTGRES
-    builder.Services.AddSingleton(new CatalogStore<Shelter>(new PostgresShelteringPersistence(connectionString,
-        () => CatalogStore<Shelter>.Initial(Seed, ShelterKey)), ShelterKey, ShelterVersion));
+    builder.Services.AddSingleton(_ => new CatalogStore<Shelter>(new PostgresShelteringPersistence(connectionString,
+        () => CatalogStore<Shelter>.Initial(Seed, ShelterKey)), ShelterKey, ShelterVersion, "sheltering"));
 #else
     throw new InvalidOperationException("Build Sheltering with EnableShelteringPostgres=true to use a PostgreSQL connection.");
 #endif
@@ -76,6 +84,9 @@ builder.Services.AddHttpClient<GroupingClient>(client =>
 }).ConfigurePrimaryHttpMessageHandler(LocalHandler);
 
 var app = builder.Build();
+_ = app.Services.GetRequiredService<CatalogStore<Shelter>>();
+if (authenticateCatalog)
+    app.UseAuthentication();
 app.Use(async (context, next) =>
 {
     try
@@ -98,7 +109,9 @@ app.MapGet("/health/ready", (CatalogStore<Shelter> catalog) =>
 app.MapGet("/queries/shelter-availability", (DateTimeOffset? at, bool? eligibleOnly, ShelterQueries handler,
     CancellationToken cancellation) => handler.GetShelterAvailability(at, eligibleOnly ?? false, cancellation));
 app.MapPost("/commands/configure-shelter", (ConfigureShelterCommand command, ShelterCommands handler,
-    CancellationToken cancellation) => handler.ConfigureShelter(command, cancellation));
+    SiteCatalogAccess access, HttpContext context, CancellationToken cancellation) =>
+    handler.ConfigureShelter(command, access.GetActor(context, incidentId, command.ShelterId),
+        incidentId!, cancellation));
 // SH-T05 reception. With Sheltering:OperatorsFile, callers need a bearer token and act only within their scope.
 app.MapGet("/queries/shelter-reception", (string? shelterId, string? incidentId, DateTimeOffset? at,
     ReceptionQueries handler, OperatorDirectory operators, HttpContext context) =>
