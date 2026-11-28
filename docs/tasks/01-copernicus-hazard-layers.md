@@ -69,5 +69,15 @@ exercise polygon before any imports. A layer without an estimate returns `null`.
 
 The exercise polygons are synthetic. The Kłodzko map includes a reference flood extent clipped from
 the public [EMSR756 AOI03 Sentinel-1 delineation](https://mapping.emergency.copernicus.eu/activations/EMSR756/),
-observed on 2024-09-15 at 05:01 UTC. The source product and observation time appear on the main map.
-A verified flood layer for Warsaw and the overlap check with the Warsaw corridors remain pending.
+observed on 2024-09-15 at 05:01 UTC.
+
+Warsaw includes the Copernicus EMS Global Flood Monitoring [Observed Flood Extent product](https://stac.eodc.eu/api/v1/collections/GFM/items/ENSEMBLE_FLOOD_20190528T045228_VV_EU020M_E054N018T3),
+observed by Sentinel-1 on 2019-05-28 at 04:52:28 UTC with a 20 m pixel size. The `ensemble_flood_extent`
+raster was clipped to the Warsaw map AOI. The 723 cells classified as floodwater (value 1) were
+vectorised into four polygons in WGS 84. The polygons are on the southern Vistula reach within the
+map AOI, partly within Warsaw's administrative boundary. The layer is bundled with the dashboard,
+which shows the source, product ID and observation time on the main map.
+
+The Warsaw polygons were checked against the exercise graph. They intersect neither
+Most Świętokrzyski nor either exercise exit, so the W0 overlap requirement remains open.
+The 2019 observation serves as historical context alongside the synthetic exercise.

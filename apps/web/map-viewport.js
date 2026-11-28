@@ -46,6 +46,14 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset, maxZoom }) {
     setView(0, 0, 1);
   }
 
+  function fit(bounds) {
+    const padding = 1.25;
+    const nextZoom = clamp(Math.min(width / bounds.width, height / bounds.height) / padding, 1, maxZoom());
+    const centerX = bounds.x + bounds.width / 2;
+    const centerY = bounds.y + bounds.height / 2;
+    setView(centerX - width / nextZoom / 2, centerY - height / nextZoom / 2, nextZoom);
+  }
+
   function gesture() {
     const [first, second] = pointers.values();
     if (!second) return { center: first, distance: 1 };
@@ -109,5 +117,5 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset, maxZoom }) {
   });
 
   resetView();
-  return { point };
+  return { point, fit };
 }

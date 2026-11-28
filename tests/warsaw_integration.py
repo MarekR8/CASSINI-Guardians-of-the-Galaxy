@@ -42,7 +42,11 @@ def command(name, payload, status=200):
 assert b'id="review-panel"' in request("/")
 scene = request("/maps/satellite.json")["warsaw"]
 assert scene["bounds"] == [20.830, 52.080, 21.300, 52.390]
-assert "floodArchive" not in scene
+archive = scene["floodArchive"]
+assert archive["label"] == "GFM / Sentinel-1"
+assert archive["productId"] == "ENSEMBLE_FLOOD_20190528T045228_VV_EU020M_E054N018T3"
+assert archive["observedAt"] == "2019-05-28T04:52:28Z" and archive["resolutionMeters"] == 20
+assert archive["geometry"]["type"] == "MultiPolygon" and archive["geometry"]["coordinates"]
 assert request("/maps/" + scene["image"]).startswith(b"\xff\xd8\xff")
 assert request("/maps/" + scene["detail"]["image"]).startswith(b"\xff\xd8\xff")
 network = request("/api/routing/queries/network")
@@ -52,6 +56,7 @@ bridge = next(segment for segment in network["segments"] if segment["id"] == "br
 assert len(bridge["geometry"]) > 5 and bridge["drivingGeometry"] != bridge["reverseDrivingGeometry"]
 
 initial = snapshot()
+assert all(layer["productId"] != archive["productId"] for layer in initial["hazards"])
 assert initial["populationEstimate"]["value"] == 65
 feature = initial["reviewFeatures"][0]
 assert feature["mode"] == "synthetic" and feature["status"] == "Pending"

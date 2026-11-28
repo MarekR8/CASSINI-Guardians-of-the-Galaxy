@@ -163,10 +163,14 @@ async function refresh(epoch) {
   }
   const archive = scene?.floodArchive;
   $('archive-credit').hidden = !archive;
+  $('archive-tools').hidden = !archive;
   if (archive) {
+    const source = archive.label ?? 'EMS';
     $('archive-source').href = archive.sourceUrl;
-    text('archive-source', '© European Union, Copernicus EMS · ' + archive.productId);
-    text('archive-date', ' · obserwacja ' + formatObservation.format(new Date(archive.observedAt)) + ' UTC');
+    text('archive-source', '© European Union, Copernicus EMS · ' + (archive.label ? source + ' · ' : '') + archive.productId);
+    text('archive-label', 'Zalanie archiwalne · ' + source);
+    text('archive-date', ' · obserwacja ' + formatObservation.format(new Date(archive.observedAt)) + ' UTC' +
+      (archive.resolutionMeters ? ' · ' + archive.resolutionMeters + ' m' : ''));
   }
   $('review-panel').hidden = !warsaw;
   text('clock', time(distribution.at) + ' UTC');
@@ -355,10 +359,12 @@ function renderMap(route) {
   const archive = scene?.floodArchive;
   $('archive-legend').hidden = !archive;
   if (archive) {
+    const group = svg('g', { id: 'archive-flood-layer' });
     for (const polygon of polygons(archive.geometry)) {
-      map.append(svg('path', { class: 'archive-flood', d: shape(polygon), 'fill-rule': 'evenodd',
+      group.append(svg('path', { class: 'archive-flood', d: shape(polygon), 'fill-rule': 'evenodd',
         fill: '#eead83', 'fill-opacity': .5, stroke: '#ffe0cb', 'stroke-width': 1.5 }));
     }
+    map.append(group);
   }
   const pending = (state.situation.reviewFeatures || []).filter(feature => feature.status === 'Pending');
   $('review-legend').hidden = !pending.length;
@@ -478,6 +484,10 @@ function showCityPath(path) {
   text('city-status', found ? 'Trasa orientacyjna · ' + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
 }
 
+$('archive-focus').addEventListener('click', () => {
+  const layer = $('archive-flood-layer');
+  if (layer) mapViewport.fit(layer.getBBox());
+});
 $('map-layer').addEventListener('click', () => {
   state.satelliteDetail = !state.satelliteDetail;
   updateMapDetail();
