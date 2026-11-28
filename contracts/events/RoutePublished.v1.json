@@ -1,0 +1,23 @@
+{
+  "eventId": "0e7f3b52-61a4-4c1f-8c2d-9f4b7a3e5d21",
+  "type": "RoutePublished.v1",
+  "producer": "routing",
+  "subjectId": "civilian-case/case-14",
+  "subjectVersion": 2,
+  "occurredAt": "2026-11-27T19:31:05Z",
+  "correlationId": "incident-42",
+  "causationId": "north-draw",
+  "payload": {
+    "subject": {
+      "kind": "civilian-case",
+      "id": "case-14"
+    },
+    "routeVersion": 2,
+    "drawId": "north-draw",
+    "situationRevision": 1,
+    "exit": "exit-north",
+    "validFrom": "2026-11-27T19:31:00Z",
+    "validUntil": "2026-11-27T20:31:00Z",
+    "routePath": "/queries/draws/north-draw"
+  }
+}

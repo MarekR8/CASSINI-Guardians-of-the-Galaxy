@@ -36,8 +36,9 @@ def local_url(port):
 
 
 @contextmanager
-def start_services(port, data_dir, scenario="sample", city_directory=None):
+def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False, *, auto_replan=None):
     data_dir.mkdir(parents=True, exist_ok=True)
+    services = [*SERVICES, ("Sheltering", "Cassini.Sheltering", 5)] if sheltering else SERVICES
     env = dict(os.environ)
     env.update({
         "DOTNET_ENVIRONMENT": "Production",
@@ -55,11 +56,22 @@ def start_services(port, data_dir, scenario="sample", city_directory=None):
         "Routing__BaseUrl": local_url(port + 3),
         "Management__BaseUrl": local_url(port + 1),
         **{f"Services__{service}": local_url(port + offset)
-           for service, _, offset in SERVICES if service != "Gateway"},
+           for service, _, offset in services if service != "Gateway"},
     })
+    if auto_replan is not None:
+        env["Dispatch__AutoReplan"] = str(auto_replan).lower()
+    if sheltering:
+        fixture = ROOT / "data" / "demo" / "sheltering" / "sample-sites.json"
+        env.update({
+            "AssemblyPoints__SeedFile": str(fixture),
+            "AssemblyPoints__StateFile": str(data_dir / "assembly-points.json"),
+            "Sheltering__SeedFile": str(fixture),
+            "Sheltering__StateFile": str(data_dir / "shelters.json"),
+            "Sheltering__BaseUrl": local_url(port + 5),
+        })
     children = []
     try:
-        for directory, assembly, offset in SERVICES:
+        for directory, assembly, offset in services:
             dll = ROOT / "src" / directory / "bin" / "Debug" / "net10.0" / (assembly + ".dll")
             log = data_dir / (directory.lower() + ".log")
             with log.open("w", encoding="utf-8") as stream:
@@ -68,7 +80,7 @@ def start_services(port, data_dir, scenario="sample", city_directory=None):
                     cwd=ROOT, env=env, stdin=subprocess.DEVNULL, stdout=stream, stderr=subprocess.STDOUT,
                 )
             children.append((process, log))
-        for (directory, _, offset), (process, log) in zip(SERVICES, children):
+        for (directory, _, offset), (process, log) in zip(services, children):
             health = "/health" if directory == "Gateway" else "/health/ready"
             wait_ready(local_url(port + offset) + health, process, log)
         yield local_url(port)
@@ -99,17 +111,21 @@ def wait_ready(url, process, log):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--port", type=int, default=5080, help="Gateway port (uses this port and the next four)")
+    parser.add_argument("--port", type=int, default=5080, help="Gateway port (uses the next four, or five with --sheltering)")
     parser.add_argument("--data", type=Path, help="Local state/log directory")
     parser.add_argument("--scenario", choices=("valencia", "sample"),
                         help="Defaults to Valencia, or to the sample when running --test")
     parser.add_argument("--city-directory", type=Path, help="Directory with the generated offline map and graph")
     parser.add_argument("--no-build", action="store_true", help="Use existing compiled services")
     parser.add_argument("--test", action="store_true", help="Run integration tests in fresh temporary state")
+    parser.add_argument("--sheltering", action="store_true", help="Enable the sample assembly point and shelter catalogs")
     args = parser.parse_args()
-    if not 1024 <= args.port <= 65531:
-        parser.error("port must be between 1024 and 65531")
-    args.scenario = args.scenario or ("sample" if args.test else "valencia")
+    last_port = 65530 if args.sheltering else 65531
+    if not 1024 <= args.port <= last_port:
+        parser.error(f"port must be between 1024 and {last_port}")
+    args.scenario = args.scenario or ("sample" if args.test or args.sheltering else "valencia")
+    if args.sheltering and args.scenario != "sample":
+        parser.error("--sheltering is available in the sample scenario")
     if args.city_directory and args.scenario == "sample":
         parser.error("--city-directory requires a city scenario")
     city = args.city_directory
@@ -127,18 +143,26 @@ def main():
     if args.test:
         ARTIFACTS.mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="integration-", dir=ARTIFACTS) as directory:
+            test_file = ("sheltering_integration.py" if args.sheltering else
+                         "valencia_integration.py" if args.scenario == "valencia" else "offline_integration.py")
+            scripts = [test_file, "connectivity_integration.py"] if test_file == "offline_integration.py" else [test_file]
             with start_services(args.port, Path(directory), args.scenario,
-                                city.resolve() if city else None) as url:
-                subprocess.run(
-                    [os.sys.executable, str(ROOT / "tests" / (
-                        "valencia_integration.py" if args.scenario == "valencia" else
-                        "offline_integration.py")), url],
-                    cwd=ROOT,
-                    check=True,
-                )
+                                city.resolve() if city else None, sheltering=args.sheltering,
+                                auto_replan=False) as url:
+                for script in scripts:
+                    subprocess.run([os.sys.executable, str(ROOT / "tests" / script), url], cwd=ROOT, check=True)
+            if args.sheltering:
+                with start_services(args.port, Path(directory), sheltering=True) as url:
+                    subprocess.run(
+                        [os.sys.executable, str(ROOT / "tests" / test_file), url, "--after-restart"],
+                        cwd=ROOT,
+                        check=True,
+                    )
         return
-    data = args.data or ARTIFACTS / ("offline-demo" if args.scenario == "sample" else args.scenario + "-demo")
-    with start_services(args.port, data.resolve(), args.scenario, city.resolve() if city else None) as url:
+    state_name = "sheltering-demo" if args.sheltering else "offline-demo" if args.scenario == "sample" else "valencia-demo"
+    data = args.data or ARTIFACTS / state_name
+    with start_services(args.port, data.resolve(), args.scenario, city.resolve() if city else None,
+                        sheltering=args.sheltering) as url:
         print("CASSINI Offline: " + url, flush=True)
         print("Ctrl+C zatrzymuje lokalne mikroserwisy.", flush=True)
         try:

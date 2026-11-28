@@ -1,0 +1,53 @@
+{
+  "fixtureVersion": "cassini.sample-sites.v1",
+  "scenario": "sample",
+  "exerciseAt": "2026-11-27T19:20:00Z",
+  "assemblyPoints": [
+    {
+      "incidentId": "incident-42",
+      "pointId": "assembly-north",
+      "name": "Północny punkt zbiórki",
+      "place": { "graphNodeId": "exit-north", "longitude": 16.654, "latitude": 50.441 },
+      "stepFree": true,
+      "status": "open",
+      "operatingWindow": { "opensAt": "2026-11-27T19:00:00Z", "closesAt": "2026-11-27T20:30:00Z" },
+      "evidence": {
+        "source": "sample-flood-and-egress-v1", "mode": "synthetic", "verification": "verified",
+        "observedAt": "2026-11-27T19:10:00Z", "validUntil": "2026-11-27T21:00:00Z", "situationRevision": 0
+      },
+      "version": 1
+    }
+  ],
+  "shelters": [
+    {
+      "shelterId": "shelter-a",
+      "name": "Schronienie wschodnie A",
+      "place": { "graphNodeId": "exit-east", "longitude": 16.659, "latitude": 50.435 },
+      "stepFree": true,
+      "status": "open",
+      "operatingWindow": { "opensAt": "2026-11-27T19:00:00Z", "closesAt": "2026-11-27T20:30:00Z" },
+      "evidence": {
+        "source": "sample-flood-and-egress-v1", "mode": "synthetic", "verification": "verified",
+        "observedAt": "2026-11-27T19:10:00Z", "validUntil": "2026-11-27T21:00:00Z", "situationRevision": 0
+      },
+      "resources": { "places": 8, "accessiblePlaces": 2, "intakePerHour": 6 },
+      "commitments": { "heldPlaces": 1, "heldAccessiblePlaces": 0, "occupiedPlaces": 2, "occupiedAccessiblePlaces": 1 },
+      "version": 1
+    },
+    {
+      "shelterId": "shelter-b",
+      "name": "Schronienie północne B",
+      "place": { "graphNodeId": "exit-north", "longitude": 16.654, "latitude": 50.441 },
+      "stepFree": true,
+      "status": "open",
+      "operatingWindow": { "opensAt": "2026-11-27T19:15:00Z", "closesAt": "2026-11-27T21:00:00Z" },
+      "evidence": {
+        "source": "sample-flood-and-egress-v1", "mode": "synthetic", "verification": "verified",
+        "observedAt": "2026-11-27T19:10:00Z", "validUntil": "2026-11-27T21:00:00Z", "situationRevision": 0
+      },
+      "resources": { "places": 4, "accessiblePlaces": 1, "intakePerHour": null },
+      "commitments": { "heldPlaces": 0, "heldAccessiblePlaces": 0, "occupiedPlaces": 0, "occupiedAccessiblePlaces": 0 },
+      "version": 1
+    }
+  ]
+}

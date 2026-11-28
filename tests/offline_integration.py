@@ -164,11 +164,21 @@ new_request = post("dispatch", "request", {
     "commandId": "request-support", "caseId": "case-14", "pickupNode": "pickup",
 })
 assert new_request["pickupNode"] == "pickup" and new_request["caseId"] == "case-14"
-for step in ("acknowledgement", "moving", "exit-confirmed"):
+for step in ("acknowledgement", "moving"):
     case = post("management", "progress", {
         "commandId": "case-" + step, "caseId": "case-14", "step": step, "expectedVersion": case["version"],
     })
-assert case["progress"] == "ExitConfirmed"
+exit_report = {"commandId": "case-exit-confirmed", "caseId": "case-14", "step": "exit-confirmed",
+               "expectedVersion": case["version"]}
+assert post("management", "progress", exit_report, 400)["code"] == "PositionEvidenceRequired"
+exit_report = {**exit_report, "commandId": "case-exit-with-fix", "observedAt": "2026-11-27T19:45:00Z",
+               "latitude": 50.4410, "longitude": 16.6540, "accuracy": 12,
+               "evidence": {"galileoUsed": False, "osnma": "none", "egnos": "unknown"}, "mode": "simulated"}
+case = post("management", "progress", exit_report)
+assert case["progress"] == "ExitConfirmed" and case["exit"]["mode"] == "simulated"
+counters = get("management", "incident")["counters"]
+assert counters["confirmedOutside"] == 1 and counters["confirmedOutsideSimulated"] == 1
+assert counters["inZoneEstimate"]["value"] == 4872 and counters["estimatedWithoutConfirmedExit"] == 4871
 
 no_exit = post("situation", "closure", {
     "commandId": "close-north", "segmentId": "north-link", "closed": True, "expectedRevision": 1,

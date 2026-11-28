@@ -1,5 +1,6 @@
 """Verify Dispatch against recorded routes and an ORS-compatible local HTTP stub."""
 
+from base64 import b64encode
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from hashlib import sha256
@@ -7,6 +8,7 @@ from pathlib import Path
 from subprocess import run
 from tempfile import TemporaryDirectory
 from threading import Thread
+from time import monotonic, sleep
 from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request
@@ -50,11 +52,11 @@ def close_bridge(base):
 
 
 @contextmanager
-def demo(port, scenario="sample", **config):
+def demo(port, scenario="sample", *, auto_replan=False, **config):
     folder = ROOT / "artifacts"
     folder.mkdir(exist_ok=True)
     with TemporaryDirectory(dir=folder) as data, patch.dict(os.environ, config):
-        with start_services(port, Path(data), scenario) as base:
+        with start_services(port, Path(data), scenario, auto_replan=auto_replan) as base:
             yield base
 
 
@@ -165,17 +167,121 @@ def check_capture(port, ors_url):
             check=True)
 
 
+def wait_for_replan(base, assignment, timeout=8):
+    deadline = monotonic() + timeout
+    while True:
+        result, = api(base, "dispatch/queries/assignments")["assignments"]
+        if result["version"] > assignment["version"]:
+            return result
+        assert monotonic() < deadline, result
+        sleep(0.15)
+
+
+def check_ranking_and_automatic_replan(port):
+    evidence = {"source": "EGNOS", "egnosApplied": True, "hpl": 9, "mode": "synthetic"}
+    units = [{"unitId": f"unit-{number}", "name": f"Unit {number}", "state": "Available", "node": node}
+             for number, node in [(4, "exit-east"), (3, "exit-east"), (2, "pickup"), (5, "pickup")]]
+    with TemporaryDirectory(dir=ROOT / "artifacts") as directory:
+        data = Path(directory)
+        fixture = data / "positions.json"
+        fixture.write_text(json.dumps([
+            {"unitId": unit["unitId"], "node": unit["node"], "evidence": evidence}
+            for unit in units if unit["unitId"] != "unit-5"
+        ]), encoding="utf-8")
+        (data / "dispatch.json").write_text(json.dumps({
+            "view": {"requests": [{"requestId": "request-15", "caseId": "case-15", "pickupNode": "pickup",
+                                   "state": "Open", "version": 1}], "assignments": [], "units": units},
+            "receipts": {},
+        }), encoding="utf-8")
+        with patch.dict(os.environ, {"Dispatch__AutoReplanIntervalSeconds": "1",
+                                    "Integrations__Egnos__FixtureFile": str(fixture)}):
+            with start_services(port, data, auto_replan=True) as base:
+                path = "dispatch/queries/unit-candidates?requestId=request-15"
+                ranking = api(base, path)
+                assert ranking["requestVersion"] == 1 and ranking["situationRevision"] == 0
+                assert [candidate["unitId"] for candidate in ranking["candidates"]] == [
+                    "unit-2", "unit-3", "unit-4", "unit-5",
+                ], ranking
+                nearest, first_at_east, second_at_east, unverified = ranking["candidates"]
+                assert nearest["approachSeconds"] == 0 < first_at_east["approachSeconds"]
+                assert first_at_east["approachSeconds"] == second_at_east["approachSeconds"]
+                assert unverified["status"] == "PositionUnverified" and unverified["approachSeconds"] is None
+                assert not api(base, "dispatch/queries/assignments")["assignments"]
+
+                assignment = book(base)
+                assert api(base, path, expected=409)["code"] == "RequestUnavailable"
+                close_bridge(base)
+                result = wait_for_replan(base, assignment)
+                assert result["routeCurrent"] and result["route"]["revision"] == 1
+                assert result["route"]["exit"] == "exit-north" and result["state"] == assignment["state"]
+                assert result["version"] == assignment["version"] + 1
+                assert [item["kind"] for item in result["history"]] == ["Assigned", "RouteWithdrawn", "Replanned"]
+
+                api(base, "situation/commands/closure", {"commandId": "close-north", "segmentId": "north-link",
+                    "expectedRevision": 1, "closed": True})
+                sleep(1.2)
+                blocked, = api(base, "dispatch/queries/assignments")["assignments"]
+                assert blocked["routeStatus"]["state"] == "Blocked" and blocked["version"] == result["version"]
+
+
+def check_rabbitmq(port, management_url):
+    username = os.environ["RABBITMQ_TEST_USERNAME"]
+    password = os.environ["RABBITMQ_TEST_PASSWORD"]
+    authorization = "Basic " + b64encode(f"{username}:{password}".encode()).decode()
+
+    def publish(key, kind):
+        envelope = {"type": kind, "eventId": "exercise-" + key}
+        body = {"properties": {"delivery_mode": 2}, "routing_key": key, "payload": json.dumps(envelope),
+                "payload_encoding": "string"}
+        request = Request(management_url.rstrip("/") + "/api/exchanges/%2F/evacuation.events/publish",
+                          data=json.dumps(body).encode(),
+                          headers={"Content-Type": "application/json", "Authorization": authorization})
+        deadline = monotonic() + 15
+        while True:
+            try:
+                with LOCAL_HTTP.open(request, timeout=2) as response:
+                    if json.load(response)["routed"]:
+                        return
+            except HTTPError as error:
+                if error.code != 404:
+                    raise
+                error.close()
+            assert monotonic() < deadline, "RabbitMQ queue binding was not ready"
+            sleep(0.15)
+
+    for key, kind in [("situation.changed.v1", "SituationChanged.v1"),
+                      ("routing.route-withdrawn.v1", "RouteWithdrawn.v1")]:
+        with demo(port, auto_replan=True, Dispatch__AutoReplanIntervalSeconds="120") as base:
+            assignment = book(base)
+            close_bridge(base)
+            blocked, = api(base, "dispatch/queries/assignments")["assignments"]
+            assert blocked["routeStatus"]["state"] == "Blocked"
+            publish(key, kind)
+            result = wait_for_replan(base, assignment)
+            assert result["routeCurrent"] and result["route"]["revision"] == 1
+            assert result["version"] == assignment["version"] + 1
+            publish(key, kind)
+            unchanged, = api(base, "dispatch/queries/assignments")["assignments"]
+            assert unchanged["version"] == result["version"]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=16880)
     parser.add_argument("--recordings", type=Path, help="Run the booking and replan checks with these ORS recordings")
+    parser.add_argument("--rabbit-management", help="Run notification tests against a dedicated RabbitMQ broker")
     args = parser.parse_args()
+    if args.rabbit_management:
+        check_rabbitmq(args.port, args.rabbit_management)
+        print("Dispatch RabbitMQ checks passed: situation change and route withdrawal trigger replan.")
+        return
     if args.recordings is not None:
         check_replay(args.port, "sample", args.recordings.resolve(), "recorded")
-        print("Captured ORS routes passed the booking and replan checks for Kłodzko.")
+        print("Captured ORS routes passed the sample booking and replan checks.")
         return
     check_replay(args.port, "sample", expected_exit="exit-east")
     check_dispatch_review(args.port)
+    check_ranking_and_automatic_replan(args.port)
 
     with TemporaryDirectory() as empty:
         with demo(args.port, Integrations__Ors__Mode="mock", Integrations__Ors__FixtureDirectory=empty) as base:
@@ -213,7 +319,7 @@ def main():
         finally:
             server.shutdown()
             thread.join()
-    print("Dispatch ORS checks passed: capture, replay, reroute, missing fixture, manual position and closed bridge rejection.")
+    print("Dispatch checks passed: candidate ranking, automatic replan, ORS capture/replay and route eligibility.")
 
 
 if __name__ == "__main__":

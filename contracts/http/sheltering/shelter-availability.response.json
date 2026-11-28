@@ -1,0 +1,50 @@
+{
+  "revision": 2,
+  "situationRevision": 0,
+  "at": "2026-11-27T19:20:00Z",
+  "shelters": [
+    {
+      "shelterId": "shelter-north-example",
+      "name": "Ćwiczeniowe schronienie Północ",
+      "place": {
+        "graphNodeId": "exit-north",
+        "longitude": 16.654,
+        "latitude": 50.441,
+        "nodeId": null
+      },
+      "stepFree": true,
+      "status": "open",
+      "operatingWindow": {
+        "opensAt": "2026-11-27T19:00:00Z",
+        "closesAt": "2026-11-27T22:00:00Z"
+      },
+      "evidence": {
+        "source": "sample-site-exercise",
+        "mode": "synthetic",
+        "verification": "verified",
+        "observedAt": "2026-11-27T19:00:00Z",
+        "validUntil": "2026-11-27T22:00:00Z",
+        "situationRevision": 0
+      },
+      "version": 1,
+      "resources": {
+        "places": 3,
+        "accessiblePlaces": 1,
+        "intakePerHour": 2
+      },
+      "commitments": {
+        "heldPlaces": 1,
+        "heldAccessiblePlaces": 0,
+        "occupiedPlaces": 1,
+        "occupiedAccessiblePlaces": 1
+      },
+      "available": {
+        "places": 1,
+        "accessiblePlaces": 0
+      },
+      "overcommitted": false,
+      "eligible": true,
+      "ineligibleReason": null
+    }
+  ]
+}

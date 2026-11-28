@@ -1,0 +1,27 @@
+{
+  "register": {
+    "commandId": "group-register-1",
+    "incidentId": "incident-42",
+    "groupId": "group-household",
+    "caseIds": ["case-14", "case-15"],
+    "relationships": [
+      {"kind": "household", "caseId": "case-14", "relatedCaseId": "case-15", "evidenceRef": "synthetic-household-report"}
+    ],
+    "evidenceRef": "synthetic-membership-report"
+  },
+  "approve": {
+    "commandId": "group-approve-1",
+    "incidentId": "incident-42",
+    "groupId": "group-household",
+    "expectedGroupRevision": 1,
+    "expectedPlanRevision": 0,
+    "legId": "leg-shelter",
+    "evidenceId": "household-shared"
+  },
+  "expected": {
+    "planRevision": 1,
+    "status": "Approved",
+    "reason": "IndependentDeparturesSharedShelter",
+    "routes": {"pickup-east": "shelter-a", "walk-east": "shelter-a"}
+  }
+}

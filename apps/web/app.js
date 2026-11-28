@@ -1,4 +1,5 @@
 import { createMapViewport } from './map-viewport.js';
+import { createSiteCatalog } from './site-catalog.js';
 
 const $ = id => document.getElementById(id);
 const satelliteScenes = fetch('/maps/satellite.json')
@@ -9,20 +10,21 @@ const state = {
   cityImagery: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null,
-  dispatchSelections: new Map(), dispatchErrors: new Map(),
+  dispatchSelections: new Map(), dispatchErrors: new Map(), dispatchRankings: new Map(),
   satelliteScene: null, satelliteDetail: false,
 };
 const mapViewport = createMapViewport($('map'), {
   zoomIn: $('map-zoom-in'), zoomOut: $('map-zoom-out'), reset: $('map-zoom-reset'),
   maxZoom: () => state.network?.city ? 32 : 5,
 });
+const siteCatalog = createSiteCatalog($('site-catalog'), api);
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
   'east-junction': 'Przed mostem', 'exit-east': 'Wyjście wschodnie',
   'north-junction': 'Dojście północne', 'exit-north': 'Wyjście północne',
 };
 const statuses = {
-  Open: 'Otwarta sprawa', Acknowledged: 'Potwierdzono odbiór', Moving: 'W drodze',
+  Open: 'Otwarta sprawa', Acknowledged: 'Potwierdzono odbiór', Moving: 'W drodze', PickedUp: 'Osoba odebrana',
   ExitConfirmed: 'Wyjście potwierdzone', Assigned: 'Jednostka przydzielona',
   AtPickup: 'Na miejscu odbioru', PickupConfirmed: 'Odbiór osoby potwierdzony',
   Completed: 'Zakończono zadanie', Cancelled: 'Anulowano', Available: 'Gotowa', Booked: 'Zajęta',
@@ -98,6 +100,7 @@ async function run(action) {
 function invalidateRead() {
   state.distribution = null;
   state.readAvailable = false;
+  siteCatalog.update(null);
   if (state.draw) state.draw = { id: state.draw.id, state: 'Unknown', route: null };
   if (state.network?.scenario === 'valencia') redrawMap();
   else renderDistribution();
@@ -139,6 +142,7 @@ async function refresh(epoch) {
   state.readAvailable = true;
   state.network = network;
   state.situation = situation;
+  if (revisionChanged) state.dispatchRankings.clear();
   state.incident = incident;
   state.dispatch = dispatch;
   state.cityImagery = cityImagery;
@@ -148,6 +152,7 @@ async function refresh(epoch) {
   $('valencia-tools').hidden = !valencia;
   if (valencia) $('map').setAttribute('aria-label', 'Mapa zalania i dróg w obszarze zdjęć Sentinel-1.');
   state.distribution = distribution;
+  siteCatalog.update(valencia ? null : { incidentId: incident.incidentId, at: distribution.at });
   if (draw) state.draw = { id: state.draw.id, ...draw };
   const scene = valencia ? null : scenes?.[network.scenario];
   state.satelliteScene = scene;
@@ -179,7 +184,7 @@ async function refresh(epoch) {
   } else {
     text('clock', time(distribution.at) + ' UTC');
     renderDistribution();
-    const operations = JSON.stringify([incident, dispatch]);
+    const operations = JSON.stringify([incident, dispatch, [...state.dispatchRankings]]);
     if (operations !== state.operationsSignature) {
       renderOperations(incident, dispatch);
       state.operationsSignature = operations;
@@ -492,8 +497,25 @@ $('map-layer').addEventListener('click', () => {
   state.satelliteDetail = !state.satelliteDetail;
   updateMapDetail();
 });
+// The panel stands in for the resident's device: it reports the exit node position, labeled as a simulation.
+function exerciseExitFix(item) {
+  const drawn = state.subject?.caseId === item.caseId && state.draw?.state === 'Active' ? state.draw.route.exit : null;
+  const node = state.network?.nodes.find(candidate => candidate.id === (drawn || state.network.exits[0]));
+  return node ? {
+    observedAt: new Date().toISOString(), latitude: node.latitude, longitude: node.longitude, accuracy: 15,
+    evidence: { galileoUsed: false, osnma: 'none', egnos: 'unknown' }, mode: 'simulated',
+  } : null;
+}
+
 function renderOperations(incident, dispatch) {
-  text('alert-count', 'Liczba zgłoszeń: ' + incident.alerts.length);
+  const counters = incident.counters;
+  const estimate = counters?.inZoneEstimate
+    ? ' · w strefie (szacunek GHSL): ' + counters.inZoneEstimate.value.toLocaleString('pl-PL') : '';
+  text('alert-count', 'Liczba zgłoszeń: ' + incident.alerts.length + (counters
+    ? ' · potwierdzone poza strefą: ' + counters.confirmedOutside +
+      (counters.confirmedOutsideSimulated ? ' (w tym SYMULACJA: ' + counters.confirmedOutsideSimulated + ')' : '') +
+      ' · bez potwierdzenia: ' + counters.unconfirmed + estimate
+    : ''));
   $('cases').replaceChildren(...incident.cases.map(item => {
     const row = element('li');
     const info = element('div');
@@ -518,10 +540,16 @@ function renderOperations(incident, dispatch) {
         commandId: commandId(), caseId: item.caseId, pickupNode: item.node,
       }).then(() => 'Zapisano potrzebę pomocy.')));
     }
-    const step = { Open: ['acknowledgement', 'Potwierdź odbiór'], Acknowledged: ['moving', 'Zgłoś przejście'], Moving: ['exit-confirmed', 'Potwierdź wyjście'] }[item.progress];
-    if (step) actions.append(button(step[1], () => api('management', 'commands/progress', {
+    const step = {
+      Open: ['acknowledgement', 'Potwierdź odbiór'], Acknowledged: ['moving', 'Zgłoś przejście'],
+      Moving: ['exit-confirmed', 'Potwierdź wyjście'], PickedUp: ['exit-confirmed', 'Potwierdź wyjście'],
+    }[item.progress];
+    const exit = step?.[0] === 'exit-confirmed';
+    if (step && (!exit || exerciseExitFix(item))) actions.append(button(step[1], () => api('management', 'commands/progress', {
       commandId: commandId(), caseId: item.caseId, step: step[0], expectedVersion: item.version,
-    }).then(() => 'Zapisano status mieszkańca.')));
+      ...(exit ? exerciseExitFix(item) : {}),
+    }).then(() => step[0] === 'exit-confirmed'
+      ? 'Zapisano wyjście z pozycją ćwiczebną (SYMULACJA).' : 'Zapisano status mieszkańca.')));
     if (actions.childElementCount) row.append(actions);
     return row;
   }));
@@ -543,15 +571,36 @@ function renderOperations(incident, dispatch) {
     if (!assignment && available.length) {
       const select = element('select');
       select.setAttribute('aria-label', 'Jednostka dla ' + item.caseId);
-      for (const unit of available) {
-        const option = element('option', unit.name + ' · ' + unitPositionLabel(unit));
+      const result = state.dispatchRankings.get(item.requestId);
+      const ranking = result?.requestVersion === item.version ? result.candidates : [];
+      const candidates = new Map(ranking.map(candidate => [candidate.unitId, candidate]));
+      const order = new Map(ranking.map((candidate, index) => [candidate.unitId, index]));
+      const ranked = [...available].sort((a, b) => (order.get(a.unitId) ?? order.size) -
+        (order.get(b.unitId) ?? order.size));
+      for (const unit of ranked) {
+        const candidate = candidates.get(unit.unitId);
+        let estimate;
+        if (candidate?.node === unit.node && candidate.status !== 'PositionUnverified') {
+          estimate = candidate.status === 'Eligible' ? 'dojazd ' + minutes(candidate.approachSeconds)
+            : dispatchMessages[candidate.status];
+        }
+        const option = element('option', [unit.name, unitPositionLabel(unit), estimate].filter(Boolean).join(' · '));
         option.value = unit.unitId;
         select.append(option);
       }
       const saved = state.dispatchSelections.get(item.requestId);
       if (available.some(unit => unit.unitId === saved)) select.value = saved;
       select.addEventListener('change', () => state.dispatchSelections.set(item.requestId, select.value));
-      actions.append(select, button('Przydziel', () => {
+      actions.append(button('Porównaj czasy dojazdu', () => dispatchAction(item.requestId, async () => {
+        state.dispatchRankings.delete(item.requestId);
+        const result = await api('dispatch', 'queries/unit-candidates?requestId=' + encodeURIComponent(item.requestId));
+        if (result.situationRevision === state.situation?.revision) {
+          state.dispatchSelections.delete(item.requestId);
+          state.dispatchRankings.set(item.requestId, result);
+        } else {
+          throw Object.assign(new Error(dispatchMessages.SituationChanged), { code: 'SituationChanged' });
+        }
+      })), select, button('Przydziel', () => {
         const unit = available.find(unit => unit.unitId === select.value);
         return withConfirmedUnitPosition(unit, confirmed => change('assign', {
           requestId: item.requestId, unitId: unit.unitId, expectedVersion: item.version, ...confirmed,

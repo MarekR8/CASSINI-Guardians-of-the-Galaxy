@@ -1,0 +1,11 @@
+{
+  "commandId": "3f9c2a4e-7d61-4b1e-9a55-0c2d8e1f6b70",
+  "caseId": "case-14",
+  "step": "exit-confirmed",
+  "observedAt": "2026-11-27T19:45:00Z",
+  "latitude": 50.4410,
+  "longitude": 16.6540,
+  "accuracy": 12,
+  "evidence": { "galileoUsed": true, "osnma": "simulated", "egnos": "unknown" },
+  "mode": "simulated"
+}
