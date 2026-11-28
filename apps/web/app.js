@@ -1,4 +1,5 @@
 import { createMapViewport } from './map-viewport.js';
+import { createSiteCatalog } from './site-catalog.js';
 
 const $ = id => document.getElementById(id);
 const satelliteScenes = fetch('/maps/satellite.json')
@@ -16,6 +17,7 @@ const mapViewport = createMapViewport($('map'), {
   zoomIn: $('map-zoom-in'), zoomOut: $('map-zoom-out'), reset: $('map-zoom-reset'),
   maxZoom: () => state.network?.city ? 32 : 5,
 });
+const siteCatalog = createSiteCatalog($('site-catalog'), api);
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
   'east-junction': 'Przed mostem', 'exit-east': 'Wyjście wschodnie',
@@ -98,6 +100,7 @@ async function run(action) {
 function invalidateRead() {
   state.distribution = null;
   state.readAvailable = false;
+  siteCatalog.update(null);
   if (state.draw) state.draw = { id: state.draw.id, state: 'Unknown', route: null };
   if (state.network?.scenario === 'valencia') redrawMap();
   else renderDistribution();
@@ -149,6 +152,7 @@ async function refresh(epoch) {
   $('valencia-tools').hidden = !valencia;
   if (valencia) $('map').setAttribute('aria-label', 'Mapa zalania i dróg w obszarze zdjęć Sentinel-1.');
   state.distribution = distribution;
+  siteCatalog.update(valencia ? null : { incidentId: incident.incidentId, at: distribution.at });
   if (draw) state.draw = { id: state.draw.id, ...draw };
   const scene = valencia ? null : scenes?.[network.scenario];
   state.satelliteScene = scene;

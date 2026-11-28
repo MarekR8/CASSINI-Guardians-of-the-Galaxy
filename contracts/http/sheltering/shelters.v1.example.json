@@ -1,0 +1,21 @@
+{
+  "sheltersVersion": "cassini.shelters.v1",
+  "scenario": "sample",
+  "provenance": {
+    "source": "sample-site-exercise",
+    "mode": "synthetic",
+    "preparedAt": "2026-11-27T19:00:00Z",
+    "note": "Illustrative projection of nominal resources in the synthetic site catalog."
+  },
+  "shelters": [
+    {
+      "id": "shelter-north-example",
+      "name": "Ćwiczeniowe schronienie Północ",
+      "longitude": 16.654,
+      "latitude": 50.441,
+      "capacity": 3,
+      "intakePerHour": 2,
+      "stepFree": true
+    }
+  ]
+}

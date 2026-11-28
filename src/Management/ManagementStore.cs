@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Cassini.Management.Grouping;
 
 namespace Cassini.Management;
 
@@ -10,7 +11,9 @@ internal sealed record EvacuationCase(
 
 internal sealed record IncidentView(string IncidentId, HazardAlert[] Alerts, EvacuationCase[] Cases);
 internal sealed record Receipt(string Command, JsonElement Result);
-internal sealed record ManagementState(IncidentView Incident, Dictionary<string, Receipt> Receipts);
+internal sealed record ManagementState(
+    IncidentView Incident, Dictionary<string, Receipt> Receipts,
+    Dictionary<string, EvacuationGroup>? Groups = null);
 
 internal sealed class ManagementStore
 {
@@ -39,14 +42,24 @@ internal sealed class ManagementStore
                 ]), []);
     }
 
-    public IncidentView Read()
+    public IncidentView Read() => ReadSnapshot().Incident;
+
+    public ManagementState ReadSnapshot()
     {
         lock (gate)
-            return state.Incident;
+            return state;
     }
 
     public IResult Execute<TCommand>(
         string? id, TCommand command, Func<IncidentView, (IncidentView? Changed, object Payload, int Status)> apply)
+        => ExecuteState(id, command, snapshot =>
+        {
+            var (incident, payload, status) = apply(snapshot.Incident);
+            return (incident is null ? null : snapshot with { Incident = incident }, payload, status);
+        });
+
+    public IResult ExecuteState<TCommand>(
+        string? id, TCommand command, Func<ManagementState, (ManagementState? Changed, object Payload, int Status)> apply)
     {
         if (string.IsNullOrWhiteSpace(id) || id.Length > 128)
             return Error("CommandIdRequired", "Provide a command ID of at most 128 characters.", 400);
@@ -59,13 +72,13 @@ internal sealed class ManagementStore
                     ? Results.Ok(receipt.Result)
                     : Error("CommandIdConflict", "This command ID was used for another request.", 409);
 
-            var (changed, payload, status) = apply(state.Incident);
+            var (changed, payload, status) = apply(state);
             if (changed is null)
                 return Results.Json(payload, statusCode: status);
 
             var result = JsonSerializer.SerializeToElement(payload, Json);
             var receipts = new Dictionary<string, Receipt>(state.Receipts) { [id] = new(identity, result) };
-            var next = new ManagementState(changed, receipts);
+            var next = changed with { Receipts = receipts };
             try
             {
                 if (path is not null)

@@ -4,9 +4,9 @@ ARG ENABLE_DISPATCH_POSTGRES=false
 WORKDIR /source
 COPY src/ src/
 COPY apps/web/ apps/web/
-COPY data/demo/network/graph.json data/demo/network/graph.json
 COPY data/demo/population/estimate.json data/demo/population/estimate.json
 COPY data/demo/ors/ data/demo/ors/
+COPY data/demo/sheltering/sample-sites.json data/demo/sheltering/sample-sites.json
 COPY data/demo/routing/valencia-task03.zip data/demo/routing/params.json data/demo/routing/
 COPY data/demo/routing/valencia/population.json data/demo/routing/valencia/deadlines.json data/demo/routing/valencia/shelters.synthetic.json data/demo/routing/valencia/
 RUN dotnet publish "$PROJECT" -c Release -o /output -p:NuGetAudit=false -p:EnableDispatchPostgres="$ENABLE_DISPATCH_POSTGRES"

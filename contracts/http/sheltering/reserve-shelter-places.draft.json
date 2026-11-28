@@ -1,0 +1,33 @@
+{
+  "commandId": "cmd-draft-reserve-example",
+  "correlationId": "corr-draft-incident-42-shelter",
+  "shelterId": "shelter-north-example",
+  "expectedShelterVersion": 1,
+  "groupPlanRef": {
+    "incidentId": "incident-42",
+    "groupId": "household-example",
+    "planRevision": 1
+  },
+  "holdsExpireAt": "2026-11-27T20:00:00Z",
+  "assignments": [
+    {
+      "incidentId": "incident-42",
+      "caseId": "case-14",
+      "legId": "leg-to-shelter",
+      "expectedVersion": 1,
+      "resources": {
+        "places": 1,
+        "accessiblePlaces": 0
+      },
+      "arrivalWindow": {
+        "startsAt": "2026-11-27T19:40:00Z",
+        "endsAt": "2026-11-27T19:50:00Z"
+      },
+      "routingEvidence": {
+        "proposalId": "proposal-example",
+        "situationRevision": 0
+      }
+    }
+  ],
+  "approvalRef": "approval-example"
+}
