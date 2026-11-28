@@ -10,6 +10,7 @@
     <InternalsVisibleTo Include="Cassini.Routing.Tests" />
     <Compile Include="../Demo/DemoNetwork.cs" Link="DemoNetwork.cs" />
     <Compile Include="../Demo/CityNetwork.cs" Link="CityNetwork.cs" />
+    <Compile Include="../Demo/RoadBounds.cs" Link="RoadBounds.cs" />
     <Content Include="../../data/demo/network/graph.json" Link="warsaw-graph.json"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../../data/demo/ors/recorded/*.json" Link="ors/recorded/%(Filename)%(Extension)"

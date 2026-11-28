@@ -95,7 +95,11 @@ def check_replay(port, scenario, directory=None, mode="synthetic", expected_exit
         if expected_exit is not None:
             assert assignment["route"]["exit"] == expected_exit
         close_bridge(base)
-        assert not api(base, "dispatch/queries/assignments")["assignments"][0]["routeCurrent"]
+        status = api(base, "dispatch/queries/assignments")["assignments"][0]["routeStatus"]
+        if mode == "synthetic":
+            assert status["state"] == "Blocked" and "bridge-2" in status["segments"], status
+        else:
+            assert status["revision"] == 1 and status["state"] in ("Valid", "Blocked"), status
         updated = api(base, "dispatch/commands/replan", {
             "commandId": "replan", "assignmentId": assignment["assignmentId"],
             "expectedVersion": assignment["version"],
@@ -103,6 +107,40 @@ def check_replay(port, scenario, directory=None, mode="synthetic", expected_exit
         assert updated["route"]["exit"] == "exit-north"
         assert len(updated["route"]["outboundGeometry"]) >= 2
         assert updated["route"]["provenance"]["mode"] == mode
+
+
+def check_dispatch_review(port):
+    with demo(port, Integrations__Ors__Mode="graph") as base:
+        units = api(base, "dispatch/queries/assignments")["units"]
+        assert {unit["unitId"]: unit["positionVerified"] for unit in units} == {"unit-3": True, "unit-4": False}
+        assignment = book(base, unitId="unit-4", confirmedStartNode="exit-east")
+        assert assignment["unitId"] == "unit-4"
+        assert [decision["kind"] for decision in assignment["history"]] == ["PositionConfirmed", "Assigned"]
+        assert assignment == book(base, unitId="unit-4", confirmedStartNode="exit-east")
+
+        def closure(revision, segment, value=True):
+            return api(base, "situation/commands/closure", {
+                "commandId": "closure-" + str(revision), "closed": value,
+                "segmentId": segment, "expectedRevision": revision,
+            })
+
+        def status():
+            return api(base, "dispatch/queries/assignments")["assignments"][0]["routeStatus"]
+
+        closure(0, "walk-to-pickup")
+        assert status()["state"] == "Valid" and status()["revision"] == 1
+        closure(1, "bridge-2")
+        blocked = status()
+        assert blocked["state"] == "Blocked" and blocked["segments"] == ["bridge-2"] and blocked["observedAt"]
+        closure(2, "bridge-2", False)
+        assert status()["state"] == "ReviewRequired"
+        replanned = api(base, "dispatch/commands/replan", {
+            "commandId": "replan", "assignmentId": assignment["assignmentId"],
+            "expectedVersion": assignment["version"],
+        })
+        assert [decision["kind"] for decision in replanned["history"]][-2:] == ["RouteWithdrawn", "Replanned"]
+        assert replanned["history"][-2]["reason"] == "RoadChanged"
+        assert status()["state"] == "Valid"
 
 
 def check_capture(port, ors_url):
@@ -139,6 +177,7 @@ def main():
         return
     check_replay(args.port, "sample", expected_exit="exit-east")
     check_replay(args.port, "warsaw", expected_exit="exit-north")
+    check_dispatch_review(args.port)
 
     with TemporaryDirectory() as empty:
         with demo(args.port, Integrations__Ors__Mode="mock", Integrations__Ors__FixtureDirectory=empty) as base:

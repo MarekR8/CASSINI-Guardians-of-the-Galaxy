@@ -7,7 +7,10 @@ internal sealed record SituationSnapshot(
     [property: JsonRequired] long Revision,
     [property: JsonRequired] int Stage,
     [property: JsonRequired] string[] ClosedSegments,
-    Dictionary<string, long>? SegmentRevisions);
+    Dictionary<string, long>? SegmentRevisions,
+    Dictionary<string, ClosureObservation>? ClosureEvidence = null);
+
+internal sealed record ClosureObservation(DateTimeOffset DecidedAt);
 
 internal sealed class SituationGateway(HttpClient client)
 {

@@ -10,11 +10,13 @@ internal sealed record TransportRoute(
     int ApproachSeconds, int OutboundSeconds, double[][]? ApproachGeometry = null,
     double[][]? OutboundGeometry = null, RouteProvenance? Provenance = null);
 internal sealed record RouteProvenance(string Source, string Mode, DateTimeOffset ObservedAt);
+internal sealed record DispatchDecision(string Kind, DateTimeOffset At, string CommandId, long Revision,
+    string? Node = null, string? Reason = null, string[]? Segments = null);
 
 internal sealed record Assignment(
     string AssignmentId, string RequestId, string CaseId, string UnitId, string State, int Version,
     TransportRoute Route, string LastKnownNode, bool? RouteCurrent = null,
-    PositionEvidence? PositionEvidence = null)
+    PositionEvidence? PositionEvidence = null, RouteStatus? RouteStatus = null, DispatchDecision[]? History = null)
 {
     public bool Active => State is not ("Completed" or "Cancelled");
 }
@@ -46,7 +48,8 @@ internal sealed class DispatchStore
                     new("request-15", "case-15", "pickup", "Open", 1),
                     new("request-16", "case-16", "pickup", "Open", 1),
                 ],
-                [new("unit-3", "Jednostka 3", "Available", "exit-east")], []), []);
+                [new("unit-3", "Jednostka 3", "Available", "exit-east"),
+                 new("unit-4", "Jednostka 4", "Available", "exit-east")], []), []);
     }
 
     public DispatchView Read()

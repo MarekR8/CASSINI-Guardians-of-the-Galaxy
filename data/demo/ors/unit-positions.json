@@ -3,5 +3,10 @@
     "unitId": "unit-3",
     "node": "exit-east",
     "evidence": { "source": "EGNOS", "egnosApplied": true, "hpl": 9, "mode": "synthetic" }
+  },
+  {
+    "unitId": "unit-4",
+    "node": "exit-east",
+    "evidence": { "source": "EGNOS", "egnosApplied": true, "hpl": 36, "mode": "synthetic" }
   }
 ]

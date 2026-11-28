@@ -1,4 +1,5 @@
 using System.Globalization;
+using Cassini.Demo;
 
 namespace Cassini.Routing;
 
@@ -11,6 +12,7 @@ internal sealed record AssistanceRoute(
     int ApproachSeconds, int OutboundSeconds, double[][]? ApproachGeometry = null,
     double[][]? OutboundGeometry = null, RouteProvenance? Provenance = null);
 internal sealed record DrawStatus(string State, RouteOption? Route, long Revision);
+internal sealed record RoadRestriction(string Id, bool Closed, long? Revision, RoadBounds? Bounds, DateTimeOffset? ClosedAt);
 
 internal sealed class RoutingQueries(SituationGateway situation, DrawJournal journal,
     AssistanceRouteProvider? routeProvider = null)
@@ -50,6 +52,20 @@ internal sealed class RoutingQueries(SituationGateway situation, DrawJournal jou
         var preferred = outbound[0];
         return new(snapshot.Revision, preferred.Nodes[^1], approach.Segments, preferred.Segments,
             approach.Seconds, preferred.Seconds);
+    }
+
+    internal async Task<object> AssistanceRestrictionsAsync(long since, CancellationToken cancellationToken)
+    {
+        if (since < 0)
+            throw new RoutingException(400, "InvalidRevision", "Provide a non-negative revision.");
+        var snapshot = await situation.ReadAsync(cancellationToken);
+        var revisions = snapshot.SegmentRevisions;
+        var closed = snapshot.ClosedSegments.ToHashSet(StringComparer.Ordinal);
+        var updated = revisions?.Where(pair => pair.Value > since).Select(pair => pair.Key) ?? [];
+        var roads = since >= snapshot.Revision ? [] : closed.Union(updated).Order(StringComparer.Ordinal)
+            .Select(id => new RoadRestriction(id, closed.Contains(id), revisions?.GetValueOrDefault(id),
+                ClosedRoadArea.ForSegment(id)?.RoadBounds, snapshot.ClosureEvidence?.GetValueOrDefault(id)?.DecidedAt)).ToArray();
+        return new { snapshot.Revision, hasHistory = revisions is not null, roads };
     }
 
     internal async Task<DrawStatus> DrawStatusAsync(string commandId, CancellationToken cancellationToken)

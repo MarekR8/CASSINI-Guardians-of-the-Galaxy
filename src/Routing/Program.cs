@@ -94,6 +94,9 @@ if (!valencia)
     queries.MapGet("/assistance-route",
         (string from, string pickup, RoutingQueries handlers, CancellationToken cancellationToken) =>
             handlers.AssistanceAsync(from, pickup, cancellationToken));
+queries.MapGet("/assistance-restrictions",
+    (long since, RoutingQueries handlers, CancellationToken cancellationToken) =>
+        handlers.AssistanceRestrictionsAsync(since, cancellationToken));
     queries.MapGet("/draws/{commandId}",
         (string commandId, RoutingQueries handlers, CancellationToken cancellationToken) =>
             handlers.DrawStatusAsync(commandId, cancellationToken));

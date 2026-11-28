@@ -1,4 +1,5 @@
 using System.Globalization;
+using Cassini.Demo;
 
 namespace Cassini.Routing;
 
@@ -33,9 +34,8 @@ internal sealed class AssistanceRouteProvider(IRouteProvider provider)
                 exclusions.Select(area => area.Polygon()).ToArray()), cancellation);
             if (candidate is null || !Near(candidate.Geometry[0], origin) || !Near(candidate.Geometry[^1], destination))
                 return null;
-            for (var i = 1; i < candidate.Geometry.Length; i++)
-                if (exclusions.Any(area => area.Intersects(candidate.Geometry[i - 1], candidate.Geometry[i])))
-                    return null;
+            if (exclusions.Any(area => area.RoadBounds.Intersects(candidate.Geometry)))
+                return null;
             return new(candidate.Geometry, candidate.Seconds, candidate.Provenance);
         }
     }
@@ -69,31 +69,15 @@ internal sealed class AssistanceRouteProvider(IRouteProvider provider)
 
 internal readonly record struct ClosedRoadArea(double West, double South, double East, double North)
 {
+    internal RoadBounds RoadBounds => new(West, South, East, North);
+
     internal static ClosedRoadArea[] FromSnapshot(SituationSnapshot snapshot)
     {
         var areas = new List<ClosedRoadArea>();
         foreach (var id in snapshot.ClosedSegments.Order(StringComparer.Ordinal))
         {
-            var segment = Network.Segments.FirstOrDefault(segment => segment.Id == id);
-            double[][][] lines;
-            if (segment is not null)
-            {
-                lines = new[] { segment.DrivingGeometry, segment.ReverseDrivingGeometry, segment.Geometry }
-                    .OfType<double[][]>().ToArray();
-                if (lines.Length == 0)
-                    lines = [Network.Nodes.Where(node => node.Id == segment.From || node.Id == segment.To)
-                        .Select(node => new[] { node.Longitude, node.Latitude }).ToArray()];
-            }
-            else if (Network.City?.Road(id) is { } road)
-                lines = [road.Geometry];
-            else
-                throw new RoutingException(503, "ClosureGeometryUnavailable",
-                    "The current closed road has no known geometry.");
-
-            // Warsaw's bridge edge includes connection roads also used by the detour. The
-            // longest straight run of its driving geometry is the crossing over the river.
-            var bounds = id == "bridge-2" && segment?.DrivingGeometry is { Length: > 2 } bridge
-                ? Bounds(BridgeCrossing(bridge), 25) : Bounds(lines.SelectMany(Core).ToArray(), 10);
+            var bounds = ForSegment(id) ?? throw new RoutingException(503, "ClosureGeometryUnavailable",
+                "The current closed road has no known geometry.");
             // Merge overlapping boxes so the ORS MultiPolygon has disjoint interiors.
             for (var index = 0; index < areas.Count;)
             {
@@ -112,6 +96,24 @@ internal readonly record struct ClosedRoadArea(double West, double South, double
             areas.Add(bounds);
         }
         return areas.ToArray();
+    }
+
+    internal static ClosedRoadArea? ForSegment(string id)
+    {
+        var segment = Network.Segments.FirstOrDefault(segment => segment.Id == id);
+        if (segment is null)
+            return Network.City?.Road(id) is { } road ? Bounds(Core(road.Geometry).ToArray(), 10) : null;
+
+        // Warsaw's bridge edge includes connection roads also used by the detour.
+        if (id == "bridge-2" && segment.DrivingGeometry is { Length: > 2 } bridge)
+            return Bounds(BridgeCrossing(bridge), 25);
+
+        var lines = new[] { segment.DrivingGeometry, segment.ReverseDrivingGeometry, segment.Geometry }
+            .OfType<double[][]>().ToArray();
+        if (lines.Length == 0)
+            lines = [Network.Nodes.Where(node => node.Id == segment.From || node.Id == segment.To)
+                .Select(node => new[] { node.Longitude, node.Latitude }).ToArray()];
+        return Bounds(lines.SelectMany(Core).ToArray(), 10);
     }
 
     private static ClosedRoadArea Bounds(double[][] points, double marginMetres)
@@ -159,21 +161,4 @@ internal readonly record struct ClosedRoadArea(double West, double South, double
 
     internal double[][][] Polygon() => [[[West, South], [East, South], [East, North], [West, North], [West, South]]];
 
-    internal bool Intersects(double[] start, double[] end)
-    {
-        var first = 0d;
-        var last = 1d;
-        return Clip(start[0], end[0], West, East) && Clip(start[1], end[1], South, North);
-
-        bool Clip(double a, double b, double low, double high)
-        {
-            if (a == b)
-                return a >= low && a <= high;
-            var entry = (low - a) / (b - a);
-            var exit = (high - a) / (b - a);
-            first = Math.Max(first, Math.Min(entry, exit));
-            last = Math.Min(last, Math.Max(entry, exit));
-            return first <= last;
-        }
-    }
 }

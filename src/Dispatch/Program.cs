@@ -10,6 +10,7 @@ builder.Services.AddSingleton(new UnitPositionPolicy(
     builder.Configuration.GetValue("Integrations:Egnos:MaxHpl", 25d)));
 builder.Services.AddSingleton<DispatchQueries>();
 builder.Services.AddSingleton<DispatchCommands>();
+builder.Services.AddSingleton<RouteReview>();
 builder.Services.AddHttpClient<ManagementClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Management:BaseUrl"] ?? "http://127.0.0.1:5081");
