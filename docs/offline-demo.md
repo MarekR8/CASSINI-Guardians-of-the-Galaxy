@@ -115,6 +115,46 @@ docker compose -p cassini-sheltering -f compose.yaml -f compose.sheltering.yaml 
 
 Ustaw `CASSINI_PORT` na wolny port, gdy zwykłe demo już działa na 5080. Test katalogów uruchom przez `python scripts/offline_demo.py --sheltering --test --port 5480`.
 
+#### Panel „Schronienia i przydziały” (SH-T07)
+
+Przy `--sheltering` pod katalogiem pojawia się karta **Schronienia i przydziały**. Pokazuje:
+
+- obiekty i ich dostępność;
+- przyjęcia w każdym schronieniu (oczekujący, spóźnieni, obecni, przyjęcia i wyjścia);
+- zatwierdzone plany grup podróżnych;
+- tabelę przydziałów.
+
+Każda kolumna tabeli pochodzi od innego właściciela:
+
+| Kolumna | Właściciel | Uwagi |
+| --- | --- | --- |
+| Wyjście ze strefy | Management | |
+| Check-in w punkcie | brak | Żadna usługa nie prowadzi go jeszcze. Panel pisze „brak właściciela danych”. |
+| Rezerwacja | Sheltering | |
+| Opublikowana trasa | SH-T06 | Jeszcze nie podłączona. Panel pisze „nieopublikowana · SH-T06”. |
+| Przyjęcie | Sheltering | |
+
+Wycofany przydział zawsze ma etykietę „wycofana”. Gdy odczyt się nie powiedzie albo Situation ma nowszą rewizję niż ta, przy której sprawdzono schronienia, panel podaje czas i rewizję ostatniego spójnego odczytu. Rezerwacje oznacza wtedy jako „ostatnio … (niepotwierdzone)” i ukrywa przyciski akcji.
+
+Konta operatorów działają tylko wtedy, gdy Sheltering ma ustawione `Sheltering__OperatorsFile`. Wtedy przyjęcia odczytuje i zgłasza tylko posiadacz tokenu z tego pliku (granica ról SH-T05 Stage B). Token wpisuje się w polu **Token operatora ćwiczenia**. Panel trzyma go tylko w pamięci karty i wysyła wyłącznie w swoich zapytaniach.
+
+- Koordynator widzi wszystkie schronienia i nie może zgłaszać przyjęć.
+- Operator schronienia widzi i obsługuje tylko swoje schronienie.
+
+Ćwiczeniowe tokeny generuje `scripts/offline_demo.py` w katalogu stanu (`operator-tokens.json`). Nie trafiają do Git. Z Keycloakiem (profil `full`) panel używa tokenu logowania. Konta Sheltering i Keycloak nie są ze sobą łączone.
+
+Próba generalna i testy:
+
+```sh
+python scripts/offline_demo.py --scenario sample --test    # regresja bazowa
+python tests/sheltering_rehearsal.py                        # macierz SH-A01–SH-A08 na świeżym stanie
+python tests/sheltering_rehearsal.py --browser --images     # + ścieżka w przeglądarce i gotowe obrazy Docker
+python -m pip install playwright==1.49.1 && python -m playwright install chromium
+python tests/sheltering_browser.py --screenshots artifacts/sheltering-browser
+```
+
+`sheltering_rehearsal.py` buduje usługi raz, a każdy zestaw testów uruchamia na nowym katalogu stanu. Wynik każdego punktu SH-A zapisuje w `artifacts/sheltering-rehearsal.json`. Opcja `--images` startuje `compose.yaml` z `compose.sheltering.yaml` na pustych wolumenach z `--no-build --pull never` i uruchamia na nich test katalogów. Obrazy trzeba wcześniej zbudować poleceniem `build` podanym wyżej.
+
 ### Ranking jednostek (`sample`)
 
 W karcie **Pomoc terenowa** przycisk **Porównaj czasy dojazdu** odczytuje `GET /api/dispatch/queries/unit-candidates?requestId=…`. Lista jednostek jest wtedy posortowana według rankingu Dispatch i pokazuje czas dojazdu albo powód braku kandydatury. Ranking jest ważny tylko dla rewizji sytuacji i wersji prośby, z których powstał; po zmianie rewizji panel go odrzuca.
