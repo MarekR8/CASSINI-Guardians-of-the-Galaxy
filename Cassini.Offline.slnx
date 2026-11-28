@@ -4,6 +4,7 @@
     <Project Path="src/Situation/Situation.csproj" />
     <Project Path="src/Routing/Cassini.Routing.csproj" />
     <Project Path="src/Dispatch/Cassini.Dispatch.csproj" />
+    <Project Path="src/Sheltering/Cassini.Sheltering.csproj" />
     <Project Path="src/Gateway/Gateway.csproj" />
   </Folder>
   <Folder Name="/Shared/">

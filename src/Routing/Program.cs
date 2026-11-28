@@ -1,6 +1,7 @@
 using Cassini.Routing;
 using Cassini.Routing.Evacuation;
 using Cassini.Demo;
+using Cassini.Routing.Destinations;
 
 var builder = WebApplication.CreateBuilder(args);
 var scenario = builder.Configuration["Demo:Scenario"] is { Length: > 0 } configured ? configured : "sample";
@@ -61,6 +62,23 @@ switch (providerMode)
 if (providerMode != "graph")
     builder.Services.AddTransient<AssistanceRouteProvider>();
 
+var destinationsEnabled = !valencia &&
+    builder.Configuration["Sheltering:BaseUrl"] is { Length: > 0 };
+if (destinationsEnabled)
+{
+    builder.Services.AddSingleton(new DestinationSources(
+        new Uri((builder.Configuration["Situation:BaseUrl"] ?? "http://127.0.0.1:5082").TrimEnd('/') + "/"),
+        new Uri(builder.Configuration["Sheltering:BaseUrl"]!.TrimEnd('/') + "/")));
+    builder.Services.AddSingleton(TimeProvider.System);
+    builder.Services.AddHttpClient<DestinationQueries>(client => client.Timeout = TimeSpan.FromSeconds(4))
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            UseProxy = false,
+            AllowAutoRedirect = false,
+            UseCookies = false,
+        });
+}
+
 var app = builder.Build();
 _ = app.Services.GetRequiredService<DrawJournal>();
 app.Use(async (context, next) =>
@@ -84,6 +102,11 @@ app.MapGet("/health/live", () => Results.Ok(new { service = "routing" }));
 app.MapGet("/health/ready", () => Results.Ok(new { service = "routing" }));
 
 var queries = app.MapGroup("/queries");
+if (destinationsEnabled)
+{
+    queries.MapGet("/destinations", (string? incidentId, DateTimeOffset? at, DestinationQueries handler,
+        CancellationToken cancellation) => handler.GetDestinations(incidentId, at, cancellation));
+}
 queries.MapGet("/network", () => new {
     Network.Nodes, Network.Segments, Network.Exits,
     city = Network.City is { } city ? new { city.Bounds, city.OsmTimestamp, city.RoadCount, city.ZoneCounts } : null,

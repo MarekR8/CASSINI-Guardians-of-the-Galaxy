@@ -15,6 +15,9 @@ var upstreams = new Dictionary<string, string>
     ["routing"] = builder.Configuration["Services:Routing"] ?? "http://127.0.0.1:5083",
     ["dispatch"] = builder.Configuration["Services:Dispatch"] ?? "http://127.0.0.1:5084",
 };
+if (builder.Configuration["Services:Sheltering"] is { Length: > 0 } sheltering)
+    upstreams["sheltering"] = sheltering;
+
 builder.Services.AddHttpClient("services", client => client.Timeout = TimeSpan.FromSeconds(6))
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
     {
@@ -72,6 +75,7 @@ if (!string.IsNullOrWhiteSpace(cityDirectory))
     }
 }
 app.MapGet("/health", () => Results.Ok(new { service = "gateway" }));
+app.MapGet("/features", () => Results.Ok(new { sheltering = upstreams.ContainsKey("sheltering") }));
 app.MapGet("/api/{service}/queries/{operation}/{id?}", (
     string service, string operation, string? id, HttpContext context, IHttpClientFactory clients) =>
     Forward(service, "queries", operation, id, context, clients));

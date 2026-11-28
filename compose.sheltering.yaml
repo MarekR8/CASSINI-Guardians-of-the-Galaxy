@@ -1,0 +1,37 @@
+services:
+  situation:
+    environment:
+      Demo__Scenario: sample
+      AssemblyPoints__SeedFile: /app/sample-sites.json
+      AssemblyPoints__StateFile: /state/assembly-points.json
+
+  routing:
+    environment:
+      Demo__Scenario: sample
+      Sheltering__BaseUrl: http://sheltering:8080
+    depends_on: [sheltering]
+
+  sheltering:
+    image: cassini-offline/sheltering:demo
+    pull_policy: never
+    init: true
+    networks: [operations]
+    build:
+      context: .
+      args:
+        PROJECT: src/Sheltering/Cassini.Sheltering.csproj
+    command: ["Cassini.Sheltering.dll"]
+    environment:
+      Situation__BaseUrl: http://situation:8080
+      Sheltering__SeedFile: /app/sample-sites.json
+      Sheltering__StateFile: /state/shelters.json
+    depends_on: [situation]
+    volumes: [sheltering:/state]
+
+  gateway:
+    environment:
+      Services__Sheltering: http://sheltering:8080
+    depends_on: [sheltering]
+
+volumes:
+  sheltering:
