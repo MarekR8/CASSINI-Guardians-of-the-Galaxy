@@ -74,10 +74,13 @@ exercise graphs and their before/after bridge scenarios. The files are labeled
 Warsaw approaches the pickup across the bridge before its closure, even though
 the local outbound ranking already prefers the north exit.
 
-To capture actual responses, load `Integrations__Ors__ApiKey` from your local
-environment and run `python scripts/record_ors_routes.py artifacts/ors-recorded`.
-Point `Integrations__Ors__FixtureDirectory` at that directory and use replay
-mode. The hash includes the profile and complete normalized request.
+To capture actual responses, configure `Integrations__Ors__ApiKey` in your local
+environment or use the Routing project's .NET user-secrets. Run
+`python scripts/record_ors_routes.py artifacts/ors-recorded`, then run
+`python tests/dispatch_ors_integration.py --recordings artifacts/ors-recorded`
+after building the solution. To use those recordings in the dashboard, point
+`Integrations__Ors__FixtureDirectory` at that directory and use replay mode.
+The hash includes the profile and complete normalized request.
 Missing entries return `FixtureMissing`. The launcher sets the environment to
 Production. Use the environment variable with the launcher and use .NET
 user-secrets with a standalone Routing process in Development.
@@ -95,9 +98,10 @@ reported quality is missing or the HPL exceeds `Integrations:Egnos:MaxHpl`
 (25 metres by default), the dispatcher can pass `confirmedStartNode` with the
 known node in an assign or replan command.
 
-Local verification covers both cities in replay mode, missing recordings,
-manual start position, and a route crossing the closed bridge rejected through
-an ORS-compatible HTTP test server. The browser check covered the position
+Local verification covers capturing responses from an ORS-compatible HTTP
+test server and replaying those files for both cities, missing recordings,
+manual start position, and rejection of a route crossing the closed bridge.
+The browser check covered the position
 label, both vehicle legs, withdrawal after bridge closure, the detour and the
 state with no available exit. Actual ORS responses and hosted service limits
 still need validation with an API key.
