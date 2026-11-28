@@ -283,6 +283,8 @@ function polygonPath(polygon, project) {
 const integrationButtons = $('integration-preview').querySelectorAll('[data-integration]');
 const integrationSummaries = {
   'integration-copernicus': result => `${result.productId} · ${formatObservation.format(new Date(result.observedAt))} UTC`,
+  'integration-sentinel-1': result => `${result.productId} · szacunek ludności: ${result.populationEstimate.value}`,
+  'integration-copernicus-dem': result => `${result.productId} · potencjalne zagrożenie`,
   'integration-flypix': result => `${result.geoJson.features.length} detekcji do weryfikacji · raster ${result.imageProductId}`,
   'city-data': result => result.zones.map(zone => `${zone.zoneId} · liczba osób: ${zone.people}`).join(', '),
   'city-map': result => `${result.datasetId} · ${result.geoJson.features.length} obszarów w GeoJSON`,

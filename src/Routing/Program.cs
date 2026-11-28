@@ -6,6 +6,7 @@ using Cassini.Routing.Destinations;
 var builder = WebApplication.CreateBuilder(args);
 var scenario = builder.Configuration["Demo:Scenario"] is { Length: > 0 } configured ? configured : "sample";
 var valencia = scenario == "valencia";
+var evacuationEnabled = valencia && builder.Configuration.GetValue("Routing:EvacuationEnabled", true);
 if (scenario is not ("sample" or "valencia"))
     throw new InvalidDataException($"Unknown demo scenario '{scenario}'.");
 Network.Configure(valencia ? CityNetwork.Load(builder.Configuration["Demo:CityDirectory"], scenario) : null);
@@ -23,7 +24,7 @@ builder.Services.AddSingleton(_ => new DrawJournal(
     Path.Combine(builder.Environment.ContentRootPath, "artifacts", "routing-draws.json")));
 builder.Services.AddTransient<RoutingQueries>();
 builder.Services.AddTransient<RoutingCommands>();
-if (valencia)
+if (evacuationEnabled)
 {
     // Task 03 evacuation model: inputs prepared by experiments/routing, plan recomputed per Situation revision.
     var evacuationDirectory = builder.Configuration["Routing:EvacuationDirectory"] is { Length: > 0 } directory
@@ -141,7 +142,7 @@ queries.MapGet("/assistance-restrictions",
         (DrawCommand command, RoutingCommands handlers, CancellationToken cancellationToken) =>
             handlers.DrawAsync(command, cancellationToken));
 }
-else
+else if (evacuationEnabled)
 {
     queries.MapGet("/evacuation-plan", (EvacuationRouting handlers, CancellationToken cancellationToken) =>
         handlers.PlanAsync(cancellationToken));
