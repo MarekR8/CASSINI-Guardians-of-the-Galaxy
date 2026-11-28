@@ -1,0 +1,18 @@
+{
+  "paramsVersion": "cassini.routing-params.v1",
+  "deadline": {
+    "note": "Model assumption, not a forecast. A hazard node must be left before the earlier of the depth rule and the distance rule.",
+    "depthMinutes": [
+      {"minMetres": 2.0, "minutes": 15},
+      {"minMetres": 1.0, "minutes": 30},
+      {"minMetres": 0.5, "minutes": 45},
+      {"minMetres": 0.0, "minutes": 60}
+    ],
+    "depthToleranceMetres": 25,
+    "distance": {
+      "minutesAtSource": 15,
+      "minutesPerKm": 10,
+      "maxMinutes": 90
+    }
+  }
+}
