@@ -12,6 +12,7 @@ const steps = {
   Acknowledged: ['moving', 'Zgłoś rozpoczęcie ewakuacji'],
   Moving: ['exit-confirmed', 'Zgłoś opuszczenie strefy'],
 };
+const areas = { sample: 'Kłodzko', warsaw: 'Warszawa', valencia: 'Walencja' };
 const state = { network: null, resident: null, nodes: [], busy: false, reading: false, online: false };
 let connectionNotice = false;
 const profile = $('profile');
@@ -124,12 +125,21 @@ async function refresh() {
 }
 
 function render() {
+  const area = areas[state.network?.scenario];
+  $('area').hidden = !area;
+  $('area').textContent = area ? 'Obszar ćwiczenia · ' + area : '';
+  const activeAlert = state.online && state.alert;
+  $('alert').dataset.active = Boolean(activeAlert);
   $('alert-title').textContent = state.online
     ? state.alert ? 'Aktywny alert powodziowy' : 'Brak aktywnego alertu'
     : 'Komunikaty chwilowo niedostępne';
-  $('alert-text').textContent = state.online && state.alert
-    ? 'Wybierz punkt startu. Jeśli potrzebujesz transportu, zgłoś się po pomoc. Alert ćwiczeniowy · ' +
-      time(state.alert.observedAt) + ' UTC.' : '';
+  $('alert-text').textContent = activeAlert
+    ? 'Jeśli potrzebujesz transportu, wskaż punkt odbioru i wyślij zgłoszenie pomocy.'
+    : state.online ? 'Tutaj pojawi się komunikat dla mieszkańców.' : 'Spróbujemy ponownie sprawdzić stan alertu.';
+  $('alert-meta').hidden = !activeAlert;
+  $('alert-meta').textContent = activeAlert ? 'Komunikat ćwiczeniowy CASSINI · ' +
+    new Intl.DateTimeFormat('pl-PL', { timeZone: 'UTC', dateStyle: 'medium', timeStyle: 'short' })
+      .format(new Date(state.alert.observedAt)) + ' UTC' : '';
   const route = state.online ? state.draw?.route : null;
   $('draw').textContent = ['Withdrawn', 'Expired'].includes(state.draw?.state)
     ? 'Wyznacz nową trasę' : 'Wyznacz trasę';
@@ -148,10 +158,15 @@ function render() {
     : request ? 'Punkt odbioru: ' + label(request.pickupNode) + '. ' +
       (helpState === 'Open' ? 'Zgłoszenie przyjęte. Oczekujesz na jednostkę.'
         : helpState === 'Acknowledged' ? 'Jednostka przyjęła zadanie.' : labels[helpState] ?? 'Zgłoszenie przyjęte.')
-    : 'Punkt odbioru możesz wybrać powyżej.';
+    : 'Nie wysłano zgłoszenia pomocy.';
   $('progress-status').textContent = state.online ? labels[state.resident.progress] : 'Status zgłoszenia niedostępny.';
-  $('progress').textContent = steps[state.resident?.progress]?.[1] ?? 'Zgłoś postęp';
-  drawMap(route);
+  const progress = state.resident?.progress;
+  $('progress').hidden = progress === 'ExitConfirmed';
+  $('progress').textContent = steps[progress]?.[1] ?? 'Zgłoś opuszczenie strefy';
+  $('progress-guidance').textContent = progress === 'ExitConfirmed'
+    ? 'Zgłoszenie jest zapisane w systemie koordynatora.'
+    : 'Zgłoś opuszczenie strefy, gdy już z niej wyjdziesz.';
+  if (!$('route-panel').hidden) drawMap(route);
 }
 
 function drawMap(route) {
@@ -274,14 +289,12 @@ $('help').addEventListener('click', () => run(async () => {
     state.resident = updated;
   }
   await command('dispatch/commands/request', { caseId, pickupNode: state.resident.node }, 'help');
-  notice('Zgłoszenie pomocy zostało przyjęte.');
 }));
 $('progress').addEventListener('click', () => run(async () => {
   const [step] = steps[state.resident.progress];
   await command('management/commands/progress', {
     caseId: profile.value, step, expectedVersion: state.resident.version,
   }, step);
-  if (step === 'exit-confirmed') notice('System przyjął zgłoszenie opuszczenia strefy.');
 }));
 
 void refresh();
