@@ -11,6 +11,8 @@ Every event uses the envelope in [`src/Shared/Messaging/IntegrationEvent.cs`](..
 | [`AssignmentChanged.v1`](AssignmentChanged.v1.json) | `dispatch.assignment-changed.v1` | Dispatch (task 4) | **Management (implemented)** | Management records `assistance` on the case |
 | [`HazardAlertRecorded.v1`](HazardAlertRecorded.v1.json) | `management.hazard-alert-recorded.v1` | **Management (implemented)** | Situation | Published from the outbox |
 | [`CaseProgressChanged.v1`](CaseProgressChanged.v1.json) | `management.case-progress-changed.v1` | **Management (implemented)** | Not required for the MVP monitor | Published for every milestone; a position update does not publish |
+| [`ShelterAdmissionConfirmed.v1`](ShelterAdmissionConfirmed.v1.json) | `sheltering.shelter-admission-confirmed.v1` | Sheltering (SH-T05) | Management, coordinator view | Written to the Sheltering outbox with the admission; SH-T06 publishes it |
+| [`ShelterDepartureConfirmed.v1`](ShelterDepartureConfirmed.v1.json) | `sheltering.shelter-departure-confirmed.v1` | Sheltering (SH-T05) | Management, coordinator view | Written to the Sheltering outbox with the departure; SH-T06 publishes it |
 
 ## Rules for producers
 

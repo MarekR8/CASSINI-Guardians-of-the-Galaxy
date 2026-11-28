@@ -1,18 +1,22 @@
 using Cassini.Demo.SiteCatalog;
 using Cassini.Sheltering.Catalog;
 using Cassini.Sheltering.Infrastructure;
+using Cassini.Sheltering.Reception;
 
 var builder = WebApplication.CreateBuilder(args);
 if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
     builder.WebHost.UseUrls("http://127.0.0.1:5085");
 
 var seedFile = builder.Configuration["Sheltering:SeedFile"] ?? Path.Combine(AppContext.BaseDirectory, "sample-sites.json");
+var holdsFile = builder.Configuration["Sheltering:HoldsFile"];
 var stateFile = builder.Configuration["Sheltering:StateFile"] ?? Path.Combine("artifacts", "sheltering", "catalog.json");
 builder.Services.AddSingleton(new CatalogStore<Shelter>(stateFile,
-    () => ShelterSeed.Read(seedFile), shelter => shelter.ShelterId, shelter => shelter.Version));
+    () => ShelterSeed.WithHolds(ShelterSeed.Read(seedFile), holdsFile), shelter => shelter.ShelterId, shelter => shelter.Version));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ShelterCommands>();
 builder.Services.AddScoped<ShelterQueries>();
+builder.Services.AddScoped<ReceptionCommands>();
+builder.Services.AddScoped<ReceptionQueries>();
 builder.Services.AddHttpClient<SituationClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Situation:BaseUrl"] ?? "http://127.0.0.1:5082");
@@ -48,5 +52,13 @@ app.MapGet("/queries/shelter-availability", (DateTimeOffset? at, bool? eligibleO
     CancellationToken cancellation) => handler.GetShelterAvailability(at, eligibleOnly ?? false, cancellation));
 app.MapPost("/commands/configure-shelter", (ConfigureShelterCommand command, ShelterCommands handler,
     CancellationToken cancellation) => handler.ConfigureShelter(command, cancellation));
+app.MapGet("/queries/shelter-reception", (string? shelterId, string? incidentId, DateTimeOffset? at,
+    ReceptionQueries handler) => handler.GetReception(shelterId, incidentId, at));
+app.MapGet("/queries/shelter-reception-events", (string? shelterId, ReceptionQueries handler) =>
+    handler.GetEvents(shelterId));
+app.MapPost("/commands/confirm-shelter-admission", (ConfirmShelterAdmissionCommand command, ReceptionCommands handler) =>
+    handler.ConfirmAdmission(command));
+app.MapPost("/commands/confirm-shelter-departure", (ConfirmShelterDepartureCommand command, ReceptionCommands handler) =>
+    handler.ConfirmDeparture(command));
 
 app.Run();

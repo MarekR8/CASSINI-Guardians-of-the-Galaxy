@@ -1,0 +1,11 @@
+{
+  "commandId": "cmd-report-leave-14",
+  "expectedVersion": 2,
+  "shelterId": "shelter-a",
+  "incidentId": "incident-42",
+  "reportId": "report-leave-14",
+  "observedAt": "2026-11-27T19:55:00Z",
+  "departures": [
+    { "caseId": "case-14", "legId": "leg-shelter" }
+  ]
+}
