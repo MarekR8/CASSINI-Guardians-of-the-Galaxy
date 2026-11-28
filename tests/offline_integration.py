@@ -39,7 +39,9 @@ def post(service, path, body, expected=200):
 page = request("/")
 assert "Koordynacja ewakuacji" in page
 assert 'id="satellite-credit"' in page and 'type="file"' not in page
+assert 'id="map-zoom-in"' in page and 'id="map-zoom-reset"' in page
 assert "commands/draw" in request("/app.js")
+assert "createMapViewport" in request("/map-viewport.js")
 scene = request("/maps/satellite.json")["sample"]
 archive = scene["floodArchive"]
 assert archive["productId"] == "EMSR756_AOI03_DEL_PRODUCT_observedEventA_v1"

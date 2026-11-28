@@ -52,6 +52,9 @@ Warszawy pokazuje w tym samym miejscu odnośnik do Kłodzka.
 
 ### Ćwiczenie
 
+Powiększaj mapę kółkiem myszy, gestem dwóch palców albo przyciskami **+** i **−**. Przeciągnij mapę,
+aby przesunąć widok. **Resetuj widok** wraca do początkowego położenia i skali.
+
 1. Wybierz **Zgłoś zalanie**. Licznik zgłoszeń wzrośnie. Lokalna mapa pokazuje zasięg ćwiczenia i dostępne odcinki.
 2. Wybierz **Pokaż rozkład** obok mieszkańca 14 lub wybierz węzeł startowy. Przy starcie o 19:20 UTC wschodnia trasa ma około 61% szansy, północna około 39%. Rozkład zawiera planowane godziny startu i przybycia.
 3. Wybierz **Wylosuj trasę w węźle**. System losuje z rozkładu obowiązującego w danej rewizji. Wynik widać na mapie. W pierwszym losowaniu może wypaść dowolna z dwóch opcji.

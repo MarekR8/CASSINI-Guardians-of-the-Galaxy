@@ -27,7 +27,14 @@
     <div class="workspace">
       <section class="card map-card" aria-labelledby="map-title">
         <div class="card-heading"><div><h2 id="map-title">Mapa sytuacji</h2><p id="map-area">Schemat obszaru ćwiczeń</p></div><span class="badge" id="revision">Rewizja —</span></div>
-        <svg id="map" viewBox="0 0 760 420" role="img" aria-label="Graf przejść, wyjścia i obszar zalania"></svg>
+        <div class="map-viewport">
+          <svg id="map" viewBox="0 0 760 420" role="img" tabindex="0" aria-label="Mapa przejść, wyjść i zalania. Użyj plusa, minusa i strzałek, aby zmienić widok."></svg>
+          <div class="map-navigation" role="group" aria-label="Sterowanie mapą">
+            <button id="map-zoom-in" type="button" aria-label="Powiększ mapę">+</button>
+            <button id="map-zoom-out" type="button" aria-label="Pomniejsz mapę">−</button>
+            <button id="map-zoom-reset" type="button">Resetuj widok</button>
+          </div>
+        </div>
         <div class="scenario" id="city-tools" hidden>
           <div class="buttons">
             <button id="city-overview" type="button" aria-pressed="true">Cała Warszawa</button>

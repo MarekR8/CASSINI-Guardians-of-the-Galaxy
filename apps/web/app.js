@@ -1,4 +1,9 @@
+import { createMapViewport } from './map-viewport.js';
+
 const $ = id => document.getElementById(id);
+const mapViewport = createMapViewport($('map'), {
+  zoomIn: $('map-zoom-in'), zoomOut: $('map-zoom-out'), reset: $('map-zoom-reset'),
+});
 const satelliteScenes = fetch('/maps/satellite.json')
   .then(response => response.ok ? response.json() : null)
   .catch(() => null);
@@ -435,8 +440,14 @@ function showCityPath(path) {
   text('city-status', found ? 'Trasa orientacyjna · ' + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
 }
 
-$('city-overview').addEventListener('click', () => { state.cityOverview = true; redrawMap(); });
-$('city-detail').addEventListener('click', () => { state.cityOverview = false; redrawMap(); });
+function changeCityView(overview) {
+  state.cityOverview = overview;
+  mapViewport.reset();
+  redrawMap();
+}
+
+$('city-overview').addEventListener('click', () => changeCityView(true));
+$('city-detail').addEventListener('click', () => changeCityView(false));
 $('map-layer').addEventListener('click', () => {
   state.satelliteDetail = !state.satelliteDetail;
   redrawMap();
@@ -459,7 +470,7 @@ $('city-mode').addEventListener('change', () => {
 });
 $('map').addEventListener('click', event => {
   if (!state.cityPicking || state.busy) return;
-  const svgPoint = new DOMPoint(event.clientX, event.clientY).matrixTransform($('map').getScreenCTM().inverse());
+  const svgPoint = mapViewport.point(event.clientX, event.clientY);
   const point = state.unproject(svgPoint.x, svgPoint.y);
   const [w, s, e, n] = state.network.city.bounds;
   if (point[0] < w || point[0] > e || point[1] < s || point[1] > n) return;
