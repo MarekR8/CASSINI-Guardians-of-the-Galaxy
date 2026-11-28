@@ -1,4 +1,5 @@
 using Cassini.Management;
+using Cassini.Management.Grouping;
 
 var builder = WebApplication.CreateBuilder(args);
 if (string.IsNullOrEmpty(builder.Configuration["urls"]))
@@ -22,5 +23,8 @@ queries.MapGet("/cases/{caseId}", (string caseId, IncidentQueries handler) =>
 var commands = app.MapGroup("/commands");
 commands.MapPost("/alert", (RecordAlert command, IncidentCommands handler) => handler.RecordAlert(command));
 commands.MapPost("/progress", (RecordProgress command, IncidentCommands handler) => handler.RecordProgress(command));
+
+if (app.Configuration["Grouping:EvidenceFile"] is { Length: > 0 } evidenceFile)
+    app.MapGrouping(GroupingEvidence.Load(evidenceFile));
 
 app.Run();
