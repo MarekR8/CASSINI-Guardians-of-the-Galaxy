@@ -130,7 +130,7 @@ See the [MVP domain invariants](domain-invariants.md), [implementation work pack
 
 ## Sheltering and Grouping extension
 
-This proposal implements the [sheltering and grouping workflows](domain/business-processes.md#detailed-sheltering-and-grouping-workflows). The existing MVP aggregates, references and service ownership shown above remain the baseline. The extension adds three capabilities: grouping by travel and care constraints, management of assembly points, and allocation of shelter resources. See the proposed [commands, events and transitions](mvp-commands-events.md#sheltering-and-grouping-extension).
+This proposal implements the [sheltering and grouping workflows](domain/business-processes.md#detailed-sheltering-and-grouping-workflows). The existing MVP aggregates, references and service ownership shown above remain the baseline. The extension adds three capabilities: grouping by travel and care constraints, management of assembly points, and allocation of shelter resources. See the proposed [commands, events and transitions](mvp-commands-events.md#sheltering-and-grouping-extension) and the [implementation guide](sheltering-implementation-guide.md) for the build sequence and acceptance checks.
 
 ### Subsystems and dependencies
 

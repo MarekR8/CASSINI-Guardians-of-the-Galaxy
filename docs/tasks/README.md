@@ -2,6 +2,8 @@
 
 Goal: take the flood evacuation demo to the presentation, then to the full architecture in [mvp-technology-stack.md](../mvp-technology-stack.md). **The demo comes first.** Each task has a Stage A (demo) and a Stage B (project completion). Start Stage B only after everyone's Stage A is green.
 
+The follow-on [Sheltering and Grouping tasks](sheltering/README.md) build on these packages and have their own Stage A acceptance checks.
+
 | # | File | Part of the architecture | Technologies |
 | --- | --- | --- | --- |
 | 1 | [01-copernicus-hazard-layers.md](01-copernicus-hazard-layers.md) | Situation: hazard layers and population | Copernicus EMS, GHSL, Sentinel-1 (CDSE/openEO), PostGIS |
