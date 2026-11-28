@@ -1,11 +1,13 @@
 using Cassini.Routing;
+using Cassini.Routing.Evacuation;
 using Cassini.Demo;
 
 var builder = WebApplication.CreateBuilder(args);
 var scenario = builder.Configuration["Demo:Scenario"] is { Length: > 0 } configured ? configured : "sample";
 var valencia = scenario == "valencia";
-var network = DemoNetwork.Load(valencia ? "sample" : scenario);
-Network.Configure(network, scenario == "sample" ? null : CityNetwork.Load(builder.Configuration["Demo:CityDirectory"], scenario));
+if (scenario is not ("sample" or "valencia"))
+    throw new InvalidDataException($"Unknown demo scenario '{scenario}'.");
+Network.Configure(valencia ? CityNetwork.Load(builder.Configuration["Demo:CityDirectory"], scenario) : null);
 if (builder.Configuration["urls"] is null)
     builder.WebHost.UseUrls("http://127.0.0.1:5083");
 
@@ -20,6 +22,17 @@ builder.Services.AddSingleton(_ => new DrawJournal(
     Path.Combine(builder.Environment.ContentRootPath, "artifacts", "routing-draws.json")));
 builder.Services.AddTransient<RoutingQueries>();
 builder.Services.AddTransient<RoutingCommands>();
+if (valencia)
+{
+    // Task 03 evacuation model: inputs prepared by experiments/routing, plan recomputed per Situation revision.
+    var evacuationDirectory = builder.Configuration["Routing:EvacuationDirectory"] is { Length: > 0 } directory
+        ? directory : Path.Combine(AppContext.BaseDirectory, "evacuation");
+    var shelterFile = builder.Configuration["Routing:EvacuationShelters"] is { Length: > 0 } file ? file : null;
+    builder.Services.AddSingleton(_ => EvacuationInputs.ReadDirectory(evacuationDirectory, shelterFile));
+    builder.Services.AddSingleton<EvacuationPlanner>();
+    builder.Services.AddHostedService<EvacuationPlanRefresher>();
+    builder.Services.AddTransient<EvacuationRouting>();
+}
 var ors = builder.Configuration.GetSection("Integrations:Ors");
 var providerMode = ors["Mode"] ?? "graph";
 switch (providerMode)
@@ -72,8 +85,7 @@ app.MapGet("/health/ready", () => Results.Ok(new { service = "routing" }));
 
 var queries = app.MapGroup("/queries");
 queries.MapGet("/network", () => new {
-    Network.Nodes, Network.Segments, Network.Exits, Network.Warsaw?.Bounds,
-    Network.Warsaw?.ContextRoads, Network.Warsaw?.Waterways, Network.Warsaw?.Attribution, Network.Warsaw?.OsmTimestamp,
+    Network.Nodes, Network.Segments, Network.Exits,
     city = Network.City is { } city ? new { city.Bounds, city.OsmTimestamp, city.RoadCount, city.ZoneCounts } : null,
     scenario
 });
@@ -104,6 +116,20 @@ queries.MapGet("/assistance-restrictions",
     var commands = app.MapGroup("/commands");
     commands.MapPost("/draw",
         (DrawCommand command, RoutingCommands handlers, CancellationToken cancellationToken) =>
+            handlers.DrawAsync(command, cancellationToken));
+}
+else
+{
+    queries.MapGet("/evacuation-plan", (EvacuationRouting handlers, CancellationToken cancellationToken) =>
+        handlers.PlanAsync(cancellationToken));
+    queries.MapGet("/distribution",
+        (string node, string? profile, EvacuationRouting handlers, CancellationToken cancellationToken) =>
+            handlers.DistributionAsync(node, profile, cancellationToken));
+    queries.MapGet("/draws/{commandId}",
+        (string commandId, RoutingQueries handlers, CancellationToken cancellationToken) =>
+            handlers.DrawStatusAsync(commandId, cancellationToken));
+    app.MapGroup("/commands").MapPost("/draw",
+        (DrawCommand command, EvacuationRouting handlers, CancellationToken cancellationToken) =>
             handlers.DrawAsync(command, cancellationToken));
 }
 

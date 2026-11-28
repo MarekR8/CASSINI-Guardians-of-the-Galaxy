@@ -8,4 +8,10 @@
   <ItemGroup>
     <ProjectReference Include="../Cassini.Routing.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="../../../data/demo/routing/expected.json" Link="routing-fixtures/expected.json"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../../data/demo/routing/cases/*.json" Link="routing-fixtures/cases/%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

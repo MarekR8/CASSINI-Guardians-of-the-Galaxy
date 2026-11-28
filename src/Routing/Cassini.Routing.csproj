@@ -8,12 +8,16 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Cassini.Routing.Tests" />
-    <Compile Include="../Demo/DemoNetwork.cs" Link="DemoNetwork.cs" />
     <Compile Include="../Demo/CityNetwork.cs" Link="CityNetwork.cs" />
     <Compile Include="../Demo/RoadBounds.cs" Link="RoadBounds.cs" />
-    <Content Include="../../data/demo/network/graph.json" Link="warsaw-graph.json"
-             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../../data/demo/ors/recorded/*.json" Link="ors/recorded/%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Task 03 evacuation model inputs for the Valencia scenario. -->
+    <Content Include="../../data/demo/routing/valencia-task03.zip;../../data/demo/routing/params.json"
+             Link="evacuation/%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../data/demo/routing/valencia/population.json;../../data/demo/routing/valencia/deadlines.json;../../data/demo/routing/valencia/shelters.synthetic.json"
+             Link="evacuation/valencia/%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

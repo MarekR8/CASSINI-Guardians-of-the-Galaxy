@@ -127,3 +127,96 @@ Events carry stable IDs, subject revisions, occurrence times, and correlation an
 - **Progress.** A dashboard combines case progress, route state and dispatch status through projections. It shows the latest known data and the time it was observed. Explicit operator or verified self-reports confirm physical progress. The same immutable report ID cannot advance the case twice.
 
 See the [MVP domain invariants](domain-invariants.md), [implementation work packages](mvp-work-packages.md), [command and event catalog with sequence diagrams](mvp-commands-events.md), and [service interface specification](mvp-interfaces.md).
+
+## Sheltering and Grouping extension
+
+This proposal implements the [sheltering and grouping workflows](domain/business-processes.md#detailed-sheltering-and-grouping-workflows). The existing MVP aggregates, references and service ownership shown above remain the baseline. The extension adds three capabilities: grouping by travel and care constraints, management of assembly points, and allocation of shelter resources. See the proposed [commands, events and transitions](mvp-commands-events.md#sheltering-and-grouping-extension) and the [implementation guide](sheltering-implementation-guide.md) for the build sequence and acceptance checks.
+
+### Subsystems and dependencies
+
+An arrow points from the subsystem requesting information to its owner. Grouping is a separate domain subsystem and can initially run as a module hosted by Management. Its consumers use its contract, whether it runs in that process or is deployed separately. Sheltering is a new microservice. Situation Data continues to own operational evidence and also owns assembly point availability.
+
+```mermaid
+flowchart LR
+    Management["Management<br/>incidents and individual cases"]
+    Situation["Situation Data<br/>hazard and access evidence"]
+    Routing["Evacuation Routing<br/>route eligibility and instructions"]
+    Dispatch["Assistance Dispatch<br/>requests and unit bookings"]
+
+    Grouping["Grouping · new subsystem<br/>travel parties and care constraints"]
+    Sheltering["Sheltering · new microservice<br/>capacity, reservations and admissions"]
+    Points["Assembly points · new capability<br/>owned by Situation Data"]
+
+    Routing -->|routing snapshot| Situation
+    Dispatch -->|case information| Management
+    Dispatch -->|approach and outbound routes| Routing
+
+    Grouping -->|case references and essential mobility needs| Management
+    Sheltering -->|group plan revision and care constraints| Grouping
+    Sheltering -->|destination evidence| Situation
+    Sheltering -->|eligible path and arrival window| Routing
+    Situation --- Points
+```
+
+### New aggregate roots
+
+| Owner | Aggregate root and identity | Child entities and value objects | Consistency boundary |
+| --- | --- | --- | --- |
+| Grouping | `EvacuationGroup(incidentId, groupId)` | `GroupMember`, `DependencyLink`, `CareHandover`; `TravelParty`, `GroupPlanRef` | Records incident-scoped membership, required care and optional shared destinations. A travel plan creates feasible parties and preserves care or records an authorized handover. A school link applies only to the group under its supervision during the incident. |
+| Situation Data | `AssemblyPoint(incidentId, pointId)` | `PlaceRef`, `AccessProfile`, `TimeWindow`, `Evidence` | Controls when a site is usable for temporary assembly or pickup. A check-in consumes no shelter places. |
+| Sheltering | `Shelter(shelterId)` | `Reservation`, `Admission`; `ResourceQuantity`, `IntakeWindow`, `TimeWindow`, `PlaceRef` | Owns usable capacities and intake limits for the physical site. A reservation identifies the incident, case and assignment. Admission and departure update occupied resources exactly once per stay. |
+| Sheltering | `ShelterAssignment(incidentId, caseId, legId)` | `ShelterAssignmentRevision`; `GroupPlanRef`, `RouteEvidenceRef`, `Approval` | Owns one active shelter assignment per person and leg, even when several people share a plan. Revision history identifies the reservation, superseded destination and reason. |
+
+```mermaid
+flowchart TB
+    subgraph M["Evacuation Management"]
+        Incident["EvacuationIncident"]
+        Case["EvacuationCase"]
+    end
+
+    subgraph S["Situation Data"]
+        Hazard["HazardAssessment"]
+        Network["NetworkSegment"]
+        Point["AssemblyPoint · new"]
+    end
+
+    subgraph R["Evacuation Routing"]
+        Route["RouteInstruction"]
+    end
+
+    subgraph D["Assistance Dispatch"]
+        Request["AssistanceRequest"]
+        Unit["ResponseUnit"]
+    end
+
+    subgraph G["Grouping"]
+        Group["EvacuationGroup · new"]
+    end
+
+    subgraph H["Sheltering"]
+        Shelter["Shelter · new"]
+        Assignment["ShelterAssignment · new"]
+    end
+
+    Case -.->|incidentId| Incident
+    Request -.->|caseId| Case
+    Request -.->|unitId in assignment| Unit
+    Route -.->|civilian caseId| Case
+    Route -.->|response assignmentId| Request
+    Route -.->|snapshot reference| S
+
+    Group -.->|caseId of member| Case
+    Point -.->|incidentId| Incident
+    Assignment -.->|caseId| Case
+    Assignment -.->|optional group plan revision| Group
+    Assignment -.->|shelterId and reservationId| Shelter
+```
+
+Dotted arrows are references by ID. A shelter and an assembly point can refer to the same location without sharing capacity counters. The original routing `SafePoint` remains the evidence of an eligible exit for a specific route. A suitable assembly point can be selected as a first-leg destination after Routing checks that evidence.
+
+### Consistency and publication
+
+- **Group decision.** Grouping retains the case references and the version of the approved plan. A shared destination is a preference unless needed for authorized care. Consumers recheck the group plan before reserving places or publishing instructions that would split a required care link.
+- **Booking and reassignment.** An application handler in Sheltering commits the affected assignments, shelter reservations and the outbox in one local transaction. It validates all requested resources and the intake slot as a unit. Moving an unconsumed reservation requires both shelters in that transaction. An admitted person's old place remains occupied until confirmed departure, even when a later leg already has a new reservation.
+- **Route publication.** The reservation and published route are separate facts. Following a booking, the authorized publisher rechecks the current assignment and route eligibility before using Routing's existing publication workflow. If publication fails, keep the instruction pending, enforce the reservation's validity and reconcile against both authoritative owners. An invalid prior route is withdrawn even when no replacement is available.
+- **First leg.** Routing can issue an authorized instruction to a verified exit or assembly point without a shelter reservation. A missing route or unresolved care requirement remains visible for assisted evacuation or verification.

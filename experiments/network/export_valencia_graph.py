@@ -11,7 +11,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 from shapely import prepare
 from shapely.geometry import LineString, box, mapping, shape
 
-from osm_to_graph import distance
+from osm_network import distance
 from prepare_valencia import EVIDENCE, OUTPUT, ROOT, flood_layers, polygon_parts
 
 

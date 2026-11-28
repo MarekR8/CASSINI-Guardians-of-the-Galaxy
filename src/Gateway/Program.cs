@@ -58,7 +58,6 @@ if (!string.IsNullOrWhiteSpace(cityDirectory))
 {
     var assets = new (string Route, string File, string ContentType)[]
     {
-        ("warsaw.svg", "city-map.svg", "image/svg+xml"),
         ("city.svg", "city-map.svg", "image/svg+xml"),
         ("city-nodes.svg", "city-nodes.svg", "image/svg+xml"),
         ("city-imagery.json", "city-imagery.json", "application/json"),
@@ -73,9 +72,6 @@ if (!string.IsNullOrWhiteSpace(cityDirectory))
     }
 }
 app.MapGet("/health", () => Results.Ok(new { service = "gateway" }));
-int? companionPort = int.TryParse(builder.Configuration["Demo:CompanionPort"], out var port) &&
-    port is >= 1 and <= 65535 ? port : null;
-app.MapGet("/ui/companion", () => new { port = companionPort });
 app.MapGet("/api/{service}/queries/{operation}/{id?}", (
     string service, string operation, string? id, HttpContext context, IHttpClientFactory clients) =>
     Forward(service, "queries", operation, id, context, clients));

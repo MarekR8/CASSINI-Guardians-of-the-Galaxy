@@ -11,6 +11,8 @@ This guide takes the project from the documentation branch to a runnable flood e
 
 The MVP ends at an eligible point outside the hazard zone and a confirmed exit. Shelter allocation and relationship-based grouping belong to later releases. The first runnable slice uses the recorded provider and synthetic people and units. Device and provider credentials are only prerequisites for the corresponding live demonstrations.
 
+For the next release, use the [Sheltering and Grouping implementation guide](sheltering-implementation-guide.md) and its [team tasks](tasks/sheltering/README.md).
+
 ## Bootstrap the repository
 
 | Path to create | What belongs there |

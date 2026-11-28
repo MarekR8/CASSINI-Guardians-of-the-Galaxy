@@ -1,6 +1,6 @@
 # Walencja · powódź z 29 października 2024 r.
 
-Panel domyślnie pokazuje aglomerację Walencji, w tym Picanyę, Paiportę, Catarroję i Albuferę. Mapa dróg obejmuje prostokąt `[-0.62, 39.24, -0.25, 39.61]` w kolejności zachód, południe, wschód, północ. Dwa rastry Sentinel‑1 pokrywają wspólny, mniejszy fragment aglomeracji.
+Panel pokazuje wspólny prostokąt dwóch scen Sentinel‑1 walencjańskiej aglomeracji. Do tej samej granicy przycięty jest eksport dla etapu 03. Dane źródłowe grafu aglomeracji obejmują prostokąt `[-0.62, 39.24, -0.25, 39.61]` w kolejności zachód, południe, wschód, północ.
 
 ## Przygotowanie i uruchomienie
 
@@ -14,7 +14,7 @@ Panel domyślnie pokazuje aglomerację Walencji, w tym Picanyę, Paiportę, Cata
    python scripts/offline_demo.py
    ```
 
-Panel działa pod [127.0.0.1:5080](http://127.0.0.1:5080). Wybierz datę w **Radar Sentinel‑1**, żeby zobaczyć ten sam fragment przed zdarzeniem i po nim. Włącz **Pokaż strefy węzłów**, żeby zobaczyć klasyfikację. Pomarańczowy oznacza węzeł w obszarze zalania lub jego śladu, zielony węzeł poza oboma obszarami w zasięgu obserwacji, a szary brak oceny. Czerwony obszar pokazuje archiwalny zasięg EMS. Panel otwiera się na całym obrazie radarowym z 31 października; opcja **Mapa OSM** wraca do zasięgu aglomeracji. **Trasa testowa OSM** służy do sprawdzenia połączeń i reakcji na zatwierdzone zamknięcia.
+Panel działa pod [127.0.0.1:5080](http://127.0.0.1:5080). **Radar Sentinel‑1** pozwala przełączać zdjęcia przy tym samym przybliżeniu. Czerwony obszar pokazuje archiwalny zasięg EMS, przycięty do prostokąta zobrazowania. Przyciski mapy służą do przybliżania, przesuwania i powrotu do pełnego prostokąta. Panel Walencji służy do odczytu. Dane do pracy nad trasami i strefami węzłów są w paczce etapu 03.
 
 Dla Dockera, po przygotowaniu danych i pobraniu obrazów bazowych, użyj `docker compose -p cassini-valencia -f compose.yaml -f compose.valencia.yaml up --build`. Przy kolejnym uruchomieniu bez internetu użyj `up --no-build --pull never`. Pobrany pakiet EMS, dane robocze oraz stan panelu pozostają w ignorowanym przez Git katalogu `artifacts/`.
 
@@ -30,7 +30,7 @@ Dla Dockera, po przygotowaniu danych i pobraniu obrazów bazowych, użyj `docker
    python experiments/network/import_valencia_review.py
    ```
 
-   W panelu **Weryfikacja detekcji** rozwiń **Dopasowane odcinki OSM**. **Zatwierdź zamknięcie** zamyka wszystkie odcinki dopasowane do tej jednej adnotacji. Odrzucenie pozostawia odcinki otwarte. Zatwierdzone geometrie są wyświetlane na czerwono, a Routing pobiera bieżącą rewizję zamknięć z Situation.
+   Dopasowania można sprawdzić w polu `reviewFeatures[].segmentIds` w zapytaniu Situation `GET /api/situation/queries/snapshot`. To osobny proces ćwiczeniowy. Do odczytowego podglądu Walencji i przekazania aktualnego grafu wystarczają mapa EMS i gotowa paczka etapu 03.
 
 ## Kontrakt dla taska 03
 
