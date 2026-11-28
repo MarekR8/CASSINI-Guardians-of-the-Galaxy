@@ -17,7 +17,6 @@ const state = { network: null, resident: null, nodes: [], busy: false, reading: 
 let connectionNotice = false;
 const profile = $('profile');
 const point = $('node');
-const controls = [$('draw'), $('locate'), $('help'), $('progress')];
 const byId = id => state.nodes.find(node => node.id === id);
 const label = id => byId(id)?.label ?? id;
 const time = value => new Intl.DateTimeFormat('pl-PL', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' })
@@ -62,13 +61,11 @@ function notice(message = '') {
 function syncControls() {
   const locked = state.busy || state.reading || !state.online || !state.resident;
   const supported = state.network?.scenario !== 'valencia';
-  for (const control of controls) control.disabled = locked;
   profile.disabled = state.busy;
   point.disabled = locked || !supported;
   $('locate').disabled = point.disabled;
   $('draw').disabled = locked || !supported || state.resident.mobility !== 'Walking' ||
     state.resident.progress === 'ExitConfirmed';
-  $('help').disabled = locked || !supported || state.resident.progress === 'ExitConfirmed';
   $('progress').disabled = locked || !supported || !state.alert || !steps[state.resident.progress];
 }
 
@@ -134,7 +131,7 @@ function render() {
     ? state.alert ? 'Aktywny alert powodziowy' : 'Brak aktywnego alertu'
     : 'Komunikaty chwilowo niedostępne';
   $('alert-text').textContent = activeAlert
-    ? 'Jeśli potrzebujesz transportu, wskaż punkt odbioru i wyślij zgłoszenie pomocy.'
+    ? 'Jeśli potrzebujesz transportu, sprawdź informacje w sekcji pomocy.'
     : state.online ? 'Tutaj pojawi się komunikat dla mieszkańców.' : 'Spróbujemy ponownie sprawdzić stan alertu.';
   $('alert-meta').hidden = !activeAlert;
   $('alert-meta').textContent = activeAlert ? 'Komunikat ćwiczeniowy CASSINI · ' +
@@ -158,7 +155,7 @@ function render() {
     : request ? 'Punkt odbioru: ' + label(request.pickupNode) + '. ' +
       (helpState === 'Open' ? 'Zgłoszenie przyjęte. Oczekujesz na jednostkę.'
         : helpState === 'Acknowledged' ? 'Jednostka przyjęła zadanie.' : labels[helpState] ?? 'Zgłoszenie przyjęte.')
-    : 'Nie wysłano zgłoszenia pomocy.';
+    : 'Brak wyznaczonego punktu odbioru.';
   $('progress-status').textContent = state.online ? labels[state.resident.progress] : 'Status zgłoszenia niedostępny.';
   const progress = state.resident?.progress;
   $('progress').hidden = progress === 'ExitConfirmed';
@@ -279,16 +276,6 @@ $('draw').addEventListener('click', () => run(async () => {
     if (error.status >= 400 && error.status < 500) sessionStorage.removeItem(key);
     throw error;
   }
-}));
-$('help').addEventListener('click', () => run(async () => {
-  const caseId = profile.value;
-  if (state.resident.node !== point.value) {
-    const updated = await command('management/commands/progress', {
-      caseId, step: 'position', node: point.value, expectedVersion: state.resident.version,
-    }, 'position');
-    state.resident = updated;
-  }
-  await command('dispatch/commands/request', { caseId, pickupNode: state.resident.node }, 'help');
 }));
 $('progress').addEventListener('click', () => run(async () => {
   const [step] = steps[state.resident.progress];

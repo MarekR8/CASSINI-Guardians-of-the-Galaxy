@@ -18,15 +18,11 @@
       <span class="alert-mark" aria-hidden="true">!</span>
       <div role="status"><h2 id="alert-title">Sprawdzamy komunikaty</h2><p id="alert-text"></p><p id="alert-meta" class="meta" hidden></p></div>
     </section>
-    <p class="quick-action"><a class="button" href="#assistance">Potrzebuję pomocy</a></p>
+    <p class="quick-action"><a class="button" href="#assistance">Sprawdź pomoc w ewakuacji</a></p>
     <div class="grid">
       <section class="card" id="assistance" aria-labelledby="help-title" tabindex="-1">
         <h2 id="help-title">Pomoc w ewakuacji</h2>
-        <p>Wskaż miejsce, w którym możesz zaczekać na odbiór.</p>
-        <label for="node">Punkt odbioru<select id="node" disabled></select></label>
-        <button id="locate" class="secondary" type="button" disabled>Użyj mojej lokalizacji</button>
-        <p id="position" class="meta" role="status"></p>
-        <button id="help" type="button" disabled>Wyślij zgłoszenie pomocy</button>
+        <p>Punkt odbioru zostanie wyznaczony przez system na podstawie Twojego położenia.</p>
         <p id="help-status" class="status" role="status">Sprawdzamy status pomocy…</p>
       </section>
       <section class="card" aria-labelledby="progress-title">
@@ -38,6 +34,9 @@
     </div>
     <details class="demo-panel"><summary>Tryb demo</summary><label for="profile">Profil ćwiczeniowy<select id="profile"><option value="case-14">Mieszkaniec pieszy</option><option value="case-15">Mieszkaniec potrzebujący transportu</option><option value="case-16">Drugi profil z transportem</option></select></label></details>
     <section id="route-panel" hidden>
+      <label for="node">Punkt startu<select id="node" disabled></select></label>
+      <button id="locate" class="secondary" type="button" disabled>Użyj mojej lokalizacji</button>
+      <p id="position" class="meta" role="status"></p>
       <p id="route-status"></p>
       <canvas id="map" width="960" height="510" role="img" aria-label="Mapa schematyczna ćwiczenia"></canvas>
       <button id="draw" disabled>Wyznacz trasę</button>
