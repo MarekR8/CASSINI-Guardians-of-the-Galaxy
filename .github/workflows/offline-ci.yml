@@ -28,6 +28,23 @@ jobs:
       - name: Verify Android offline logic without an emulator
         run: dotnet run --project apps/offline-android/tests/Offline.Tests.csproj -p:NuGetAudit=false
 
+  verify-routing-model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: experiments/routing/requirements.txt
+      - name: Install the task 03 reference model
+        run: python -m pip install -r experiments/routing/requirements.txt
+      - name: Verify the reference model and its inputs
+        run: python -m unittest discover -s experiments/routing -v
+      - name: Verify expected.json is reproduced by the model
+        run: python experiments/routing/fixtures.py --check
+
   verify-dispatch-postgres:
     runs-on: ubuntu-24.04
     timeout-minutes: 10

@@ -9,6 +9,8 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import ProxyHandler, Request, build_opener
 
+import valencia_evacuation
+
 
 BASE = sys.argv[1]
 HTTP = build_opener(ProxyHandler({}))
@@ -113,4 +115,6 @@ assert check["reason"] == "ClosedSegment"
 isolated, barrier = review(confirmed["revision"], "valencia-isolation-fixture", [-.378, 39.477], .006)
 approve(isolated, barrier)
 assert route()["route"] is None
-print(f"Valencia integration passed: {city['roadCount']:,} edges, classifications, evidence review, detour and no route.")
+evacuation = valencia_evacuation.run(BASE)
+print(f"Valencia integration passed: {city['roadCount']:,} edges, classifications, evidence review, detour and no route; "
+      f"{evacuation}.")

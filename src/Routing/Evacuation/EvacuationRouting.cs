@@ -21,8 +21,13 @@ internal sealed class EvacuationRouting(SituationGateway situation, DrawJournal 
         return new
         {
             plan.Revision, model = ModelName, plan.ComputedAt, plan.DurationSeconds, closedSegments = plan.Closed,
-            people = new { estimated = result.PeopleEstimated, handedOver = result.PeopleHandedOver, kind = "estimate" },
-            result.Status, result.Shelters, result.Waves,
+            result.ComplianceShare,
+            people = new
+            {
+                estimated = result.PeopleEstimated, handedOver = result.PeopleHandedOver,
+                guided = result.Status.Values.Sum(), uninformed = result.PeopleUninformed, kind = "estimate",
+            },
+            result.Status, result.StatusAll, uninformedStatus = result.UninformedStatus, result.Shelters, result.Waves,
             profiles = plan.Model.Profiles.Select(profile => new { profile.Name, profile.Share }),
         };
     }
