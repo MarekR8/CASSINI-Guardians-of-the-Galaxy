@@ -50,6 +50,10 @@ h1 { font-size: clamp(1.8rem, 4vw, 3.15rem); letter-spacing: -.035em; line-heigh
 #map { width: 100%; display: block; background: #12232a; border-block: 1px solid var(--line);
   touch-action: none; cursor: grab; user-select: none; }
 #map.dragging { cursor: grabbing; }
+#map polyline, #map path { vector-effect: non-scaling-stroke; }
+#map .map-symbol { transform: scale(var(--map-symbol-scale, 1)); }
+#map .map-hidden, #map.map-city:not(.map-detailed) .map-node,
+#map.map-city:not(.map-detailed) .map-context, #map.map-detailed .map-city-roads { visibility: hidden; }
 #map:focus-visible { outline-offset: -2px; }
 .map-navigation { position: absolute; top: .6rem; left: .6rem; display: flex; gap: .25rem; }
 .map-navigation button { min-height: 2.3rem; min-width: 2.3rem; padding: .25rem .5rem; }
@@ -75,7 +79,6 @@ h1 { font-size: clamp(1.8rem, 4vw, 3.15rem); letter-spacing: -.035em; line-heigh
 .scenario { border-top: 1px solid var(--line); }
 .buttons { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
 .buttons[hidden] { display: none; }
-#city-overview[aria-pressed="true"], #city-detail[aria-pressed="true"] { border-color: var(--accent); }
 .route-body { padding-top: 0; }
 label { color: var(--muted); font-size: .875rem; display: block; }
 select, input { display: block; min-width: 0; max-width: 100%; width: 100%; padding: .55rem .65rem; margin-top: .35rem; }

@@ -1,9 +1,6 @@
 import { createMapViewport } from './map-viewport.js';
 
 const $ = id => document.getElementById(id);
-const mapViewport = createMapViewport($('map'), {
-  zoomIn: $('map-zoom-in'), zoomOut: $('map-zoom-out'), reset: $('map-zoom-reset'),
-});
 const satelliteScenes = fetch('/maps/satellite.json')
   .then(response => response.ok ? response.json() : null)
   .catch(() => null);
@@ -14,9 +11,13 @@ const state = {
   network: null, situation: null, distribution: null, draw: null,
   pendingDraw: null, subject: null, busy: false, epoch: 0, polling: false,
   operationsSignature: null, sourcesSignature: null, reviewSignature: null,
-  cityOverview: true, cityPicking: false, cityPoints: [], cityPath: null,
+  cityPicking: false, cityPoints: [], cityPath: null,
   satelliteScene: null, satelliteDetail: false,
 };
+const mapViewport = createMapViewport($('map'), {
+  zoomIn: $('map-zoom-in'), zoomOut: $('map-zoom-out'), reset: $('map-zoom-reset'),
+  maxZoom: () => state.network?.scenario === 'warsaw' ? 32 : 5,
+});
 const names = {
   'walk-start': 'Punkt zbiórki', pickup: 'Węzeł przy odbiorze',
   'east-junction': 'Przed mostem', 'exit-east': 'Wyjście wschodnie',
@@ -152,7 +153,7 @@ async function refresh(epoch) {
     ? 'Warszawa · ' + network.city.roadCount.toLocaleString('pl-PL') + ' odcinków OSM'
     : warsaw ? 'Warszawa · lokalne ćwiczenie nad Wisłą' : 'Kłodzko · obszar ćwiczeń');
   $('map-credit').hidden = !warsaw;
-  $('city-tools').hidden = !warsaw || !(network.city || scene);
+  $('city-tools').hidden = !network.city;
   $('city-routing').hidden = !network.city;
   if (scene) {
     $('satellite-source').href = scene.sourceUrl;
@@ -261,6 +262,28 @@ function polygons(geometry) {
   return [];
 }
 
+function updateMapDetail() {
+  const map = $('map');
+  const { x, y, width, height } = map.viewBox.baseVal;
+  const city = map.classList.contains('map-city');
+  const detailImage = $('orthophoto-background');
+  const closeView = width <= 760 / 5;
+  let detailVisible = Boolean(detailImage && !state.satelliteDetail);
+  if (city && detailVisible) {
+    const { x: left, y: top, width: spanX, height: spanY } = detailImage.getBBox();
+    detailVisible = closeView && x < left + spanX && x + width > left &&
+      y < top + spanY && y + height > top;
+  }
+  if (detailImage) detailImage.classList.toggle('map-hidden', !detailVisible);
+  map.classList.toggle('map-detailed', !city || closeView);
+  $('ortho-credit').hidden = !detailVisible;
+  $('satellite-credit').hidden = !state.satelliteScene || (detailVisible && !city);
+  $('map-layer-tools').hidden = !detailImage || (city && !detailVisible && !state.satelliteDetail);
+  text('map-layer', state.satelliteDetail ? 'Pokaż ortofotomapę' : 'Pokaż Sentinel-2');
+}
+
+$('map').addEventListener('map-view-change', updateMapDetail);
+
 function renderMap(route) {
   const map = $('map');
   if (!state.network) return;
@@ -268,17 +291,8 @@ function renderMap(route) {
   const scene = state.satelliteScene;
   const city = state.network.city;
   const cityBounds = city?.bounds ?? (warsaw ? scene?.bounds : null);
-  const overview = Boolean(cityBounds && state.cityOverview);
-  const ortho = !overview && !state.satelliteDetail ? scene?.detail : null;
-  const background = ortho ?? scene;
-  $('satellite-credit').hidden = !scene || Boolean(ortho);
-  $('ortho-credit').hidden = !ortho;
-  if (ortho) $('ortho-source').href = ortho.sourceUrl;
-  $('map-layer-tools').hidden = overview || !scene?.detail;
-  text('map-layer', ortho ? 'Pokaż Sentinel-2' : 'Pokaż ortofotomapę');
-  const bounds = overview ? cityBounds : scene?.viewBounds ?? state.network.bounds;
-  $('city-overview').setAttribute('aria-pressed', overview);
-  $('city-detail').setAttribute('aria-pressed', !overview);
+  const bounds = cityBounds ?? scene?.viewBounds ?? state.network.bounds;
+  map.classList.toggle('map-city', Boolean(cityBounds));
   const [west, south, east, north] = bounds || [16.646, 50.431, 16.660, 50.442];
   const ratio = Math.cos((south + north) * Math.PI / 360);
   const scale = Math.min(680 / ((east - west) * ratio), 360 / (north - south));
@@ -301,19 +315,29 @@ function renderMap(route) {
   grid.append(svg('path', { d: 'M 34 0 H 0 V 34', fill: 'none', stroke: '#294049', 'stroke-width': 1 }));
   defs.append(grid);
   map.replaceChildren(defs, svg('rect', { width: 760, height: 420, fill: 'url(#grid)' }));
-  if (background) {
-    const image = mapImage(background.bounds, '/maps/' + background.image, .83);
-    image.id = ortho ? 'orthophoto-background' : 'satellite-background';
+  if (scene) {
+    const image = mapImage(scene.bounds, '/maps/' + scene.image, .83);
+    image.id = 'satellite-background';
     map.append(image);
+    if (scene.detail) {
+      const orthophoto = mapImage(scene.detail.bounds, '/maps/' + scene.detail.image, .95);
+      orthophoto.id = 'orthophoto-background';
+      map.append(orthophoto);
+      $('ortho-source').href = scene.detail.sourceUrl;
+    }
   }
-  if (overview && city) {
-    map.append(mapImage(city.bounds, '/maps/warsaw.svg?v=' + encodeURIComponent(city.osmTimestamp), scene ? .48 : 1));
-  } else if (!overview) {
+  if (city) {
+    const roads = mapImage(city.bounds, '/maps/warsaw.svg?v=' + encodeURIComponent(city.osmTimestamp), scene ? .48 : 1);
+    roads.classList.add('map-city-roads');
+    map.append(roads);
+  }
+  if (!cityBounds || warsaw) {
     for (const line of (scene ? [] : state.network.waterways || [])) {
       map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none', stroke: '#285469', 'stroke-width': 18 }));
     }
     for (const line of state.network.contextRoads || []) {
       map.append(svg('polyline', { points: pointsOnMap(line), fill: 'none',
+        class: 'map-context',
         stroke: scene ? '#9aacac' : '#38525a', 'stroke-opacity': scene ? .55 : 1, 'stroke-width': 1.15 }));
     }
   }
@@ -355,43 +379,57 @@ function renderMap(route) {
   }
   map.append(svg('path', { d: 'M 713 62 V 29 M 706 38 L 713 29 L 720 38', stroke: '#a4babf', fill: 'none', 'stroke-width': 2 }));
   map.append(svg('text', { x: 708, y: 82, class: 'map-caption' }, 'N'));
+  const routes = [];
   for (const segment of state.network.segments) {
     if (!(segment.walkingSeconds > 0)) continue;
     const geometry = segment.geometry ? pointsOnMap(segment.geometry)
       : [points.get(segment.from), points.get(segment.to)].map(point => point.join(',')).join(' ');
     const inaccessible = closed.has(segment.id);
     const active = selected.has(segment.id);
-    map.append(svg('polyline', {
+    const line = {
       points: geometry, fill: 'none', stroke: inaccessible ? '#ff9e8f' : active ? '#8df0ce' : '#89a4a9',
-      'stroke-width': inaccessible || active ? 6 : 3, 'stroke-linecap': 'round',
+      'stroke-width': inaccessible || active ? 4 : 1.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
       'stroke-dasharray': inaccessible ? '10 7' : 'none',
-    }));
+    };
+    if (inaccessible || active) routes.push(line);
+    else map.append(svg('polyline', line));
   }
-  for (const [id, [x, y]] of (overview ? [] : points)) {
+  if (state.distribution && state.cityPath?.revision === state.situation.revision && state.cityPath.route?.geometry.length) {
+    routes.push({ points: pointsOnMap(state.cityPath.route.geometry), fill: 'none',
+      stroke: '#8df0ce', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  }
+  for (const line of routes) {
+    map.append(svg('polyline', { ...line, stroke: '#102026', 'stroke-width': 7 }));
+    map.append(svg('polyline', { ...line, class: 'map-route' }));
+  }
+  for (const [id, [x, y]] of points) {
     const isExit = state.network.exits.includes(id);
     const isStart = id === $('node').value;
-    map.append(svg('circle', { cx: x, cy: y, r: isStart ? 9 : 6,
+    const marker = svg('g', { class: 'map-node', transform: 'translate(' + x + ' ' + y + ')' });
+    const symbol = svg('g', { class: 'map-symbol' });
+    marker.append(symbol);
+    symbol.append(svg('circle', { r: isStart ? 9 : 6,
       fill: isExit ? '#fbd47e' : isStart ? '#8df0ce' : '#b7cbce', stroke: '#12232a', 'stroke-width': 2 }));
     const caption = warsaw ? warsawMapLabels[id] : [
       label(id), id === 'pickup' ? -10 : 10, id === 'pickup' || id === 'east-junction' ? 26 : -14,
     ];
     if (caption) {
       const [name, dx, dy] = caption;
-      map.append(svg('text', { x: x + dx, y: y + dy, 'text-anchor': dx < 0 ? 'end' : 'start',
+      symbol.append(svg('text', { x: dx, y: dy, 'text-anchor': dx < 0 ? 'end' : 'start',
         class: isExit || isStart ? '' : 'minor-label' }, name));
     }
-  }
-  if (state.distribution && state.cityPath?.revision === state.situation.revision && state.cityPath.route?.geometry.length) {
-    map.append(svg('polyline', { points: pointsOnMap(state.cityPath.route.geometry), fill: 'none',
-      stroke: '#8df0ce', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+    map.append(marker);
   }
   for (const point of state.cityPoints) {
     const [cx, cy] = project(...point);
-    map.append(svg('circle', { cx, cy, r: 5, fill: '#fbd47e', stroke: '#12232a', 'stroke-width': 2 }));
+    const marker = svg('g', { transform: 'translate(' + cx + ' ' + cy + ')' });
+    marker.append(svg('circle', { class: 'map-symbol', r: 5, fill: '#fbd47e', stroke: '#12232a', 'stroke-width': 2 }));
+    map.append(marker);
   }
   if (state.cityPath && !state.distribution) {
     text('city-status', 'Trasa oczekuje na ponowną weryfikację.');
   }
+  updateMapDetail();
 }
 
 function renderReviews(reviews) {
@@ -440,17 +478,9 @@ function showCityPath(path) {
   text('city-status', found ? 'Trasa orientacyjna · ' + minutes(found.seconds) : 'Brak trasy w wybranym trybie.');
 }
 
-function changeCityView(overview) {
-  state.cityOverview = overview;
-  mapViewport.reset();
-  redrawMap();
-}
-
-$('city-overview').addEventListener('click', () => changeCityView(true));
-$('city-detail').addEventListener('click', () => changeCityView(false));
 $('map-layer').addEventListener('click', () => {
   state.satelliteDetail = !state.satelliteDetail;
-  redrawMap();
+  updateMapDetail();
 });
 $('city-pick').addEventListener('click', () => {
   state.cityPicking = !state.cityPicking;

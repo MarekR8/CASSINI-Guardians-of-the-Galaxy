@@ -1,9 +1,8 @@
-const MAX_ZOOM = 5;
 const ZOOM_STEP = 1.25;
 const DRAG_THRESHOLD = 4;
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
-export function createMapViewport(map, { zoomIn, zoomOut, reset }) {
+export function createMapViewport(map, { zoomIn, zoomOut, reset, maxZoom }) {
   const { width, height } = map.viewBox.baseVal;
   const pointers = new Map();
   let zoom = 1;
@@ -13,14 +12,16 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset }) {
   let moved = false;
 
   function setView(nextX, nextY, nextZoom) {
-    zoom = clamp(nextZoom, 1, MAX_ZOOM);
+    zoom = clamp(nextZoom, 1, maxZoom());
     const visibleWidth = width / zoom;
     const visibleHeight = height / zoom;
     x = clamp(nextX, 0, width - visibleWidth);
     y = clamp(nextY, 0, height - visibleHeight);
     map.setAttribute('viewBox', [x, y, visibleWidth, visibleHeight].join(' '));
-    zoomIn.disabled = zoom === MAX_ZOOM;
+    zoomIn.disabled = zoom === maxZoom();
     zoomOut.disabled = reset.disabled = zoom === 1;
+    map.style.setProperty('--map-symbol-scale', 1 / zoom);
+    map.dispatchEvent(new Event('map-view-change'));
   }
 
   function point(clientX, clientY) {
@@ -30,7 +31,7 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset }) {
   function moveViewport(from, to, factor = 1) {
     const anchor = point(from.x, from.y);
     const target = point(to.x, to.y);
-    const nextZoom = clamp(zoom * factor, 1, MAX_ZOOM);
+    const nextZoom = clamp(zoom * factor, 1, maxZoom());
     const ratio = zoom / nextZoom;
     setView(anchor.x - (target.x - x) * ratio, anchor.y - (target.y - y) * ratio, nextZoom);
   }
@@ -108,5 +109,5 @@ export function createMapViewport(map, { zoomIn, zoomOut, reset }) {
   });
 
   resetView();
-  return { point, reset: resetView };
+  return { point };
 }
