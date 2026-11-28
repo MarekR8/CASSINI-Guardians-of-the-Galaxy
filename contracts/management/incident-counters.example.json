@@ -1,0 +1,14 @@
+{
+  "inZoneEstimate": {
+    "value": 4872,
+    "method": "sum of GHS-POP cells with centres inside the flood polygon",
+    "source": "Copernicus GHSL GHS-POP R2023A",
+    "year": 2025,
+    "revision": 0
+  },
+  "inZoneStatus": "available",
+  "confirmedOutside": 1,
+  "confirmedOutsideSimulated": 1,
+  "unconfirmed": 2,
+  "estimatedWithoutConfirmedExit": 4871
+}
