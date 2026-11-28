@@ -92,6 +92,11 @@ async Task Forward(string service, string group, string operation, string? id, H
         uri += $"/{id}";
     uri += context.Request.QueryString.ToUriComponent();
     using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), uri);
+    var catalogWrite = group == "commands" && (service, operation) is
+        ("situation", "set-assembly-point") or ("sheltering", "configure-shelter");
+    if (catalogWrite && AuthenticationHeaderValue.TryParse(context.Request.Headers.Authorization, out var auth) &&
+        string.Equals(auth.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase))
+        request.Headers.Authorization = auth;
     if (group == "commands")
     {
         if (!context.Request.HasJsonContentType())
@@ -110,6 +115,8 @@ async Task Forward(string service, string group, string operation, string? id, H
             request, HttpCompletionOption.ResponseContentRead, context.RequestAborted);
         context.Response.StatusCode = (int)response.StatusCode;
         context.Response.ContentType = response.Content.Headers.ContentType?.ToString();
+        if (catalogWrite && response.Headers.WwwAuthenticate.Count > 0)
+            context.Response.Headers.WWWAuthenticate = response.Headers.WwwAuthenticate.ToString();
         await response.Content.CopyToAsync(context.Response.Body, context.RequestAborted);
     }
     catch (HttpRequestException)

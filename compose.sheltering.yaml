@@ -4,6 +4,7 @@ services:
       Demo__Scenario: sample
       AssemblyPoints__SeedFile: /app/sample-sites.json
       AssemblyPoints__StateFile: /state/assembly-points.json
+      SiteCatalog__AccessMode: demo
 
   routing:
     environment:
@@ -25,6 +26,7 @@ services:
       Situation__BaseUrl: http://situation:8080
       Sheltering__SeedFile: /app/sample-sites.json
       Sheltering__StateFile: /state/shelters.json
+      SiteCatalog__AccessMode: demo
     depends_on: [situation]
     volumes: [sheltering:/state]
 

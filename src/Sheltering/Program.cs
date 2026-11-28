@@ -8,7 +8,12 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
 
 var seedFile = builder.Configuration["Sheltering:SeedFile"] ?? Path.Combine(AppContext.BaseDirectory, "sample-sites.json");
 var stateFile = builder.Configuration["Sheltering:StateFile"] ?? Path.Combine("artifacts", "sheltering", "catalog.json");
-builder.Services.AddSingleton(new CatalogStore<Shelter>(stateFile,
+var authenticateCatalog = SiteCatalogAccess.Configure(builder);
+var incidentId = builder.Configuration["Sheltering:IncidentId"] ?? (authenticateCatalog ? null : "incident-42");
+if (!SiteRules.IsId(incidentId))
+    throw new InvalidOperationException("Configure Sheltering:IncidentId for the shelter catalog.");
+builder.Services.AddSingleton(_ => new CatalogStore<Shelter>("sheltering", stateFile,
+    builder.Configuration.GetConnectionString("ShelterCatalog"),
     () => ShelterSeed.Read(seedFile), shelter => shelter.ShelterId, shelter => shelter.Version));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ShelterCommands>();
@@ -25,6 +30,9 @@ builder.Services.AddHttpClient<SituationClient>(client =>
 });
 
 var app = builder.Build();
+_ = app.Services.GetRequiredService<CatalogStore<Shelter>>();
+if (authenticateCatalog)
+    app.UseAuthentication();
 app.Use(async (context, next) =>
 {
     try
@@ -47,6 +55,8 @@ app.MapGet("/health/ready", (CatalogStore<Shelter> catalog) =>
 app.MapGet("/queries/shelter-availability", (DateTimeOffset? at, bool? eligibleOnly, ShelterQueries handler,
     CancellationToken cancellation) => handler.GetShelterAvailability(at, eligibleOnly ?? false, cancellation));
 app.MapPost("/commands/configure-shelter", (ConfigureShelterCommand command, ShelterCommands handler,
-    CancellationToken cancellation) => handler.ConfigureShelter(command, cancellation));
+    SiteCatalogAccess access, HttpContext context, CancellationToken cancellation) =>
+    handler.ConfigureShelter(command, access.GetActor(context, incidentId, command.ShelterId),
+        incidentId!, cancellation));
 
 app.Run();

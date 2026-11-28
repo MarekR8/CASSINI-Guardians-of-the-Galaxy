@@ -6,12 +6,12 @@ internal sealed record SetAssemblyPointCommand(string? CommandId, int? ExpectedV
     string? PointId, string? Name, SitePlace? Place, bool? StepFree, string? Status,
     SiteWindow? OperatingWindow, SiteEvidence? Evidence);
 
-internal sealed class AssemblyPointCommands(CatalogStore<AssemblyPoint> store, SituationStore situation)
+internal sealed class AssemblyPointCommands(CatalogStore<AssemblyPoint> store, SituationStore situation, TimeProvider clock)
 {
-    internal CatalogWrite<AssemblyPoint> SetAssemblyPoint(SetAssemblyPointCommand command)
+    internal CatalogWrite<AssemblyPoint> SetAssemblyPoint(SetAssemblyPointCommand command, CatalogActor actor)
     {
         var key = AssemblyPoint.Key(command.IncidentId, command.PointId);
-        return store.Save(command.CommandId, command.ExpectedVersion, key, command, (_, version) =>
+        return store.Save(command.CommandId, command.ExpectedVersion, key, command, actor, clock.GetUtcNow(), (_, version) =>
         {
             var name = AssemblyPoint.ValidateIdentity(command.IncidentId, command.PointId, command.Name);
             if (command.StepFree is not { } stepFree)
@@ -22,6 +22,13 @@ internal sealed class AssemblyPointCommands(CatalogStore<AssemblyPoint> store, S
 
             return new AssemblyPoint(command.IncidentId!, command.PointId!, name, command.Place!, stepFree,
                 command.Status!, command.OperatingWindow!, command.Evidence!, version);
-        });
+        }, (_, point) => new("AssemblyPointChanged.v1", "situation.assembly-point-changed.v1", point.PointId, new
+        {
+            point.IncidentId,
+            point.PointId,
+            point.Status,
+            point.OperatingWindow,
+            evidenceRef = new { point.Evidence.Source, point.Evidence.SituationRevision },
+        }));
     }
 }

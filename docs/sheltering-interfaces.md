@@ -13,7 +13,7 @@ This contract describes the communication needed for the [sheltering and groupin
 | Dispatch | Assistance requests, unit bookings and pickup | The current Management case and Routing evidence. Pickup does not admit a person to a shelter. |
 | Gateway and coordinator view | Composed read views and authorized command forwarding | The owning service for each query or command. An unavailable owner is shown separately from a valid empty result. |
 
-Gateway clients use `/api/{service}/...`. Calls between services use private HTTP endpoints with the same path after removing that prefix. Grouping uses the Management service prefix while hosted there, with a separate handler and DTO boundary. The SH-T01 slice is opt-in for the offline `sample` exercise over local HTTP. It does not supply authenticated roles, RabbitMQ or live destinations. The target role and event contracts below apply when those components are implemented.
+Gateway clients use `/api/{service}/...`. Calls between services use private HTTP endpoints with the same path after removing that prefix. Grouping uses the Management service prefix while hosted there, with a separate handler and DTO boundary. The SH-T01 slice is opt-in for the offline `sample` exercise over local HTTP. Catalog writes also support the authenticated [SH-T01 Stage B configuration](tasks/sheltering/01-sites-and-resources.md#stage-b-operation).
 
 ## SH-T01 site catalog and destination reads
 
@@ -38,7 +38,7 @@ Use these shared fields for both site types:
 | `resources` | For shelters, `{ places, accessiblePlaces, intakePerHour }`. Accessible places are a subset of total places. A null intake rate means no configured hourly limit. |
 | `commitments` and `available` | The response gives `heldPlaces`, `heldAccessiblePlaces`, `occupiedPlaces` and `occupiedAccessiblePlaces`; `available` reports remaining `places` and `accessiblePlaces`, never negative. A capacity reduction may set `overcommitted` while keeping existing commitments visible. SH-T01 reads these counts; SH-T04 and SH-T05 own the future write operations. |
 
-`expectedVersion: 0` creates a site. For edits, pass the last read item `version`. A successful write returns the resulting item and the owner's new catalog `revision`. An identical retry with the same `commandId` returns the original write result. Reusing the ID with changed content or writing on a stale item version conflicts. Compare point and shelter catalog revisions only within their own catalogs. The `situationRevision` is separate and is the evidence revision that the destination read checked.
+`expectedVersion: 0` creates a site. For edits, pass the last read item `version`. A successful write returns the resulting item and the owner's new catalog `revision`. An identical retry by the same actor with the same `commandId` returns the original write result. Reusing the ID with changed content or writing on a stale item version conflicts. In OIDC mode the coordinator needs the incident scope. The operator needs both the incident and shelter scopes and may only change the resources of an existing shelter. Compare point and shelter catalog revisions only within their own catalogs. The `situationRevision` is separate and is the evidence revision that the destination read checked.
 
 Times use ISO 8601. Read handlers use the current UTC instant when `at` is omitted. For the seeded exercise, pass `at=2026-11-27T19:20:00Z` or use the dashboard's exercise clock. An eligibility check uses verified evidence at the queried instant and the current Situation revision. A change in that revision makes earlier site evidence stale until it is verified again. An operating window and the evidence interval are checked separately.
 
@@ -89,7 +89,7 @@ Return a stable `code` for business errors using the owner's HTTP problem respon
 
 ## Target integration events
 
-Use the existing [event envelope and RabbitMQ topology](mvp-interfaces.md#rabbitmq-bindings-and-consumers). These are proposed routing keys on `evacuation.events`. SH-T01 uses local HTTP and does not require a broker.
+Use the existing [event envelope and RabbitMQ topology](mvp-interfaces.md#rabbitmq-bindings-and-consumers). These are routing keys on `evacuation.events`. SH-T01 commits point and shelter events to the owner outboxes, with RabbitMQ publication and replay assigned to SH-T06.
 
 | Publisher | Event → proposed routing key | Consumers and effect |
 | --- | --- | --- |

@@ -4,10 +4,11 @@ namespace Situation.AssemblyPoints;
 
 internal static class AssemblyPointEndpoints
 {
-    internal static void AddAssemblyPoints(this IServiceCollection services, string seedFile, string? stateFile)
+    internal static void AddAssemblyPoints(this IServiceCollection services, string seedFile, string stateFile,
+        string? connectionString)
     {
-        services.AddSingleton(new CatalogStore<AssemblyPoint>(stateFile, () => ReadSeed(seedFile),
-            point => AssemblyPoint.Key(point.IncidentId, point.PointId), point => point.Version));
+        services.AddSingleton(_ => new CatalogStore<AssemblyPoint>("situation-data", stateFile, connectionString,
+            () => ReadSeed(seedFile), point => AssemblyPoint.Key(point.IncidentId, point.PointId), point => point.Version));
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<AssemblyPointCommands>();
         services.AddSingleton<AssemblyPointQueries>();
@@ -30,8 +31,9 @@ internal static class AssemblyPointEndpoints
 
         group.MapGet("/queries/assembly-points", (string? incidentId, DateTimeOffset? at, bool? eligibleOnly,
             AssemblyPointQueries queries) => queries.GetAssemblyPoints(incidentId, at, eligibleOnly == true));
-        group.MapPost("/commands/set-assembly-point", (SetAssemblyPointCommand command, AssemblyPointCommands commands)
-            => commands.SetAssemblyPoint(command));
+        group.MapPost("/commands/set-assembly-point", (SetAssemblyPointCommand command, AssemblyPointCommands commands,
+            SiteCatalogAccess access, HttpContext context) =>
+            commands.SetAssemblyPoint(command, access.GetActor(context, command.IncidentId)));
     }
 
     private static AssemblyPoint[] ReadSeed(string path)

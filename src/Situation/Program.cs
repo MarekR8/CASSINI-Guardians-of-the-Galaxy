@@ -1,6 +1,7 @@
 using Situation;
 using Situation.AssemblyPoints;
 using Cassini.Demo;
+using Cassini.Demo.SiteCatalog;
 
 var builder = WebApplication.CreateBuilder(args);
 if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
@@ -20,14 +21,25 @@ builder.Services.AddSingleton(new ReviewNetwork(city));
 builder.Services.AddSingleton<SituationQueries>();
 builder.Services.AddSingleton<SituationCommands>();
 var assemblyPointsSeed = scenario == "sample" ? builder.Configuration["AssemblyPoints:SeedFile"] : null;
-if (!string.IsNullOrWhiteSpace(assemblyPointsSeed))
-    builder.Services.AddAssemblyPoints(assemblyPointsSeed, builder.Configuration["AssemblyPoints:StateFile"]);
+var assemblyPointsEnabled = !string.IsNullOrWhiteSpace(assemblyPointsSeed);
+var authenticateCatalog = false;
+if (assemblyPointsEnabled)
+{
+    authenticateCatalog = SiteCatalogAccess.Configure(builder);
+    builder.Services.AddAssemblyPoints(assemblyPointsSeed!,
+        builder.Configuration["AssemblyPoints:StateFile"] ?? Path.Combine("artifacts", "sheltering", "assembly-points.json"),
+        builder.Configuration.GetConnectionString("AssemblyPointCatalog"));
+}
 builder.Services.AddSingleton<ICopernicusSource, MockCopernicusSource>();
 builder.Services.AddSingleton<IFlyPixSource, MockFlyPixSource>();
 builder.Services.AddSingleton<ICitySource, MockCitySource>();
 var integrationArea = IntegrationArea.ForScenario(scenario);
 
 var app = builder.Build();
+if (assemblyPointsEnabled)
+    _ = app.Services.GetRequiredService<CatalogStore<AssemblyPoint>>();
+if (authenticateCatalog)
+    app.UseAuthentication();
 app.Use(async (context, next) =>
 {
     try
@@ -65,7 +77,7 @@ app.MapPost("/commands/import-flypix", (ImportReviewCommand command, SituationCo
     commands.ImportReview(command));
 app.MapPost("/commands/review-decision", (ReviewDecisionCommand command, SituationCommands commands) =>
     commands.DecideReview(command));
-if (!string.IsNullOrWhiteSpace(assemblyPointsSeed))
+if (assemblyPointsEnabled)
     app.MapAssemblyPoints();
 
 app.Run();
