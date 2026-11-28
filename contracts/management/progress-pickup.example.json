@@ -1,0 +1,6 @@
+{
+  "commandId": "pickup-case-15-unit-3",
+  "caseId": "case-15",
+  "step": "pickup",
+  "expectedVersion": 2
+}

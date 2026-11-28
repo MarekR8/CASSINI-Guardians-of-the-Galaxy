@@ -7,17 +7,24 @@
    "status": {
     "Ok": 950.0
    },
+   "statusAll": {
+    "Ok": 950.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
    "shelters": [
     {
      "id": "s10",
      "capacity": 2000,
-     "expectedLoad": 458.4369438292831,
+     "expectedLoad": 515.5728933287479,
      "overflow": 0.0
     },
     {
      "id": "s20",
      "capacity": 2000,
-     "expectedLoad": 491.56305617071683,
+     "expectedLoad": 434.42710667125203,
      "overflow": 0.0
     }
    ],
@@ -29,10 +36,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 5.535508865789781,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 5.16110002050129,
       "shares": {
-       "s10": 0.5986649599342463,
-       "s20": 0.4013350400657536
+       "s10": 0.8804858551983151,
+       "s20": 0.1195141448016848
       }
      },
      "slow": {
@@ -41,10 +49,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 7.830303300666533,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.246318504354724,
       "shares": {
-       "s10": 0.6390928093660267,
-       "s20": 0.3609071906339733
+       "s10": 0.9456863434115548,
+       "s20": 0.054313656588445336
       }
      },
      "wheelchair": {
@@ -53,10 +62,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 9.087212422451465,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 8.409886892647824,
       "shares": {
-       "s10": 0.6607564415600301,
-       "s20": 0.33924355843996995
+       "s10": 0.9655545093681932,
+       "s20": 0.0344454906318068
       }
      }
     },
@@ -67,10 +77,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 5.161543362090237,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 4.3821379596575,
       "shares": {
-       "s10": 0.3100280553897376,
-       "s20": 0.6899719446102623
+       "s10": 0.017955338074497548,
+       "s20": 0.9820446619255025
       }
      },
      "slow": {
@@ -79,10 +90,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 7.111608686238265,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 6.203002521437606,
       "shares": {
-       "s10": 0.24179619603484284,
-       "s20": 0.7582038039651571
+       "s10": 0.0032876364757079024,
+       "s20": 0.996712363524292
       }
      },
      "wheelchair": {
@@ -91,10 +103,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 8.149376177751614,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.227873456550352,
       "shares": {
-       "s10": 0.20860855214887883,
-       "s20": 0.7913914478511211
+       "s10": 0.0012710050049574647,
+       "s20": 0.9987289949950424
       }
      }
     }
@@ -105,6 +118,7 @@
      "startMinute": 0,
      "people": 200,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -112,6 +126,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -119,14 +134,16 @@
      "startMinute": 0,
      "people": 450,
      "iterations": 2,
-     "gap": 5e-06
+     "priceIterations": 1,
+     "gap": 8e-05
     },
     {
      "wave": 4,
      "startMinute": 0,
      "people": 300,
      "iterations": 2,
-     "gap": 1.4e-05
+     "priceIterations": 1,
+     "gap": 1.3e-05
     }
    ]
   },
@@ -134,17 +151,24 @@
    "status": {
     "Ok": 950.0
    },
+   "statusAll": {
+    "Ok": 950.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
    "shelters": [
     {
      "id": "s10",
      "capacity": 2000,
-     "expectedLoad": 203.63475395959563,
+     "expectedLoad": 1.920206174098586,
      "overflow": 0.0
     },
     {
      "id": "s20",
      "capacity": 2000,
-     "expectedLoad": 746.3652460404044,
+     "expectedLoad": 948.0797938259013,
      "overflow": 0.0
     }
    ],
@@ -156,10 +180,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 7.262235024385243,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 6.3490102987532975,
       "shares": {
-       "s10": 0.23157031283335192,
-       "s20": 0.7684296871666481
+       "s10": 0.0024893105406546758,
+       "s20": 0.9975106894593454
       }
      },
      "slow": {
@@ -168,10 +193,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 9.919677522550872,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 9.048714568050286,
       "shares": {
-       "s10": 0.15260886389476605,
-       "s20": 0.847391136105234
+       "s10": 0.00018940870466312813,
+       "s20": 0.999810591295337
       }
      },
      "wheelchair": {
@@ -180,10 +206,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 11.350252287416494,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 10.55587359726611,
       "shares": {
-       "s10": 0.11920311056634891,
-       "s20": 0.8807968894336512
+       "s10": 4.5398640836374934e-05,
+       "s20": 0.9999546013591636
       }
      }
     },
@@ -194,10 +221,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 5.266965112709056,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 4.363971625323498,
       "shares": {
-       "s10": 0.23189119485351092,
-       "s20": 0.768108805146489
+       "s10": 0.0025496103886953935,
+       "s20": 0.9974503896113047
       }
      },
      "slow": {
@@ -206,10 +234,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 7.065269108177745,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 6.197989580768649,
       "shares": {
-       "s10": 0.15270743356350344,
-       "s20": 0.8472925664364965
+       "s10": 0.00019123890659747652,
+       "s20": 0.9998087610934024
       }
      },
      "wheelchair": {
@@ -218,10 +247,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 8.01691490865106,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.222536218500679,
       "shares": {
-       "s10": 0.11920311056634897,
-       "s20": 0.880796889433651
+       "s10": 4.539864083637509e-05,
+       "s20": 0.9999546013591636
       }
      }
     }
@@ -232,6 +262,7 @@
      "startMinute": 0,
      "people": 128,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -239,6 +270,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -246,20 +278,29 @@
      "startMinute": 0,
      "people": 522,
      "iterations": 2,
-     "gap": 5.5e-05
+     "priceIterations": 1,
+     "gap": 1e-05
     },
     {
      "wave": 4,
      "startMinute": 0,
      "people": 300,
      "iterations": 2,
-     "gap": 0.000243
+     "priceIterations": 1,
+     "gap": 5.5e-05
     }
    ]
   },
   "no-exit": {
    "status": {
     "NoEligibleExit": 950.0
+   },
+   "statusAll": {
+    "NoEligibleExit": 950.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
    },
    "shelters": [
     {
@@ -283,6 +324,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      },
@@ -292,6 +334,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      },
@@ -301,6 +344,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      }
@@ -312,6 +356,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      },
@@ -321,6 +366,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      },
@@ -330,6 +376,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "NoEligibleExit",
+      "placedShare": 0.0,
       "leaveFloodMinutes": null,
       "shares": null
      }
@@ -341,6 +388,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -348,6 +396,7 @@
      "startMinute": 0,
      "people": 450,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -355,6 +404,7 @@
      "startMinute": 0,
      "people": 120,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -362,6 +412,7 @@
      "startMinute": 0,
      "people": 380,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     }
    ]
@@ -371,17 +422,25 @@
     "DeadlineInfeasible": 650.0,
     "Ok": 300.0
    },
+   "statusAll": {
+    "DeadlineInfeasible": 650.0,
+    "Ok": 300.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
    "shelters": [
     {
      "id": "s10",
      "capacity": 2000,
-     "expectedLoad": 365.4285272123618,
+     "expectedLoad": 510.18629190639865,
      "overflow": 0.0
     },
     {
      "id": "s20",
      "capacity": 2000,
-     "expectedLoad": 584.5714727876382,
+     "expectedLoad": 439.8137080936013,
      "overflow": 0.0
     }
    ],
@@ -393,10 +452,11 @@
       "startMinute": 0,
       "deadlineMinutes": 4,
       "status": "DeadlineInfeasible",
-      "leaveFloodMinutes": 5.535508865789781,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 5.16110002050129,
       "shares": {
-       "s10": 0.5986649599342463,
-       "s20": 0.4013350400657536
+       "s10": 0.8804858551983151,
+       "s20": 0.1195141448016848
       }
      },
      "slow": {
@@ -405,10 +465,11 @@
       "startMinute": 0,
       "deadlineMinutes": 4,
       "status": "DeadlineInfeasible",
-      "leaveFloodMinutes": 7.830303300666533,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.246318504354724,
       "shares": {
-       "s10": 0.6390928093660267,
-       "s20": 0.3609071906339733
+       "s10": 0.9456863434115548,
+       "s20": 0.054313656588445336
       }
      },
      "wheelchair": {
@@ -417,10 +478,11 @@
       "startMinute": 0,
       "deadlineMinutes": 4,
       "status": "DeadlineInfeasible",
-      "leaveFloodMinutes": 9.087212422451465,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 8.409886892647824,
       "shares": {
-       "s10": 0.6607564415600301,
-       "s20": 0.33924355843996995
+       "s10": 0.9655545093681932,
+       "s20": 0.0344454906318068
       }
      }
     },
@@ -431,7 +493,8 @@
       "startMinute": 0,
       "deadlineMinutes": 5,
       "status": "Ok",
-      "leaveFloodMinutes": 4.336294879879492,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 4.334281713100054,
       "shares": {
        "s10": 0.0,
        "s20": 1.0
@@ -443,10 +506,11 @@
       "startMinute": 0,
       "deadlineMinutes": 5,
       "status": "DeadlineInfeasible",
-      "leaveFloodMinutes": 7.111608686238265,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 6.203002521437606,
       "shares": {
-       "s10": 0.24179619603484284,
-       "s20": 0.7582038039651571
+       "s10": 0.0032876364757079024,
+       "s20": 0.996712363524292
       }
      },
      "wheelchair": {
@@ -455,10 +519,11 @@
       "startMinute": 0,
       "deadlineMinutes": 5,
       "status": "DeadlineInfeasible",
-      "leaveFloodMinutes": 8.149376177751614,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.227873456550352,
       "shares": {
-       "s10": 0.20860855214887883,
-       "s20": 0.7913914478511211
+       "s10": 0.0012710050049574647,
+       "s20": 0.9987289949950424
       }
      }
     }
@@ -469,6 +534,7 @@
      "startMinute": 0,
      "people": 200,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -476,6 +542,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -483,13 +550,15 @@
      "startMinute": 0,
      "people": 450,
      "iterations": 2,
-     "gap": 5e-06
+     "priceIterations": 1,
+     "gap": 8e-05
     },
     {
      "wave": 4,
      "startMinute": 0,
      "people": 300,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     }
    ]
@@ -498,17 +567,24 @@
    "status": {
     "Ok": 19000.0
    },
+   "statusAll": {
+    "Ok": 19000.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
    "shelters": [
     {
      "id": "s10",
      "capacity": 3000,
-     "expectedLoad": 2716.578564342435,
+     "expectedLoad": 334.31797191725553,
      "overflow": 0.0
     },
     {
      "id": "s20",
      "capacity": 30000,
-     "expectedLoad": 16283.421435657563,
+     "expectedLoad": 18665.682028082745,
      "overflow": 0.0
     }
    ],
@@ -520,10 +596,11 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
-      "leaveFloodMinutes": 27.188723313784703,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 28.968318657346416,
       "shares": {
-       "s10": 0.13757085448737177,
-       "s20": 0.8624291455126282
+       "s10": 0.0001830930669210149,
+       "s20": 0.9998169069330789
       }
      },
      "slow": {
@@ -532,10 +609,11 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
-      "leaveFloodMinutes": 12.826785175268611,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 13.092749144441989,
       "shares": {
-       "s10": 0.16527576236170033,
-       "s20": 0.8347242376382997
+       "s10": 0.11219261937807133,
+       "s20": 0.8878073806219287
       }
      },
      "wheelchair": {
@@ -544,10 +622,11 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
-      "leaveFloodMinutes": 14.891734623567924,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 15.23251529410437,
       "shares": {
-       "s10": 0.1450575063243461,
-       "s20": 0.8549424936756539
+       "s10": 0.08394684248657128,
+       "s20": 0.9160531575134286
       }
      }
     },
@@ -558,10 +637,11 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
-      "leaveFloodMinutes": 19.41714156265714,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 21.244826953360942,
       "shares": {
-       "s10": 0.13757085448737152,
-       "s20": 0.8624291455126285
+       "s10": 0.0001830930669210149,
+       "s20": 0.9998169069330789
       }
      },
      "slow": {
@@ -570,10 +650,11 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
-      "leaveFloodMinutes": 9.328267510269951,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 9.526008005425247,
       "shares": {
-       "s10": 0.16527576236170025,
-       "s20": 0.8347242376382997
+       "s10": 0.02211283688127726,
+       "s20": 0.9778871631187228
       }
      },
      "wheelchair": {
@@ -582,10 +663,11 @@
       "startMinute": 0,
       "deadlineMinutes": 60,
       "status": "Ok",
-      "leaveFloodMinutes": 10.810130681069491,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 11.085430059438748,
       "shares": {
-       "s10": 0.14505750632434608,
-       "s20": 0.8549424936756539
+       "s10": 0.012159961272343336,
+       "s20": 0.9878400387276567
       }
      }
     }
@@ -595,14 +677,16 @@
      "wave": 1,
      "startMinute": 0,
      "people": 4000,
-     "iterations": 8,
-     "gap": 0.005874
+     "iterations": 10,
+     "priceIterations": 1,
+     "gap": 0.000246
     },
     {
      "wave": 2,
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -610,6 +694,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -617,7 +702,8 @@
      "startMinute": 0,
      "people": 15000,
      "iterations": 17,
-     "gap": 0.009463
+     "priceIterations": 2,
+     "gap": 0.005059
     }
    ]
   },
@@ -625,17 +711,24 @@
    "status": {
     "Ok": 950.0
    },
+   "statusAll": {
+    "Ok": 950.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
    "shelters": [
     {
      "id": "s10",
      "capacity": 2000,
-     "expectedLoad": 286.6499769172878,
+     "expectedLoad": 236.50017459431498,
      "overflow": 0.0
     },
     {
      "id": "s20",
      "capacity": 2000,
-     "expectedLoad": 663.3500230827121,
+     "expectedLoad": 713.499825405685,
      "overflow": 0.0
     }
    ],
@@ -647,10 +740,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 3.3042064763085297,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 2.510945434074074,
       "shares": {
-       "s10": 0.3209683265627164,
-       "s20": 0.6790316734372835
+       "s10": 0.26893644019488555,
+       "s20": 0.7310635598051145
       }
      },
      "slow": {
@@ -659,10 +753,11 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 4.482618962933507,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 3.571450514285715,
       "shares": {
-       "s10": 0.25513184441805836,
-       "s20": 0.7448681555819415
+       "s10": 0.1933213580452823,
+       "s20": 0.8066786419547177
       }
      },
      "wheelchair": {
@@ -671,7 +766,8 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
-      "leaveFloodMinutes": 8.333334254517096,
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 8.333333341137022,
       "shares": {
        "s10": 0.0,
        "s20": 1.0
@@ -685,6 +781,7 @@
      "startMinute": 0,
      "people": 200,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -692,6 +789,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -699,6 +797,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -706,13 +805,281 @@
      "startMinute": 0,
      "people": 750,
      "iterations": 2,
-     "gap": 0.000111
+     "priceIterations": 1,
+     "gap": 1e-06
     }
    ]
   },
-  "no-reentry": {
+  "mixed-compliance": {
+   "status": {
+    "Ok": 9500.0
+   },
+   "statusAll": {
+    "DeadlineInfeasible": 6650.0,
+    "Ok": 12350.0
+   },
+   "uninformed": {
+    "status": {
+     "DeadlineInfeasible": 6650.0,
+     "Ok": 2850.0
+    },
+    "nodes": {
+     "1": {
+      "independent": {
+       "people": 5250.0,
+       "deadlineMinutes": 60,
+       "status": "DeadlineInfeasible",
+       "leaveFloodMinutes": 162.35
+      },
+      "slow": {
+       "people": 1260.0,
+       "deadlineMinutes": 60,
+       "status": "DeadlineInfeasible",
+       "leaveFloodMinutes": 231.92857142857144
+      },
+      "wheelchair": {
+       "people": 140.0,
+       "deadlineMinutes": 60,
+       "status": "DeadlineInfeasible",
+       "leaveFloodMinutes": 270.5833333333333
+      }
+     },
+     "2": {
+      "independent": {
+       "people": 2250.0,
+       "deadlineMinutes": 60,
+       "status": "Ok",
+       "leaveFloodMinutes": 13.695598076853654
+      },
+      "slow": {
+       "people": 540.0,
+       "deadlineMinutes": 60,
+       "status": "Ok",
+       "leaveFloodMinutes": 19.565140109790935
+      },
+      "wheelchair": {
+       "people": 60.0,
+       "deadlineMinutes": 60,
+       "status": "Ok",
+       "leaveFloodMinutes": 22.82599679475609
+      }
+     }
+    }
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 3000,
+     "expectedLoad": 2572.2254987705805,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 30000,
+     "expectedLoad": 6927.77450122942,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 5250.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 17.31154448625387,
+      "shares": {
+       "s10": 0.301188596158867,
+       "s20": 0.698811403841133
+      }
+     },
+     "slow": {
+      "people": 1260.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 13.972054876115191,
+      "shares": {
+       "s10": 0.1597826099093389,
+       "s20": 0.8402173900906611
+      }
+     },
+     "wheelchair": {
+      "people": 140.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 16.263615071149015,
+      "shares": {
+       "s10": 0.1285116487113396,
+       "s20": 0.8714883512886604
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 2250.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 12.664877819587206,
+      "shares": {
+       "s10": 0.301188596158867,
+       "s20": 0.698811403841133
+      }
+     },
+     "slow": {
+      "people": 540.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 11.050672055552125,
+      "shares": {
+       "s10": 0.1597826099093389,
+       "s20": 0.8402173900906611
+      }
+     },
+     "wheelchair": {
+      "people": 60.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 60,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 12.855335113825438,
+      "shares": {
+       "s10": 0.12851164871133985,
+       "s20": 0.8714883512886602
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 2000,
+     "iterations": 3,
+     "priceIterations": 1,
+     "gap": 0.000369
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 7500,
+     "iterations": 8,
+     "priceIterations": 1,
+     "gap": 0.000479
+    }
+   ]
+  },
+  "no-guidance": {
+   "status": {},
+   "statusAll": {
+    "DeadlineInfeasible": 13300.0,
+    "Ok": 5700.0
+   },
+   "uninformed": {
+    "status": {
+     "DeadlineInfeasible": 13300.0,
+     "Ok": 5700.0
+    },
+    "nodes": {
+     "1": {
+      "independent": {
+       "people": 10500.0,
+       "deadlineMinutes": 60,
+       "status": "DeadlineInfeasible",
+       "leaveFloodMinutes": 321.95
+      },
+      "slow": {
+       "people": 2520.0,
+       "deadlineMinutes": 60,
+       "status": "DeadlineInfeasible",
+       "leaveFloodMinutes": 459.9285714285715
+      },
+      "wheelchair": {
+       "people": 280.0,
+       "deadlineMinutes": 60,
+       "status": "DeadlineInfeasible",
+       "leaveFloodMinutes": 536.5833333333334
+      }
+     },
+     "2": {
+      "independent": {
+       "people": 4500.0,
+       "deadlineMinutes": 60,
+       "status": "Ok",
+       "leaveFloodMinutes": 8.969999999999999
+      },
+      "slow": {
+       "people": 1080.0,
+       "deadlineMinutes": 60,
+       "status": "Ok",
+       "leaveFloodMinutes": 12.814285714285713
+      },
+      "wheelchair": {
+       "people": 120.0,
+       "deadlineMinutes": 60,
+       "status": "Ok",
+       "leaveFloodMinutes": 14.95
+      }
+     }
+    }
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 3000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 30000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {},
+   "waves": []
+  },
+  "hazard-weight": {
    "status": {
     "Ok": 475.0
+   },
+   "statusAll": {
+    "Ok": 475.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
    },
    "shelters": [
     {
@@ -730,6 +1097,101 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 1.0002979446730682,
+      "shares": {
+       "s10": 1.0
+      }
+     },
+     "slow": {
+      "people": 90.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 1.4285722646809063,
+      "shares": {
+       "s10": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 10.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 1.666667642127725,
+      "shares": {
+       "s10": 1.0
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 100,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 375,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    }
+   ]
+  },
+  "hazard-weight-off": {
+   "status": {
+    "Ok": 475.0
+   },
+   "statusAll": {
+    "Ok": 475.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 475.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 375.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 3.3343264822435605,
       "shares": {
        "s10": 1.0
@@ -741,6 +1203,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 4.761907548936356,
       "shares": {
        "s10": 1.0
@@ -752,6 +1215,7 @@
       "startMinute": 0,
       "deadlineMinutes": 30,
       "status": "Ok",
+      "placedShare": 1.0,
       "leaveFloodMinutes": 5.555558807092416,
       "shares": {
        "s10": 1.0
@@ -765,6 +1229,7 @@
      "startMinute": 0,
      "people": 100,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -772,6 +1237,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -779,6 +1245,7 @@
      "startMinute": 0,
      "people": 0,
      "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     },
     {
@@ -786,6 +1253,514 @@
      "startMinute": 0,
      "people": 375,
      "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    }
+   ]
+  },
+  "exit-unsafe-before-arrival": {
+   "status": {
+    "Ok": 950.0
+   },
+   "statusAll": {
+    "Ok": 950.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 396.3156906379266,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 553.6843093620733,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 5.159714371349694,
+      "shares": {
+       "s10": 0.880701534750948,
+       "s20": 0.11929846524905192
+      }
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 9.047680485389424,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 10.555627232954327,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 4.335716530331922,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 6.190534160733337,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.222289854188895,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 200,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 450,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 2.6e-05
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 300,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    }
+   ]
+  },
+  "forecast-no-exit": {
+   "status": {
+    "NoEligibleExit": 950.0
+   },
+   "statusAll": {
+    "NoEligibleExit": 950.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 2000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 2,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "NoEligibleExit",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 450,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 120,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 380,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    }
+   ]
+  },
+  "capacity-rationed": {
+   "status": {
+    "Ok": 300.0,
+    "ShelterCapacityExhausted": 649.9999999999999
+   },
+   "statusAll": {
+    "Ok": 300.0,
+    "ShelterCapacityExhausted": 649.9999999999999
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 0.0,
+     "overflow": 0.0
+    },
+    {
+     "id": "s20",
+     "capacity": 300,
+     "expectedLoad": 300.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 450.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 0.32950191570881227,
+      "leaveFloodMinutes": 6.339096242762994,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "slow": {
+      "people": 108.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 9.047632240927532,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 12.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 10.55557094774879,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    },
+    "2": {
+     "independent": {
+      "people": 300.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "ShelterCapacityExhausted",
+      "placedShare": 0.0,
+      "leaveFloodMinutes": null,
+      "shares": null
+     },
+     "slow": {
+      "people": 72.0,
+      "wave": 3,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 0.32950191570881227,
+      "leaveFloodMinutes": 6.196943723735495,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 8.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 7.222233568983357,
+      "shares": {
+       "s10": 0.0,
+       "s20": 1.0
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 128,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 522,
+     "iterations": 2,
+     "priceIterations": 201,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 300,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    }
+   ]
+  },
+  "no-reentry": {
+   "status": {
+    "Ok": 475.0
+   },
+   "statusAll": {
+    "Ok": 475.0
+   },
+   "uninformed": {
+    "status": {},
+    "nodes": {}
+   },
+   "shelters": [
+    {
+     "id": "s10",
+     "capacity": 2000,
+     "expectedLoad": 475.0,
+     "overflow": 0.0
+    }
+   ],
+   "nodes": {
+    "1": {
+     "independent": {
+      "people": 375.0,
+      "wave": 4,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 3.3343264822435605,
+      "shares": {
+       "s10": 1.0
+      }
+     },
+     "slow": {
+      "people": 90.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 4.761907548936356,
+      "shares": {
+       "s10": 1.0
+      }
+     },
+     "wheelchair": {
+      "people": 10.0,
+      "wave": 1,
+      "startMinute": 0,
+      "deadlineMinutes": 30,
+      "status": "Ok",
+      "placedShare": 1.0,
+      "leaveFloodMinutes": 5.555558807092416,
+      "shares": {
+       "s10": 1.0
+      }
+     }
+    }
+   },
+   "waves": [
+    {
+     "wave": 1,
+     "startMinute": 0,
+     "people": 100,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 2,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 3,
+     "startMinute": 0,
+     "people": 0,
+     "iterations": 2,
+     "priceIterations": 1,
+     "gap": 0.0
+    },
+    {
+     "wave": 4,
+     "startMinute": 0,
+     "people": 375,
+     "iterations": 2,
+     "priceIterations": 1,
      "gap": 0.0
     }
    ]

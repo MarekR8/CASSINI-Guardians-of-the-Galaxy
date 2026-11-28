@@ -5,6 +5,7 @@ import json
 import unittest
 
 from graph import ROOT, EvacuationGraph
+import forecast
 from model import Model, congestion
 
 PARAMS = json.loads((ROOT / "data/demo/routing/params.json").read_text(encoding="utf-8"))
@@ -28,8 +29,9 @@ def network(nodes, roads):
     })
 
 
-def shelter(identifier, node, capacity=1000, step_free=True):
-    return {"id": identifier, "nodeId": node, "capacity": capacity, "intakePerHour": None, "stepFree": step_free}
+def shelter(identifier, node, capacity=1000, step_free=True, safe_until=None):
+    return {"id": identifier, "nodeId": node, "capacity": capacity, "intakePerHour": None, "stepFree": step_free,
+            "safeUntilMinutes": safe_until}
 
 
 def params(**model):
@@ -102,6 +104,112 @@ class ModelRules(unittest.TestCase):
         self.assertAlmostEqual(at, 0.15)
         self.assertAlmostEqual(above - at, 0.15 * 4)
         self.assertLess(below, at)
+
+
+class HazardWeight(unittest.TestCase):
+    """lambda = hazardTimeWeight: a second in the water costs lambda seconds on dry ground when choosing a route."""
+
+    # To shelter 10: through the water 1-2-10 (200 s), or out of it at once 1-3 (60 s) and then dry 3-10 (250 s).
+    WET_OR_DRY = network([(1, "hazard"), (2, "hazard"), (3, "safe"), (10, "safe")],
+                         [road("wet-1", 1, 2, 100, "hazard"), road("wet-2", 2, 10, 100, "hazard"),
+                          road("exit", 1, 3, 60, "hazard"), road("dry", 3, 10, 250)])
+
+    def leave(self, weight):
+        result = run(self.WET_OR_DRY, {1: 10}, {1: 30}, [shelter("s10", 10)], params(hazardTimeWeight=weight))
+        return result["nodes"][1]["independent"]["leaveFloodMinutes"]
+
+    def test_weight_one_keeps_plain_travel_time(self):
+        self.assertAlmostEqual(self.leave(1.0), 200 / 60, places=1)
+
+    def test_weight_leaves_the_water_first(self):
+        # 5 x 200 = 1000 perceived seconds through the water against 5 x 60 + 250 = 550 via the early exit.
+        self.assertAlmostEqual(self.leave(5.0), 60 / 60, places=1)
+
+    def test_weight_below_one_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.leave(0.5)
+
+
+class MixedCompliance(unittest.TestCase):
+    """rho = complianceShare: the guided share follows the plan, the rest walks to the nearest dry node."""
+
+    NARROW = network([(1, "hazard"), (10, "safe"), (20, "safe")],
+                     [road("bridge", 1, 10, 100, "hazard", capacity=20), road("long", 1, 20, 200, "hazard")])
+    SHELTERS = [shelter("s10", 10, 50000), shelter("s20", 20, 50000)]
+
+    def run_with(self, rho, people=6000):
+        return run(self.NARROW, {1: people}, {1: 600}, self.SHELTERS, params(complianceShare=rho))
+
+    def test_people_are_conserved_between_classes(self):
+        for rho in (0.0, 0.3, 1.0):
+            result = self.run_with(rho)
+            guided, uninformed = sum(result["status"].values()), sum(result["uninformed"]["status"].values())
+            self.assertAlmostEqual(guided, round(6000 * 0.95 * rho))
+            self.assertAlmostEqual(guided + uninformed, sum(result["statusAll"].values()), delta=1)
+            self.assertAlmostEqual(sum(result["statusAll"].values()), 6000 * 0.95, delta=1)
+
+    def test_extremes(self):
+        everyone = self.run_with(1.0)
+        self.assertEqual(everyone["uninformed"]["status"], {})
+        nobody = self.run_with(0.0)
+        self.assertEqual((nobody["status"], nobody["waves"], dict(nobody["nodes"])), ({}, [], {}))
+        self.assertTrue(all(item["expectedLoad"] == 0 for item in nobody["shelters"]))
+
+    def test_uninformed_ignore_congestion_and_guided_avoid_it(self):
+        result = self.run_with(0.5)
+        # The narrow bridge is the free-flow way out, so every uninformed walker queues on it.
+        slowest_free_flow = 100 / 0.6 / 60
+        for group in result["uninformed"]["nodes"][1].values():
+            self.assertGreater(group["leaveFloodMinutes"], slowest_free_flow)
+        # Assigned on top of that queue, the guided half mostly takes the longer, empty road.
+        self.assertGreater(result["nodes"][1]["independent"]["shares"]["s20"], 0.5)
+
+    def test_uninformed_walk_the_free_flow_shortest_path(self):
+        # With few people there is no queue: each profile crosses the 100 s bridge at its own speed.
+        light = self.run_with(0.5, people=10)
+        speeds = {"independent": 1.0, "slow": 0.7, "wheelchair": 0.6}
+        for name, group in light["uninformed"]["nodes"][1].items():
+            self.assertAlmostEqual(group["leaveFloodMinutes"], 100 / speeds[name] / 60, delta=0.05)  # report rounds to 0.1
+            self.assertEqual(group["status"], "Ok")
+
+
+class ForecastAndCapacity(unittest.TestCase):
+    """Stage B: T_safe per shelter from the hazard forecast; shelter places as a hard limit."""
+
+    def test_crossing_is_interpolated_between_samples(self):
+        series = [{"time": "2024-10-29T17:00:00Z", "dischargeM3s": 900},
+                  {"time": "2024-10-29T18:00:00Z", "dischargeM3s": 1700}]
+        self.assertEqual(forecast.crossing(series, 1300).isoformat(), "2024-10-29T17:30:00+00:00")
+        self.assertEqual(forecast.crossing(series, 500).isoformat(), "2024-10-29T17:00:00+00:00")
+        self.assertIsNone(forecast.crossing(series, 2000))
+
+    def test_bundled_mock(self):
+        safety = forecast.evaluate(forecast.load(), ["shelter-a", "shelter-b", "shelter-c", "shelter-d", "shelter-e"])
+        self.assertEqual([safety[key]["safeUntilMinutes"] for key in ("shelter-a", "shelter-b", "shelter-e")], [60, 96, 72])
+        self.assertEqual(safety["shelter-c"]["status"], "SafeThroughHorizon")
+        self.assertEqual(safety["shelter-d"]["status"], "NotAssessed")
+
+    def test_shelter_unsafe_on_arrival_is_not_chosen(self):
+        # s10 is 100 s away for independent walkers (1.7 min) and 2.4 min for slow ones: T_safe 2 min splits them.
+        result = run(FORK, {1: 100}, {1: 60}, [shelter("s10", 10, safe_until=2), shelter("s20", 20)])
+        self.assertGreater(result["nodes"][1]["independent"]["shares"]["s10"], 0.5)
+        self.assertEqual(result["nodes"][1]["slow"]["shares"], {"s20": 1.0})
+        gone = run(FORK, {1: 100}, {1: 60}, [shelter("s10", 10, safe_until=0), shelter("s20", 20, safe_until=0)])
+        self.assertEqual(set(gone["status"]), {"NoEligibleExit"})
+
+    def test_places_are_a_hard_limit_and_the_rest_is_counted(self):
+        result = run(FORK, {1: 1000}, {1: 60}, [shelter("s10", 10, capacity=200, safe_until=60), shelter("s20", 20, 100)],
+                     params(maxPriceIterations=50))
+        self.assertTrue(all(item["overflow"] == 0 for item in result["shelters"]))
+        # Rationing cuts proportionally and does not move the cut share to a shelter with places left.
+        placed = sum(item["expectedLoad"] for item in result["shelters"])
+        self.assertTrue(290 <= placed <= 300, placed)
+        self.assertAlmostEqual(result["status"]["ShelterCapacityExhausted"], 950 - placed, delta=1)
+        groups = result["nodes"][1].values()
+        for group in groups:   # every group is still guided out of the flood
+            self.assertAlmostEqual(sum(group["shares"].values()), 1, places=3)
+        # Earlier waves may be placed in full; the last wave takes the cut.
+        self.assertTrue(any(group["placedShare"] < 1 for group in groups))
 
 
 class Fixtures(unittest.TestCase):

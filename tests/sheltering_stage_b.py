@@ -196,10 +196,11 @@ def main():
     parser.add_argument("--port", type=int, default=16940)
     parser.add_argument("--postgres", action="store_true", help="Use fresh, migrated databases for the two owners.")
     args = parser.parse_args()
-    configured = [bool(os.environ.get(key)) for key in (
-        "ConnectionStrings__AssemblyPointCatalog", "ConnectionStrings__ShelterCatalog")]
-    if any(setting != args.postgres for setting in configured):
-        parser.error("Set both catalog connections for --postgres and leave them unset for the file test.")
+    assembly_db = bool(os.environ.get("ConnectionStrings__AssemblyPointCatalog"))
+    shelter_dbs = sum(bool(os.environ.get(key)) for key in (
+        "ConnectionStrings__ShelterCatalog", "ConnectionStrings__Sheltering"))
+    if (assembly_db, shelter_dbs) != (args.postgres, int(args.postgres)):
+        parser.error("For --postgres set the assembly point connection and exactly one Sheltering connection.")
     artifacts = ROOT / "artifacts"
     artifacts.mkdir(exist_ok=True)
     with TemporaryDirectory(dir=artifacts) as directory:

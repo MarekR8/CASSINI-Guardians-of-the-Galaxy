@@ -1,0 +1,75 @@
+{
+  "state": "Current",
+  "reason": null,
+  "assignment": {
+    "incidentId": "incident-42",
+    "caseId": "case-31",
+    "legId": "leg-shelter",
+    "version": 4,
+    "status": "Reserved",
+    "needs": {
+      "places": 1,
+      "accessiblePlaces": 0
+    },
+    "groupPlanRef": null,
+    "reservation": {
+      "reservationId": "book-b-case-31",
+      "shelterId": "shelter-b",
+      "shelterVersion": 1,
+      "resources": {
+        "places": 1,
+        "accessiblePlaces": 0
+      },
+      "arrivalWindow": {
+        "earliest": "2026-11-27T19:40:00+00:00",
+        "latestExclusive": "2026-11-27T19:40:01+00:00"
+      },
+      "holdsExpireAt": "2026-11-27T20:00:00+00:00",
+      "route": {
+        "evidenceId": "20de32a784df5a438cd944d75907c0eaec55b10169983af1c556173ebfea1dcd",
+        "query": {
+          "mode": "walking",
+          "at": "2026-11-27T19:20:00+00:00",
+          "node": "walk-start",
+          "caseIds": null,
+          "clearBy": "2026-11-27T19:58:00+00:00",
+          "stepFree": null,
+          "groupId": null,
+          "groupRevision": null,
+          "transportId": null,
+          "recordedRouteId": null
+        }
+      },
+      "situationRevision": 0,
+      "approvalRef": "synthetic-coordinator",
+      "commandId": "book-b"
+    },
+    "withdrawn": {
+      "assignmentVersion": 2,
+      "reservationId": "book-a-case-31",
+      "shelterId": "shelter-a",
+      "reason": "ShelterClosed",
+      "evidenceRef": "synthetic-closure-report"
+    },
+    "reason": null
+  },
+  "instruction": {
+    "aggregateVersion": 1,
+    "current": {
+      "routeVersion": 1,
+      "evidenceId": "20de32a784df5a438cd944d75907c0eaec55b10169983af1c556173ebfea1dcd",
+      "assignment": {
+        "assignmentVersion": 4,
+        "reservationId": "book-b-case-31",
+        "shelterId": "shelter-b"
+      },
+      "situationRevision": 0,
+      "arrivalWindow": {
+        "earliest": "2026-11-27T19:40:00+00:00",
+        "latestExclusive": "2026-11-27T19:40:01+00:00"
+      },
+      "validUntil": "2026-11-27T20:00:00+00:00"
+    },
+    "lastWithdrawal": null
+  }
+}

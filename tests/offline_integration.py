@@ -40,8 +40,10 @@ page = request("/")
 assert "Koordynacja ewakuacji" in page
 assert 'id="satellite-credit"' in page and 'type="file"' not in page
 assert 'id="map-zoom-in"' in page and 'id="map-zoom-reset"' in page
-assert "commands/draw" in request("/app.js")
-assert "createMapViewport" in request("/map-viewport.js")
+assert "/vendor/leaflet/leaflet.js" in page and 'id="map-legend"' in page
+assert "Leaflet 1.9.4" in request("/vendor/leaflet/leaflet.js")[:200]
+assert "registerLayer" in request("/js/map.js")
+assert "commands/draw" in request("/js/panels/distribution.js")
 scene = request("/maps/satellite.json")["sample"]
 archive = scene["floodArchive"]
 assert archive["productId"] == "EMSR756_AOI03_DEL_PRODUCT_observedEventA_v1"
@@ -164,11 +166,21 @@ new_request = post("dispatch", "request", {
     "commandId": "request-support", "caseId": "case-14", "pickupNode": "pickup",
 })
 assert new_request["pickupNode"] == "pickup" and new_request["caseId"] == "case-14"
-for step in ("acknowledgement", "moving", "exit-confirmed"):
+for step in ("acknowledgement", "moving"):
     case = post("management", "progress", {
         "commandId": "case-" + step, "caseId": "case-14", "step": step, "expectedVersion": case["version"],
     })
-assert case["progress"] == "ExitConfirmed"
+exit_report = {"commandId": "case-exit-confirmed", "caseId": "case-14", "step": "exit-confirmed",
+               "expectedVersion": case["version"]}
+assert post("management", "progress", exit_report, 400)["code"] == "PositionEvidenceRequired"
+exit_report = {**exit_report, "commandId": "case-exit-with-fix", "observedAt": "2026-11-27T19:45:00Z",
+               "latitude": 50.4410, "longitude": 16.6540, "accuracy": 12,
+               "evidence": {"galileoUsed": False, "osnma": "none", "egnos": "unknown"}, "mode": "simulated"}
+case = post("management", "progress", exit_report)
+assert case["progress"] == "ExitConfirmed" and case["exit"]["mode"] == "simulated"
+counters = get("management", "incident")["counters"]
+assert counters["confirmedOutside"] == 1 and counters["confirmedOutsideSimulated"] == 1
+assert counters["inZoneEstimate"]["value"] == 4872 and counters["estimatedWithoutConfirmedExit"] == 4871
 
 no_exit = post("situation", "closure", {
     "commandId": "close-north", "segmentId": "north-link", "closed": True, "expectedRevision": 1,
@@ -185,6 +197,14 @@ sample = {
                                             [16.64, 50.44], [16.64, 50.43]]],
     }}],
 }
+network = get("routing", "network")
+nodes = {node["id"]: node for node in network["nodes"]}
+bridge = next(segment for segment in network["segments"] if segment["id"] == "bridge-2")
+west, south = sample["features"][0]["geometry"]["coordinates"][0][0]
+east, north = sample["features"][0]["geometry"]["coordinates"][0][2]
+for key in ("pickup", bridge["from"], bridge["to"], "exit-east"):
+    assert west < nodes[key]["longitude"] < east and south < nodes[key]["latitude"] < north
+assert nodes["exit-north"]["latitude"] > north
 after_import = post("situation", "import-copernicus", {
     "commandId": "import-test", "expectedRevision": 2, "productId": "TEST-PRODUCT",
     "observedAt": "2026-11-27T18:00:00Z", "geoJson": sample,
@@ -194,6 +214,21 @@ assert imported["source"] == "copernicus-ems-operator-import" and imported["prod
 assert imported["provenance"]["mode"] == "recorded"
 assert imported["provenance"]["observedAt"] == imported["observedAt"]
 assert after_import["populationEstimate"] is None
+estimate = {"value": 42, "method": "synthetic integration fixture", "source": "exercise", "year": 2025}
+sentinel = post("situation", "import-copernicus", {
+    "commandId": "import-sentinel-test", "expectedRevision": after_import["revision"],
+    "source": "sentinel-1", "productId": "TEST-SENTINEL-1-MASK",
+    "observedAt": "2026-11-27T18:05:00Z", "geoJson": sample, "populationEstimate": estimate,
+})
+layer = sentinel["hazards"][-1]
+assert layer["id"] == "sentinel-1:TEST-SENTINEL-1-MASK"
+assert layer["provenance"] == {
+    "source": "copernicus-sentinel-1-operator-import", "mode": "recorded",
+    "observedAt": layer["observedAt"], "productId": "TEST-SENTINEL-1-MASK",
+}
+assert layer["geometry"]["geometries"] == [sample["features"][0]["geometry"]]
+assert layer["populationEstimate"] == sentinel["populationEstimate"] == estimate
+assert get("situation", "snapshot") == sentinel
 assert get("routing", "distribution?node=pickup")["options"] == []
 
 print("Offline integration passed: gateway, alert retry, weighted routes, withdrawal, dispatch booking and pickup, blocked exits, local import.")

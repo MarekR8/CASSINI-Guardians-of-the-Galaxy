@@ -56,9 +56,12 @@ internal static class EvacuationInputs
             model.GetProperty("thetaPerMinute").GetDouble(), model.GetProperty("capacityFactor").GetDouble(),
             bpr.GetProperty("alpha").GetDouble(), bpr.GetProperty("beta").GetDouble(),
             delay.GetProperty("minutes").GetDouble(), delay.GetProperty("beta").GetDouble(),
-            model.GetProperty("capacityPenaltyMinutes").GetDouble(), model.GetProperty("waves").GetInt32(),
+            model.GetProperty("capacityPriceStepMinutes").GetDouble(), model.GetProperty("capacityTolerance").GetDouble(),
+            model.GetProperty("maxPriceIterations").GetInt32(), model.GetProperty("waves").GetInt32(),
             model.GetProperty("waveStaggerMinutes").GetDouble(), model.GetProperty("waveWindowMinutes").GetDouble(),
-            model.GetProperty("maxIterations").GetInt32(), model.GetProperty("tolerance").GetDouble());
+            model.GetProperty("maxIterations").GetInt32(), model.GetProperty("tolerance").GetDouble(),
+            model.TryGetProperty("complianceShare", out var compliance) ? compliance.GetDouble() : 1.0,
+            model.TryGetProperty("hazardTimeWeight", out var hazardWeight) ? hazardWeight.GetDouble() : 1.0);
         var profiles = new List<EvacProfile>();
         var handedOver = 0.0;
         foreach (var property in document.GetProperty("profiles").EnumerateObject())
@@ -161,7 +164,8 @@ internal static class EvacuationInputs
         item.TryGetProperty("name", out var name) ? name.GetString()! : item.GetProperty("id").GetString()!,
         nodeId, item.GetProperty("capacity").GetInt32(),
         item.TryGetProperty("intakePerHour", out var intake) ? NullableDouble(intake) : null,
-        item.TryGetProperty("stepFree", out var stepFree) && stepFree.GetBoolean());
+        item.TryGetProperty("stepFree", out var stepFree) && stepFree.GetBoolean(),
+        item.TryGetProperty("safeUntilMinutes", out var safe) ? NullableDouble(safe) : null);
 
     private static double? NullableDouble(JsonElement value) =>
         value.ValueKind == JsonValueKind.Null ? null : value.GetDouble();

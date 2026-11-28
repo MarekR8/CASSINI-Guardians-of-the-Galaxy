@@ -1,0 +1,16 @@
+{
+  "eventId": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
+  "type": "HazardAlertRecorded.v1",
+  "producer": "management",
+  "subjectId": "alert-1",
+  "subjectVersion": 1,
+  "occurredAt": "2026-11-27T19:31:05Z",
+  "correlationId": "incident-42",
+  "causationId": null,
+  "payload": {
+    "incidentId": "incident-42",
+    "alertId": "alert-1",
+    "evidenceStatus": "synthetic",
+    "observedAt": "2026-11-27T19:20:00Z"
+  }
+}

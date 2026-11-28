@@ -1,0 +1,11 @@
+{
+  "commandId": "cmd-invalidate-case-14",
+  "correlationId": "corr-incident-42-shelter",
+  "incidentId": "incident-42",
+  "caseId": "case-14",
+  "legId": "leg-shelter",
+  "expectedVersion": 3,
+  "reason": "ShelterClosed",
+  "evidenceRef": "synthetic-closure-report",
+  "at": null
+}

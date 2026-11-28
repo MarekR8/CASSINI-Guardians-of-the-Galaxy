@@ -7,7 +7,14 @@
     <Project Path="src/Sheltering/Cassini.Sheltering.csproj" />
     <Project Path="src/Gateway/Gateway.csproj" />
   </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="src/Shared/Messaging/Cassini.Messaging.csproj" />
+  </Folder>
   <Folder Name="/Tests/">
+    <Project Path="src/Gateway/tests/Gateway.Tests.csproj" />
+    <Project Path="src/Management/tests/Cassini.Management.Tests.csproj" />
     <Project Path="src/Routing/tests/Cassini.Routing.Tests.csproj" />
+    <Project Path="src/Sheltering/tests/Cassini.Sheltering.Tests.csproj" />
+    <Project Path="src/Shared/Messaging/tests/Cassini.Messaging.Tests.csproj" />
   </Folder>
 </Solution>

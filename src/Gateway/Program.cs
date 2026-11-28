@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using Cassini.Gateway.Link;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -24,6 +25,13 @@ builder.Services.AddHttpClient("services", client => client.Timeout = TimeSpan.F
         AllowAutoRedirect = false,
         UseCookies = false,
     });
+var auth = builder.AddGatewayAuth();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IUpstreamCommands>(services =>
+    new UpstreamCommands(services.GetRequiredService<IHttpClientFactory>(), upstreams));
+builder.Services.AddSingleton(services => new LinkSimulator(services.GetRequiredService<IUpstreamCommands>(),
+    services.GetRequiredService<TimeProvider>(), builder.Configuration["Demo:DataDirectory"]));
+builder.Services.AddHostedService<LinkForwarder>();
 
 var app = builder.Build();
 app.Use(async (context, next) =>
@@ -34,11 +42,12 @@ app.Use(async (context, next) =>
         return;
     }
     context.Response.Headers.ContentSecurityPolicy =
-        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+        $"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src {auth.ConnectSrc}; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
     context.Response.Headers.XContentTypeOptions = "nosniff";
     context.Response.Headers.CacheControl = "no-store";
     await next();
 });
+app.UseGatewayAuth(auth);
 app.UseDefaultFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -72,9 +81,13 @@ app.MapGet("/features", () => Results.Ok(new { sheltering = upstreams.ContainsKe
 app.MapGet("/api/{service}/queries/{operation}/{id?}", (
     string service, string operation, string? id, HttpContext context, IHttpClientFactory clients) =>
     Forward(service, "queries", operation, id, context, clients));
+app.MapLinkSimulator();
 app.MapPost("/api/{service}/commands/{operation}", (
-    string service, string operation, HttpContext context, IHttpClientFactory clients) =>
-    Forward(service, "commands", operation, null, context, clients));
+    string service, string operation, HttpContext context, IHttpClientFactory clients, LinkSimulator link) =>
+    LinkEndpoints.IsFieldRequest(context) && upstreams.ContainsKey(service) && IsSegment(operation) &&
+    context.Request.HasJsonContentType()
+        ? LinkEndpoints.RelayFieldCommand(context, link, service, operation)
+        : Forward(service, "commands", operation, null, context, clients));
 app.Run();
 
 async Task Forward(string service, string group, string operation, string? id, HttpContext context,
@@ -92,11 +105,9 @@ async Task Forward(string service, string group, string operation, string? id, H
         uri += $"/{id}";
     uri += context.Request.QueryString.ToUriComponent();
     using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), uri);
-    var catalogWrite = group == "commands" && (service, operation) is
-        ("situation", "set-assembly-point") or ("sheltering", "configure-shelter");
-    if (catalogWrite && AuthenticationHeaderValue.TryParse(context.Request.Headers.Authorization, out var auth) &&
-        string.Equals(auth.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase))
-        request.Headers.Authorization = auth;
+    // Owner services authorise the caller themselves (Sheltering reception in Stage B); the Gateway only forwards.
+    if (context.Request.Headers.Authorization.ToString() is { Length: > 0 } authorization)
+        request.Headers.TryAddWithoutValidation("Authorization", authorization);
     if (group == "commands")
     {
         if (!context.Request.HasJsonContentType())
@@ -114,9 +125,9 @@ async Task Forward(string service, string group, string operation, string? id, H
         using var response = await clients.CreateClient("services").SendAsync(
             request, HttpCompletionOption.ResponseContentRead, context.RequestAborted);
         context.Response.StatusCode = (int)response.StatusCode;
+        if (response.Headers.TryGetValues("WWW-Authenticate", out var challenges))
+            context.Response.Headers.WWWAuthenticate = challenges.ToArray();
         context.Response.ContentType = response.Content.Headers.ContentType?.ToString();
-        if (catalogWrite && response.Headers.WwwAuthenticate.Count > 0)
-            context.Response.Headers.WWWAuthenticate = response.Headers.WwwAuthenticate.ToString();
         await response.Content.CopyToAsync(context.Response.Body, context.RequestAborted);
     }
     catch (HttpRequestException)

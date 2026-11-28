@@ -1,0 +1,125 @@
+{
+  "label": "SYMULACJA · syntetyczne detekcje FlyPix do trybu prezentacji",
+  "synthetic": true,
+  "note": "Dane syntetyczne, nie są obserwacją FlyPix. Wygenerowane z lokalnej sieci OSM Walencji (artifacts/valencia-city) tak jak tests/valencia_integration.py. matchedSegmentIds i matchedSegmentCount służą tylko do kontroli (wynik dopasowania w Situation).",
+  "route": {
+    "from": [
+      -0.378,
+      39.477
+    ],
+    "to": [
+      -0.364,
+      39.476
+    ],
+    "mode": "walking",
+    "baselineSegments": 50,
+    "baselineSeconds": 1136
+  },
+  "detections": {
+    "crossing": {
+      "layerId": "presentation-valencia-crossing",
+      "geoJson": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "label": "SYMULACJA"
+            },
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    -0.369898,
+                    39.475659
+                  ],
+                  [
+                    -0.369698,
+                    39.475659
+                  ],
+                  [
+                    -0.369698,
+                    39.475859
+                  ],
+                  [
+                    -0.369898,
+                    39.475859
+                  ],
+                  [
+                    -0.369898,
+                    39.475659
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "description": "Zalane przejście na środku trasy pieszej (objazd).",
+      "imageProductId": "presentation-synthetic-fixture",
+      "observedAt": "2024-10-31T18:03:00Z",
+      "mode": "synthetic",
+      "matchedSegmentIds": [
+        "osm-1315196708-1064816375-7606950438",
+        "osm-1315196708-12173692461-1064816375",
+        "osm-176258784-6843975160-12173692461",
+        "osm-41197572-1064816375-25767504",
+        "osm-41197572-4676341371-1064816375",
+        "osm-41197572-60708002-4676341371"
+      ]
+    },
+    "isolation": {
+      "layerId": "presentation-valencia-isolation",
+      "geoJson": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "label": "SYMULACJA"
+            },
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    -0.384,
+                    39.471
+                  ],
+                  [
+                    -0.372,
+                    39.471
+                  ],
+                  [
+                    -0.372,
+                    39.483
+                  ],
+                  [
+                    -0.384,
+                    39.483
+                  ],
+                  [
+                    -0.384,
+                    39.471
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "description": "Zalana okolica punktu startowego (brak trasy).",
+      "imageProductId": "presentation-synthetic-fixture",
+      "observedAt": "2024-10-31T18:03:00Z",
+      "mode": "synthetic",
+      "matchedSegmentCount": 3461
+    }
+  },
+  "distribution": {
+    "node": "10242238645",
+    "profile": "independent",
+    "seed": 1,
+    "note": "Węzeł OSM w strefie zalania z szacunkiem GHSL (task 03, population.json); trzy schrony syntetyczne w rozkładzie."
+  }
+}

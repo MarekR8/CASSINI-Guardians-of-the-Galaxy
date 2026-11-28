@@ -302,6 +302,10 @@
   "model": {
    "note": "Logit stochastic user equilibrium solved by MSA, loaded in priority waves.",
    "thetaPerMinute": 0.3,
+   "hazardTimeWeight": 5,
+   "hazardTimeNote": "Lambda: route choice counts each second on a flooded road as this many seconds on dry ground, so guided routes leave the water first. Real seconds are kept for leave times, deadlines and congestion. Valencia, all guided: 63.6 % on time with 1, 78.7 % with 3 (1,756 over shelter capacity), 77.9 % with 5 (none over), 75.9 % with 10.",
+   "complianceShare": 1.0,
+   "complianceNote": "Share of the population reached by the system and following its guidance. The rest walks the free-flow shortest path to the nearest dry node, ignoring congestion and shelters; that flow is fixed background for the guided waves.",
    "capacityFactor": 10,
    "capacityNote": "The graph gives nominal pedestrian flows of 300-900 people/h per road. An evacuation uses the full street width; Fruin's walkway capacity is about 4,500 people/h per metre, so the nominal values are scaled by 10. Calibrate before operational use.",
    "bpr": {
@@ -313,7 +317,10 @@
     "minutes": 10,
     "beta": 2
    },
-   "capacityPenaltyMinutes": 120,
+   "capacityPriceStepMinutes": 30,
+   "capacityTolerance": 0.005,
+   "maxPriceIterations": 2000,
+   "capacityNote2": "Shelter places are a constraint, enforced by a shadow price per shelter in minutes: price = max(0, price + step x (assigned / places left - 1)). Prices follow the MSA iterations, then are tuned on the final routes until no shelter is over its places by more than capacityTolerance. The next wave sees the places actually given. If pricing stalls (no 1 % lower excess in 200 iterations), every group sent to a full shelter is cut proportionally: it keeps its route out of the flood and the cut share is ShelterCapacityExhausted, never overflow.",
    "waves": 4,
    "waveStaggerMinutes": 0,
    "wavesNote": "Waves are priority classes: each is assigned on the road and shelter capacity left by the more urgent ones. With a median free-flow reserve of about 9 minutes, delaying departures costs more than it relieves (Valencia: 64 % on time with 0 min stagger, 45 % with 5 min, 12 % with 10 min).",

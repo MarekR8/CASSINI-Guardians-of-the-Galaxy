@@ -1,0 +1,42 @@
+{
+  "routes": [
+    {
+      "routeId": "recording-east-walking",
+      "source": "sample-provider-replay",
+      "mode": "synthetic",
+      "observedAt": "2026-11-27T19:18:00Z",
+      "validUntil": "2026-11-27T20:00:00Z",
+      "travelMode": "walking",
+      "nodes": ["walk-start", "pickup", "east-junction", "exit-east"],
+      "segments": ["walk-to-pickup", "east-link", "bridge-2"]
+    }
+  ],
+  "bookings": [
+    {
+      "reservationId": "reservation-demo-east",
+      "incidentId": "incident-42",
+      "legId": "leg-exit",
+      "shelterId": "shelter-a",
+      "caseIds": ["case-14"],
+      "status": "Reserved",
+      "situationRevision": 0,
+      "shelterVersion": 1,
+      "accessiblePlacesHeld": 0,
+      "validFrom": "2026-11-27T19:18:00Z",
+      "validUntil": "2026-11-27T19:45:00Z"
+    }
+  ],
+  "transportWindows": [
+    {
+      "transportId": "transport-demo-north",
+      "incidentId": "incident-42",
+      "origin": "pickup",
+      "caseIds": ["case-15", "case-16"],
+      "situationRevision": 0,
+      "stepFree": true,
+      "departsFrom": "2026-11-27T19:22:00Z",
+      "departsBefore": "2026-11-27T19:25:00Z",
+      "arrivesBefore": "2026-11-27T19:30:00Z"
+    }
+  ]
+}

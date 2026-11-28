@@ -6,23 +6,30 @@ namespace Cassini.Routing.Evacuation;
 internal sealed record EvacNode(long Id, string Zone);
 internal sealed record EvacRoad(string Id, long From, long To, string Class, double?[] Walk, double? PedestriansPerHour,
     string Zone, bool Closed);
-internal sealed record EvacShelter(string Id, string Name, long NodeId, int Capacity, double? IntakePerHour, bool StepFree);
+// SafeUntilMinutes is T_safe from the hazard forecast, in minutes after the plan start; null means no forecast limit.
+internal sealed record EvacShelter(string Id, string Name, long NodeId, int Capacity, double? IntakePerHour, bool StepFree,
+    double? SafeUntilMinutes = null);
 internal sealed record EvacProfile(string Name, double Share, double SpeedFactor, string[] ExcludedClasses, bool StepFreeOnly);
 internal sealed record EvacSettings(
     double ThetaPerMinute, double CapacityFactor, double BprAlpha, double BprBeta, double ShelterDelayMinutes,
-    double ShelterDelayBeta, double CapacityPenaltyMinutes, int Waves, double WaveStaggerMinutes,
-    double WaveWindowMinutes, int MaxIterations, double Tolerance);
+    double ShelterDelayBeta, double CapacityPriceStepMinutes, double CapacityTolerance, int MaxPriceIterations,
+    int Waves, double WaveStaggerMinutes, double WaveWindowMinutes, int MaxIterations, double Tolerance,
+    double ComplianceShare = 1.0, double HazardTimeWeight = 1.0);
 internal sealed record EvacParams(EvacSettings Model, EvacProfile[] Profiles, double HandedOverShare);
 internal sealed record EvacGraph(EvacNode[] Nodes, EvacRoad[] Roads);
 
 internal sealed record GroupResult(
     double People, int Wave, double StartMinute, double DeadlineMinutes, string Status, double? LeaveFloodMinutes,
-    double[]? Shares, double[] RouteSeconds);
+    double[]? Shares, double[] RouteSeconds, double PlacedShare = 1);
 internal sealed record ShelterLoad(string Id, string Name, int Capacity, double ExpectedLoad, double Overflow);
-internal sealed record WaveSummary(int Wave, double StartMinute, double People, int Iterations, double? Gap);
+internal sealed record WaveSummary(int Wave, double StartMinute, double People, int Iterations, double? Gap,
+    int PriceIterations = 0);
+internal sealed record UninformedGroup(double People, double DeadlineMinutes, string Status, double? LeaveFloodMinutes);
 internal sealed record EvacuationResult(
     Dictionary<string, double> Status, ShelterLoad[] Shelters, Dictionary<long, Dictionary<string, GroupResult>> Nodes,
-    WaveSummary[] Waves, double PeopleEstimated, double PeopleHandedOver);
+    WaveSummary[] Waves, double PeopleEstimated, double PeopleHandedOver, double ComplianceShare,
+    Dictionary<string, double> StatusAll, Dictionary<string, double> UninformedStatus,
+    Dictionary<long, Dictionary<string, UninformedGroup>> UninformedNodes, double PeopleUninformed);
 
 internal static class Congestion
 {
@@ -36,6 +43,7 @@ internal sealed class ProfileNetwork
 {
     internal readonly int[] Start, End, Road;
     internal readonly double[] Base;
+    internal readonly bool[] Hazard;
     private readonly int[][] incoming;
     private readonly Dictionary<(int, int), int> arcOf = new();
 
@@ -65,7 +73,8 @@ internal sealed class ProfileNetwork
         End = pairs.Select(pair => pair.Item2).ToArray();
         Base = pairs.Select(pair => best[pair].Cost).ToArray();
         Road = pairs.Select(pair => best[pair].Road).ToArray();
-        var lists = Enumerable.Range(0, graph.Nodes.Length).Select(_ => new List<int>()).ToArray();
+        Hazard = Road.Select(road => graph.Roads[road].Zone == "hazard").ToArray();
+        var lists =Enumerable.Range(0, graph.Nodes.Length).Select(_ => new List<int>()).ToArray();
         for (var arc = 0; arc < pairs.Length; arc++)
         {
             lists[End[arc]].Add(arc);
@@ -76,18 +85,31 @@ internal sealed class ProfileNetwork
 
     internal int ArcOf(int start, int end) => arcOf[(start, end)];
 
-    /// <summary>Shortest paths from every node to one shelter: seconds and the next node towards the shelter.</summary>
-    internal Tree ShortestTo(int shelter, double[] roadFactor)
+    /// <summary>Shortest paths from every node to one shelter under the perceived cost (see ShortestToAny).</summary>
+    internal Tree ShortestTo(int shelter, double[] roadFactor, double hazardWeight = 1.0) =>
+        ShortestToAny([shelter], roadFactor, hazardWeight);
+
+    /// <summary>
+    /// Shortest paths from every node to whichever target is nearest. The perceived cost multiplies time on flooded
+    /// roads by hazardWeight; the tree also keeps the real seconds along each chosen path.
+    /// </summary>
+    internal Tree ShortestToAny(IReadOnlyList<int> targets, double[] roadFactor, double hazardWeight = 1.0)
     {
         var size = incoming.Length;
         var distance = new double[size];
+        var real = new double[size];
         var next = new int[size];
         Array.Fill(distance, double.PositiveInfinity);
+        Array.Fill(real, double.PositiveInfinity);
         Array.Fill(next, -1);
         var done = new bool[size];
-        distance[shelter] = 0;
         var queue = new PriorityQueue<int, double>();
-        queue.Enqueue(shelter, 0);
+        foreach (var target in targets)
+        {
+            distance[target] = 0;
+            real[target] = 0;
+            queue.Enqueue(target, 0);
+        }
         while (queue.TryDequeue(out var node, out var priority))
         {
             if (done[node] || priority > distance[node])
@@ -96,29 +118,33 @@ internal sealed class ProfileNetwork
             foreach (var arc in incoming[node])
             {
                 var from = Start[arc];
-                var candidate = distance[node] + Base[arc] * roadFactor[Road[arc]];
+                var realCost = Base[arc] * roadFactor[Road[arc]];
+                var candidate = distance[node] + realCost * (Hazard[arc] ? hazardWeight : 1.0);
                 if (candidate < distance[from])
                 {
                     distance[from] = candidate;
+                    real[from] = realCost + real[node];
                     next[from] = node;
                     queue.Enqueue(from, candidate);
                 }
             }
         }
-        return new Tree(distance, next);
+        return new Tree(distance, next, real);
     }
 }
 
 internal sealed class Tree
 {
-    internal readonly double[] Distance;
+    internal readonly double[] Distance; // perceived cost used for choice
+    internal readonly double[] Real;     // real seconds along the same path
     internal readonly int[] Next;
     private int[]? ascending;
 
-    internal Tree(double[] distance, int[] next)
+    internal Tree(double[] distance, int[] next, double[] real)
     {
         Distance = distance;
         Next = next;
+        Real = real;
     }
 
     /// <summary>Reachable nodes, nearest first. Computed on first use so stored final trees stay small.</summary>
@@ -127,7 +153,7 @@ internal sealed class Tree
 
     internal void Compact() => ascending = null;
 
-    /// <summary>Seconds until the path first reaches dry ground; infinity when the node cannot reach the shelter.</summary>
+    /// <summary>Real seconds until the path first reaches dry ground; infinity when the node cannot reach the shelter.</summary>
     internal double[] LeaveSeconds(bool[] dry)
     {
         var firstDry = new int[Distance.Length];
@@ -138,9 +164,19 @@ internal sealed class Tree
         {
             firstDry[node] = dry[node] ? node : Next[node] >= 0 ? firstDry[Next[node]] : -1;
             if (firstDry[node] >= 0)
-                leave[node] = Distance[node] - Distance[firstDry[node]];
+                leave[node] = Real[node] - Real[firstDry[node]];
         }
         return leave;
+    }
+
+    /// <summary>Cost from every node to its tree target along the fixed tree, with the given cost per outgoing arc.</summary>
+    internal double[] CostToTarget(Func<int, double> arcCost)
+    {
+        var cost = new double[Distance.Length];
+        Array.Fill(cost, double.PositiveInfinity);
+        foreach (var node in Ascending)
+            cost[node] = Next[node] < 0 ? 0 : arcCost(node) + cost[Next[node]];
+        return cost;
     }
 
     /// <summary>Flow on each node's outgoing tree arc: its own demand plus everything routed through it.</summary>
@@ -160,7 +196,7 @@ internal sealed class Tree
 internal sealed class EvacuationModel
 {
     private sealed record Group(int Node, int Profile, double People, double Deadline);
-    private sealed record Choice(double[]? Share, string Status, double[] Leave, double[] Distance);
+    private sealed record Choice(double[]? Share, string Status, double[] Leave, double[] Distance, double[] Real);
 
     private readonly EvacGraph graph;
     private readonly EvacSettings settings;
@@ -168,10 +204,11 @@ internal sealed class EvacuationModel
     private readonly EvacShelter[] shelters;
     private readonly ProfileNetwork[] networks;
     private readonly int[] shelterNodes;
-    private readonly double[] capacity, intake, capacityPerHour, roadSeconds;
+    private readonly double[] capacity, intake, safeUntil, capacityPerHour, roadSeconds, roadWeight;
     private readonly bool[] stepFree, dry;
-    private readonly Group[] groups;
-    private readonly double peopleTotal, handedOverShare;
+    private readonly int[] dryNodes;
+    private readonly Group[] groups, uninformed;
+    private readonly double peopleTotal, handedOverShare, compliance;
 
     /// <summary>Final shortest-path trees per wave and profile, used to rebuild a group's route to a shelter.</summary>
     internal Tree[][][]? FinalTrees { get; private set; }
@@ -195,6 +232,7 @@ internal sealed class EvacuationModel
         capacity = shelters.Select(shelter => (double)shelter.Capacity).ToArray();
         intake = shelters.Select(shelter => shelter.IntakePerHour ?? double.PositiveInfinity).ToArray();
         stepFree = shelters.Select(shelter => shelter.StepFree).ToArray();
+        safeUntil = shelters.Select(shelter => shelter.SafeUntilMinutes ?? double.PositiveInfinity).ToArray();
         // Same rule as Python's `pedestriansPerHour or 1`: a missing or zero capacity counts as 1 person per hour.
         capacityPerHour = graph.Roads.Select(road => road.PedestriansPerHour is { } value && value != 0 ? value : 1).ToArray();
         roadSeconds = graph.Roads.Select(road =>
@@ -202,12 +240,25 @@ internal sealed class EvacuationModel
             var values = road.Walk.Where(value => value is not null).Select(value => value!.Value).ToArray();
             return values.Length == 0 ? 0 : values.Average();
         }).ToArray();
+        if (settings.HazardTimeWeight < 1)
+            throw new InvalidDataException("model.hazardTimeWeight must be at least 1.");
+        roadWeight = graph.Roads.Select(road => road.Zone == "hazard" ? settings.HazardTimeWeight : 1.0).ToArray();
         dry = graph.Nodes.Select(node => node.Zone == "safe").ToArray();
+        dryNodes = Enumerable.Range(0, dry.Length).Where(node => dry[node]).ToArray();
         peopleTotal = people.Values.Sum();
-        groups = people.Select(pair => (Position: index[pair.Key], Count: pair.Value)).OrderBy(item => item.Position)
-            .SelectMany(item => profiles.Select((profile, number) =>
-                new Group(item.Position, number, item.Count * profile.Share, deadlines[graph.Nodes[item.Position].Id])))
-            .ToArray();
+        compliance = settings.ComplianceShare;
+        if (compliance is < 0 or > 1)
+            throw new InvalidDataException("model.complianceShare must be between 0 and 1.");
+        var ordered = people.Select(pair => (Position: index[pair.Key], Count: pair.Value)).OrderBy(item => item.Position).ToArray();
+        // Guided share rho follows the plan; the uninformed rest walks to the nearest dry node on its own.
+        groups = compliance > 0
+            ? ordered.SelectMany(item => profiles.Select((profile, number) => new Group(item.Position, number,
+                item.Count * profile.Share * compliance, deadlines[graph.Nodes[item.Position].Id]))).ToArray()
+            : [];
+        uninformed = compliance < 1
+            ? ordered.SelectMany(item => profiles.Select((profile, number) => new Group(item.Position, number,
+                item.Count * profile.Share * (1 - compliance), deadlines[graph.Nodes[item.Position].Id]))).ToArray()
+            : [];
     }
 
     internal IReadOnlyDictionary<long, int> Index { get; }
@@ -224,66 +275,176 @@ internal sealed class EvacuationModel
         return factor;
     }
 
-    private double[] ShelterDelay(double[] people, double[] residual)
+    /// <summary>Seconds added at a shelter: intake queueing plus the capacity shadow price (minutes).</summary>
+    private double[] ShelterDelay(double[] people, double[] price)
     {
         var delay = new double[people.Length];
         for (var row = 0; row < people.Length; row++)
         {
             var rate = people[row] / (settings.WaveWindowMinutes / 60);
             var queue = settings.ShelterDelayMinutes * 60 * Congestion.Term(rate / intake[row], 1.0, settings.ShelterDelayBeta);
-            var excess = Math.Max(0, people[row] / Math.Max(residual[row], 1) - 1);
-            delay[row] = queue + settings.CapacityPenaltyMinutes * 60 * excess;
+            delay[row] = queue + price[row] * 60;
         }
         return delay;
+    }
+
+    /// <summary>Raise a shelter's price while its people exceed the places left; returns the largest excess.</summary>
+    private double UpdatePrice(double[] price, double[] people, double[] residual)
+    {
+        var largest = -1.0;
+        for (var row = 0; row < price.Length; row++)
+        {
+            var excess = people[row] / Math.Max(residual[row], 1) - 1;
+            price[row] = Math.Max(0, price[row] + settings.CapacityPriceStepMinutes * excess);
+            largest = Math.Max(largest, excess);
+        }
+        return largest;
     }
 
     private Tree[][] SolveTrees(double[] roadRate)
     {
         var factor = RoadFactor(roadRate);
-        return networks.Select(network => shelterNodes.Select(node => network.ShortestTo(node, factor)).ToArray()).ToArray();
+        return networks.Select(network => shelterNodes
+            .Select(node => network.ShortestTo(node, factor, settings.HazardTimeWeight)).ToArray()).ToArray();
     }
 
     // --- choice ----------------------------------------------------------------------------------------------------
     private bool[] Routable(int profile, double[] distance) => distance.Select((value, row) =>
         double.IsFinite(value) && (!profiles[profile].StepFreeOnly || stepFree[row])).ToArray();
 
-    private Choice[] Choose(IReadOnlyList<Group> members, Tree[][] trees, double[] shelterPeople, double[] residual,
-        double startMinutes, bool deadlineCheck = true)
+    /// <summary>Routable shelters that the forecast still holds safe when the group arrives (real seconds).</summary>
+    private bool[] Eligible(int profile, double[] distance, double[] real, double startMinutes)
     {
-        var theta = settings.ThetaPerMinute;
-        var delay = ShelterDelay(shelterPeople, residual);
+        var routable = Routable(profile, distance);
+        for (var row = 0; row < routable.Length; row++)
+            routable[row] = routable[row] && startMinutes + real[row] / 60 <= safeUntil[row];
+        return routable;
+    }
+
+    private sealed record Entry(bool[]? Usable, string Status, double[] Leave, double[] Distance, double[] Real);
+
+    /// <summary>Per group: usable shelters (or none, with the reason), leave times and costs to each shelter.</summary>
+    private Entry[] ChoiceEntries(IReadOnlyList<Group> members, Tree[][] trees, double[] residual, double startMinutes,
+        bool deadlineCheck = true)
+    {
         var exits = trees.Select(perShelter => perShelter.Select(tree => tree.LeaveSeconds(dry)).ToArray()).ToArray();
-        var result = new Choice[members.Count];
+        var result = new Entry[members.Count];
         for (var number = 0; number < members.Count; number++)
         {
             var group = members[number];
             var distance = trees[group.Profile].Select(tree => tree.Distance[group.Node]).ToArray();
+            var real = trees[group.Profile].Select(tree => tree.Real[group.Node]).ToArray();
             var leave = exits[group.Profile].Select(row => row[group.Node]).ToArray();
-            var routable = Routable(group.Profile, distance);
+            var routable = Eligible(group.Profile, distance, real, startMinutes);
             if (!routable.Any(value => value))
             {
-                result[number] = new(null, "NoEligibleExit", leave, distance);
+                result[number] = new(null, "NoEligibleExit", leave, distance, real);
                 continue;
             }
             var reachable = routable.Select((value, row) => value && residual[row] > 0).ToArray();
             if (!reachable.Any(value => value))
             {
-                result[number] = new(null, "ShelterCapacityExhausted", leave, distance);
+                result[number] = new(null, "ShelterCapacityExhausted", leave, distance, real);
                 continue;
             }
             var inTime = reachable.Select((value, row) =>
                 value && (!deadlineCheck || startMinutes + leave[row] / 60 <= group.Deadline)).ToArray();
             var anyInTime = inTime.Any(value => value);
-            var usable = anyInTime ? inTime : reachable;
-            var cost = distance.Select((value, row) => (value + delay[row]) / 60).ToArray();
+            result[number] = new(anyInTime ? inTime : reachable, anyInTime ? "Ok" : "DeadlineInfeasible", leave, distance, real);
+        }
+        return result;
+    }
+
+    /// <summary>Logit shares over the usable shelters of each entry for the given shelter delays (seconds).</summary>
+    private Choice[] Logit(Entry[] entries, double[] delay)
+    {
+        var theta = settings.ThetaPerMinute;
+        return entries.Select(entry =>
+        {
+            if (entry.Usable is not { } usable)
+                return new Choice(null, entry.Status, entry.Leave, entry.Distance, entry.Real);
+            var cost = entry.Distance.Select((value, row) => (value + delay[row]) / 60).ToArray();
             var minimum = cost.Where((_, row) => usable[row]).Min();
             var share = cost.Select((value, row) => usable[row] ? Math.Exp(-theta * (value - minimum)) : 0).ToArray();
             var total = share.Sum();
             for (var row = 0; row < share.Length; row++)
                 share[row] /= total;
-            result[number] = new(share, anyInTime ? "Ok" : "DeadlineInfeasible", leave, distance);
+            return new Choice(share, entry.Status, entry.Leave, entry.Distance, entry.Real);
+        }).ToArray();
+    }
+
+    private Choice[] Choose(IReadOnlyList<Group> members, Tree[][] trees, double[] shelterPeople, double[] residual,
+        double startMinutes, bool deadlineCheck = true, double[]? price = null) =>
+        Logit(ChoiceEntries(members, trees, residual, startMinutes, deadlineCheck),
+            ShelterDelay(shelterPeople, price ?? new double[shelters.Length]));
+
+    /// <summary>Raise shelter prices on the final routes until no shelter takes more people than it has places left.</summary>
+    private (Choice[] Choices, int Iterations) EnforceCapacity(IReadOnlyList<Group> members, Entry[] entries,
+        double[] shelterPeople, double[] residual, double[] price)
+    {
+        var queue = ShelterDelay(shelterPeople, new double[shelters.Length]);
+        Choice[] choices = [];
+        var iteration = 0;
+        var (best, since) = (double.PositiveInfinity, 0);
+        while (iteration < settings.MaxPriceIterations)
+        {
+            iteration++;
+            choices = Logit(entries, queue.Select((value, row) => value + price[row] * 60).ToArray());
+            var loads = new double[shelters.Length];
+            for (var number = 0; number < members.Count; number++)
+                if (choices[number].Share is { } share)
+                    for (var row = 0; row < loads.Length; row++)
+                        loads[row] += members[number].People * share[row];
+            var excess = UpdatePrice(price, loads, residual);
+            if (excess <= settings.CapacityTolerance)
+                break;
+            // Stop once the excess has not improved by 1 % for StallIterations; Ration then cuts what is left.
+            if (excess < best * 0.99)
+                (best, since) = (excess, 0);
+            else if (++since >= StallIterations)
+                break;
         }
-        return result;
+        return (choices, iteration);
+    }
+
+    private const int StallIterations = 200; // same as STALL in experiments/routing/model.py
+
+    /// <summary>
+    /// Places are a hard limit. Where a shelter is still over its places, every group sent there is cut proportionally;
+    /// the placed share keeps a normalised distribution (the group is still guided out of the flood) and the rest is
+    /// counted as ShelterCapacityExhausted.
+    /// </summary>
+    private (Choice[] Choices, double[] Placed) Ration(IReadOnlyList<Group> members, Choice[] choices, double[] residual)
+    {
+        var loads = new double[shelters.Length];
+        for (var number = 0; number < members.Count; number++)
+            if (choices[number].Share is { } share)
+                for (var row = 0; row < loads.Length; row++)
+                    loads[row] += members[number].People * share[row];
+        var over = loads.Select((load, row) => load > Math.Max(residual[row], 0) * (1 + settings.CapacityTolerance)).ToArray();
+        var factor = loads.Select((load, row) => over[row] ? Math.Max(residual[row], 0) / Math.Max(load, 1e-12) : 1.0).ToArray();
+        var placed = new double[choices.Length];
+        var result = new Choice[choices.Length];
+        for (var number = 0; number < choices.Length; number++)
+        {
+            var choice = choices[number];
+            if (choice.Share is not { } share || !over.Any(value => value))
+            {
+                result[number] = choice;
+                placed[number] = choice.Share is null ? 0 : 1;
+                continue;
+            }
+            var kept = share.Select((value, row) => value * factor[row]).ToArray();
+            var sum = kept.Sum();
+            if (sum <= 1e-12)
+            {
+                result[number] = choice with { Share = null, Status = "ShelterCapacityExhausted" };
+                continue;
+            }
+            result[number] = choice with { Share = kept.Select(value => value / sum).ToArray() };
+            placed[number] = sum;
+        }
+        return (result, placed);
     }
 
     private (double[] Road, double[] Shelter) Load(IReadOnlyList<Group> members, Choice[] choices, Tree[][] trees)
@@ -317,8 +478,58 @@ internal sealed class EvacuationModel
     }
 
     // --- waves -----------------------------------------------------------------------------------------------------
+    // --- uninformed class -----------------------------------------------------------------------------------------
+    /// <summary>Free-flow shortest paths to the nearest dry node per profile; fixed, whatever the guided groups do.</summary>
+    private Tree[] UninformedPaths()
+    {
+        var ones = Enumerable.Repeat(1.0, graph.Roads.Length).ToArray();
+        return networks.Select(network => network.ShortestToAny(dryNodes, ones)).ToArray();
+    }
+
+    /// <summary>Road flow (people per hour, both directions) of the uninformed, spread over one wave window.</summary>
+    private double[] UninformedRate(Tree[] paths)
+    {
+        var roadPeople = new double[graph.Roads.Length];
+        for (var profile = 0; profile < profiles.Length; profile++)
+        {
+            var demand = new double[graph.Nodes.Length];
+            foreach (var group in uninformed.Where(group => group.Profile == profile))
+                demand[group.Node] += group.People;
+            if (demand.All(value => value == 0))
+                continue;
+            var tree = paths[profile];
+            var flow = tree.Accumulate(demand);
+            for (var node = 0; node < flow.Length; node++)
+                if (flow[node] > 0 && tree.Next[node] >= 0)
+                    roadPeople[networks[profile].Road[networks[profile].ArcOf(node, tree.Next[node])]] += flow[node];
+        }
+        var windowHours = settings.WaveWindowMinutes / 60;
+        return roadPeople.Select(value => value / windowHours).ToArray();
+    }
+
+    /// <summary>Minutes until each uninformed group reaches dry ground on its fixed path under the final congestion.</summary>
+    private (string Status, double? Minutes)[] UninformedOutcome(Tree[] paths, double[] rate)
+    {
+        var factor = RoadFactor(rate);
+        var seconds = paths.Select((tree, profile) => tree.CostToTarget(node =>
+        {
+            var arc = networks[profile].ArcOf(node, tree.Next[node]);
+            return networks[profile].Base[arc] * factor[networks[profile].Road[arc]];
+        })).ToArray();
+        return uninformed.Select(group =>
+        {
+            var minutes = seconds[group.Profile][group.Node] / 60;
+            return double.IsFinite(minutes)
+                ? (minutes <= group.Deadline ? "Ok" : "DeadlineInfeasible", (double?)minutes)
+                : ("NoEligibleExit", null);
+        }).ToArray();
+    }
+
+    // --- waves -----------------------------------------------------------------------------------------------------
     private int[] PlanWaves()
     {
+        if (groups.Length == 0)
+            return [];
         var free = SolveTrees(new double[graph.Roads.Length]);
         var choices = Choose(groups, free, new double[shelters.Length], capacity, 0, deadlineCheck: false);
         var reserve = new double[groups.Length];
@@ -330,7 +541,7 @@ internal sealed class EvacuationModel
                 reserve[number] = double.NegativeInfinity;
                 continue;
             }
-            var routable = Routable(groups[number].Profile, choice.Distance);
+            var routable = Eligible(groups[number].Profile, choice.Distance, choice.Real, 0);
             var best = choice.Leave.Where((value, row) => routable[row] && double.IsFinite(value)).Min();
             reserve[number] = groups[number].Deadline - best / 60;
         }
@@ -350,18 +561,20 @@ internal sealed class EvacuationModel
     {
         var waveOf = PlanWaves();
         var windowHours = settings.WaveWindowMinutes / 60;
-        var background = new double[graph.Roads.Length];
+        var paths = uninformed.Length > 0 ? UninformedPaths() : null;
+        var background = paths is null ? new double[graph.Roads.Length] : UninformedRate(paths);
         var residual = (double[])capacity.Clone();
-        var outcome = new (Choice Choice, int Wave, double Start, double? Left, string Status)[groups.Length];
+        var outcome = new (Choice Choice, int Wave, double Start, double? Left, string Status, double Placed)[groups.Length];
         var waves = new List<WaveSummary>();
         var finalTrees = new Tree[settings.Waves][][];
-        for (var wave = 0; wave < settings.Waves; wave++)
+        for (var wave = 0; wave < (groups.Length > 0 ? settings.Waves : 0); wave++)
         {
             var memberIndex = Enumerable.Range(0, groups.Length).Where(number => waveOf[number] == wave).ToArray();
             var members = memberIndex.Select(number => groups[number]).ToArray();
             var start = wave * settings.WaveStaggerMinutes;
             var xRoad = new double[graph.Roads.Length];
             var xShelter = new double[shelters.Length];
+            var price = new double[shelters.Length]; // capacity shadow price per shelter, minutes
             var gap = double.PositiveInfinity;
             var iteration = 0;
             while (iteration < settings.MaxIterations)
@@ -369,11 +582,12 @@ internal sealed class EvacuationModel
                 iteration++;
                 var rate = Add(background, xRoad, 1 / windowHours);
                 var trees = SolveTrees(rate);
-                var choices = Choose(members, trees, xShelter, residual, start);
+                var choices = Choose(members, trees, xShelter, residual, start, price: price);
                 var (yRoad, yShelter) = Load(members, choices, trees);
                 if (iteration == 1)
                 {
                     (xRoad, xShelter) = (yRoad, yShelter);
+                    UpdatePrice(price, xShelter, residual);
                     continue;
                 }
                 // Relative gap: time spent on the current flows versus on the current best responses.
@@ -381,7 +595,7 @@ internal sealed class EvacuationModel
                 double spent = 0, best = 0;
                 for (var road = 0; road < xRoad.Length; road++)
                 {
-                    var seconds = roadSeconds[road] * factor[road];
+                    var seconds = roadSeconds[road] * factor[road] * roadWeight[road]; // perceived, as optimised
                     spent += xRoad[road] * seconds;
                     best += yRoad[road] * seconds;
                 }
@@ -391,15 +605,20 @@ internal sealed class EvacuationModel
                     xRoad[road] += step * (yRoad[road] - xRoad[road]);
                 for (var row = 0; row < xShelter.Length; row++)
                     xShelter[row] += step * (yShelter[row] - xShelter[row]);
+                UpdatePrice(price, xShelter, residual);
                 if (gap < settings.Tolerance)
                     break;
             }
+            // Final evaluation under the converged flows; shelter prices are then tuned until places suffice.
             var finalRate = Add(background, xRoad, 1 / windowHours);
             var final = SolveTrees(finalRate);
             finalTrees[wave] = final;
-            var finalChoices = Choose(members, final, xShelter, residual, start);
+            var entries = ChoiceEntries(members, final, residual, start);
+            var (priced, priceIterations) = EnforceCapacity(members, entries, xShelter, residual, price);
+            var (finalChoices, placedShare) = Ration(members, priced, residual);
             foreach (var tree in final.SelectMany(perShelter => perShelter))
                 tree.Compact();
+            var assigned = new double[shelters.Length];
             for (var number = 0; number < members.Length; number++)
             {
                 var choice = finalChoices[number];
@@ -407,24 +626,39 @@ internal sealed class EvacuationModel
                 double? left = null;
                 if (choice.Share is { } share)
                 {
+                    for (var row = 0; row < assigned.Length; row++)
+                        assigned[row] += members[number].People * placedShare[number] * share[row];
                     left = share.Select((value, row) => value * (double.IsFinite(choice.Leave[row]) ? choice.Leave[row] : 0)).Sum() / 60;
                     status = start + left <= members[number].Deadline ? "Ok" : "DeadlineInfeasible";
                 }
-                outcome[memberIndex[number]] = (choice, wave, start, left, status);
+                outcome[memberIndex[number]] = (choice, wave, start, left, status, placedShare[number]);
             }
             background = finalRate;
             for (var row = 0; row < residual.Length; row++)
-                residual[row] -= xShelter[row];
+                residual[row] -= assigned[row]; // the places actually given to this wave
             waves.Add(new(wave + 1, start, members.Sum(member => member.People), iteration,
-                double.IsInfinity(gap) ? null : gap));
+                double.IsInfinity(gap) ? null : gap, priceIterations));
         }
         FinalTrees = finalTrees;
-        return Report(outcome, waves);
+        var uninformedOutcome = paths is null ? [] : UninformedOutcome(paths, background);
+        return Report(outcome, waves, uninformedOutcome);
     }
 
-    private EvacuationResult Report((Choice Choice, int Wave, double Start, double? Left, string Status)[] outcome,
-        List<WaveSummary> waves)
+    private EvacuationResult Report((Choice Choice, int Wave, double Start, double? Left, string Status, double Placed)[] outcome,
+        List<WaveSummary> waves, (string Status, double? Minutes)[] uninformedOutcome)
     {
+        var uninformedStatus = new SortedDictionary<string, double>(StringComparer.Ordinal);
+        var uninformedNodes = new Dictionary<long, Dictionary<string, UninformedGroup>>();
+        for (var number = 0; number < uninformed.Length; number++)
+        {
+            var group = uninformed[number];
+            var (state, minutes) = uninformedOutcome[number];
+            uninformedStatus[state] = uninformedStatus.GetValueOrDefault(state) + group.People;
+            var id = graph.Nodes[group.Node].Id;
+            if (!uninformedNodes.TryGetValue(id, out var perProfile))
+                uninformedNodes[id] = perProfile = new(StringComparer.Ordinal);
+            perProfile[profiles[group.Profile].Name] = new(group.People, group.Deadline, state, minutes);
+        }
         var status = new SortedDictionary<string, double>(StringComparer.Ordinal);
         var loads = new double[shelters.Length];
         var nodes = new Dictionary<long, Dictionary<string, GroupResult>>();
@@ -432,20 +666,28 @@ internal sealed class EvacuationModel
         {
             var group = groups[number];
             var item = outcome[number];
-            status[item.Status] = status.GetValueOrDefault(item.Status) + group.People;
+            var placed = item.Choice.Share is null ? 1 : item.Placed;
+            status[item.Status] = status.GetValueOrDefault(item.Status) + group.People * placed;
+            if (placed < 1 - 1e-12)
+                status["ShelterCapacityExhausted"] = status.GetValueOrDefault("ShelterCapacityExhausted") + group.People * (1 - placed);
             if (item.Choice.Share is { } share)
                 for (var row = 0; row < loads.Length; row++)
-                    loads[row] += group.People * share[row];
+                    loads[row] += group.People * placed * share[row];
             var id = graph.Nodes[group.Node].Id;
             if (!nodes.TryGetValue(id, out var perProfile))
                 nodes[id] = perProfile = new(StringComparer.Ordinal);
             perProfile[profiles[group.Profile].Name] = new(group.People, item.Wave + 1, item.Start, group.Deadline,
-                item.Status, item.Left, item.Choice.Share, item.Choice.Distance);
+                item.Status, item.Left, item.Choice.Share, item.Choice.Real, item.Choice.Share is null ? 0 : item.Placed);
         }
+        var combined = new SortedDictionary<string, double>(StringComparer.Ordinal);
+        foreach (var (key, value) in status.Concat(uninformedStatus))
+            combined[key] = combined.GetValueOrDefault(key) + value;
         return new(new Dictionary<string, double>(status),
             shelters.Select((shelter, row) => new ShelterLoad(shelter.Id, shelter.Name, shelter.Capacity, loads[row],
                 Math.Max(0, loads[row] - shelter.Capacity))).ToArray(),
-            nodes, waves.ToArray(), peopleTotal, peopleTotal * handedOverShare);
+            nodes, waves.ToArray(), peopleTotal, peopleTotal * handedOverShare, compliance,
+            new Dictionary<string, double>(combined), new Dictionary<string, double>(uninformedStatus), uninformedNodes,
+            uninformed.Sum(group => group.People));
     }
 
     /// <summary>Road IDs and node IDs of a group's route to a shelter under the final costs of its wave.</summary>

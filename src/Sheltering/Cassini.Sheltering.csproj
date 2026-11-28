@@ -4,7 +4,29 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
+  <!-- -p:EnableRabbitMq=true adds the RabbitMQ bus (Integrations:Bus:Mode=live) for the outboxes and the board (SH-T06). -->
+  <PropertyGroup Condition="'$(EnableRabbitMq)' == 'true'">
+    <DefineConstants>$(DefineConstants);MESSAGING_RABBITMQ</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableRabbitMq)' == 'true'">
+    <ProjectReference Include="../Shared/Messaging/RabbitMq/Cassini.Messaging.RabbitMq.csproj" />
+  </ItemGroup>
+  <!-- -p:EnableShelteringPostgres=true stores Sheltering in PostgreSQL (ConnectionStrings:Sheltering). -->
+  <PropertyGroup Condition="'$(EnableShelteringPostgres)' == 'true'">
+    <DefineConstants>$(DefineConstants);SHELTERING_POSTGRES</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableShelteringPostgres)' == 'true'">
+    <PackageReference Include="Npgsql" Version="10.0.4" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(EnableShelteringPostgres)' != 'true'">
+    <Compile Remove="Infrastructure/PostgresShelteringPersistence.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Shared/Messaging/Cassini.Messaging.csproj" />
+    <InternalsVisibleTo Include="Cassini.Sheltering.Tests" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="../Demo/SiteCatalog/*.cs" Link="Shared/%(Filename)%(Extension)" />
     <Content Include="../../data/demo/sheltering/sample-sites.json" Link="sample-sites.json"

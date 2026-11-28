@@ -6,7 +6,7 @@ internal sealed record EvacuationOption(
 
 internal sealed record EvacuationDistribution(
     string Node, long Revision, string Model, string Profile, string Status, int Wave, double StartMinute,
-    double DeadlineMinutes, double? LeaveFloodMinutes, double People, EvacuationOption[] Options);
+    double DeadlineMinutes, double? LeaveFloodMinutes, double People, EvacuationOption[] Options, double PlacedShare = 1);
 
 /// <summary>Valencia queries and the draw command on top of the task 03 evacuation model.</summary>
 internal sealed class EvacuationRouting(SituationGateway situation, DrawJournal journal, EvacuationPlanner planner)
@@ -21,9 +21,19 @@ internal sealed class EvacuationRouting(SituationGateway situation, DrawJournal 
         return new
         {
             plan.Revision, model = ModelName, plan.ComputedAt, plan.DurationSeconds, closedSegments = plan.Closed,
-            people = new { estimated = result.PeopleEstimated, handedOver = result.PeopleHandedOver, kind = "estimate" },
-            result.Status, result.Shelters, result.Waves,
+            result.ComplianceShare,
+            people = new
+            {
+                estimated = result.PeopleEstimated, handedOver = result.PeopleHandedOver,
+                guided = result.Status.Values.Sum(), uninformed = result.PeopleUninformed, kind = "estimate",
+            },
+            result.Status, result.StatusAll, uninformedStatus = result.UninformedStatus, result.Shelters, result.Waves,
             profiles = plan.Model.Profiles.Select(profile => new { profile.Name, profile.Share }),
+            forecast = new
+            {
+                plan.Forecast.Mode, plan.Forecast.Source, plan.Forecast.Label, plan.Forecast.Status, plan.Forecast.IssuedAt,
+                plan.Forecast.PlanStart, plan.Forecast.FetchedAt, plan.Forecast.Detail, shelters = plan.Forecast.Shelters,
+            },
         };
     }
 
@@ -99,6 +109,6 @@ internal sealed class EvacuationRouting(SituationGateway situation, DrawJournal 
             options = options.Select(option => option with { Weight = option.Weight / total }).ToList();
         }
         return new(node, plan.Revision, ModelName, profile, group.Status, group.Wave, group.StartMinute,
-            group.DeadlineMinutes, group.LeaveFloodMinutes, group.People, options.ToArray());
+            group.DeadlineMinutes, group.LeaveFloodMinutes, group.People, options.ToArray(), group.PlacedShare);
     }
 }

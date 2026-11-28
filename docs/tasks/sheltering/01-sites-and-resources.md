@@ -47,6 +47,7 @@ can run either the offline exercise or the authenticated catalogs.
 | `SiteCatalog__Audience` | Catalog API audience in access tokens. Configure this separately from the browser's client ID. |
 | `Sheltering__IncidentId` | Incident ID for this shelter catalog. Required in OIDC mode. Use distinct state storage for distinct incident deployments. |
 | `ConnectionStrings__AssemblyPointCatalog`, `ConnectionStrings__ShelterCatalog` | Connection strings for the owners' separate PostgreSQL databases. Supply credentials through deployment configuration. Apply [the migration](../../../src/Demo/SiteCatalog/001-site-catalog.sql) to each database before starting the owners. |
+| `ConnectionStrings__Sheltering` | Use this instead of `ShelterCatalog` when the Sheltering service uses its allocation database. Build with both `EnableSiteCatalogStageB=true` and `EnableShelteringPostgres=true`. Sheltering applies its own migrations to that database. |
 | `AssemblyPoints__SeedFile`, `Sheltering__SeedFile` | Catalog fixture paths. The launcher supplies the synthetic fixture. For standalone Situation, set the assembly-point seed path to enable the catalog. |
 | `AssemblyPoints__StateFile`, `Sheltering__StateFile` | Local files when no connection is set. An existing file snapshot can bootstrap an empty database catalog. |
 
@@ -65,8 +66,9 @@ token returns `401`, and insufficient scope returns `403`.
 Each committed write records an audit entry with the authenticated subject and
 the before and after state. The JSON backend atomically replaces the owner's
 snapshot on disk. The PostgreSQL backend locks the owner row and writes the
-snapshot in a single transaction. The snapshot holds configuration, receipts,
-audit history and pending outbox entries. A retry by the same actor returns the
+snapshot in a single transaction. In the allocation database those writes use
+the same transaction as the existing Sheltering store with separate audit and
+outbox tables. A retry by the same actor returns the
 same receipt and keeps the original event ID. Existing Stage A receipts can
 still replay in demo mode. Audits and outbox entries stay inside the owner store.
 

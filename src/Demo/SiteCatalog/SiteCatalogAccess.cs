@@ -6,12 +6,6 @@ using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Cassini.Demo.SiteCatalog;
 
-internal sealed record CatalogActor(string Issuer, string Subject, string Role)
-{
-    internal static CatalogActor Demo { get; } = new("cassini-offline", "exercise", "demo");
-    internal bool CanConfigureSite => Role is "coordinator" or "demo";
-}
-
 internal sealed class SiteCatalogAccess(string mode)
 {
     internal static bool Configure(WebApplicationBuilder builder)

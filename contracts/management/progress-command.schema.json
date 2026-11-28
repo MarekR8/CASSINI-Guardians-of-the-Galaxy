@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cassini/management/progress-command.v1",
+  "title": "POST /commands/progress (W2)",
+  "description": "Case progress reported to Management. 'pickup' and 'exit-confirmed' are distinct milestones; only 'exit-confirmed' with a position fix counts as confirmed outside the zone. Position fields are what the device reports; the server never upgrades them.",
+  "type": "object",
+  "required": ["commandId", "caseId", "step"],
+  "properties": {
+    "commandId": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Stable across retries. The same ID with a different body is rejected with 409 CommandIdConflict." },
+    "caseId": { "type": "string" },
+    "step": { "enum": ["acknowledgement", "moving", "position", "pickup", "exit-confirmed"] },
+    "expectedVersion": { "type": "integer", "description": "Required for every step except 'exit-confirmed', where a late field report may omit it." },
+    "node": { "type": "string", "description": "Only for 'position': a confirmed demo graph node." },
+    "observedAt": { "type": "string", "format": "date-time", "description": "UTC time of the observation or fix. At most 2 minutes in the future." },
+    "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+    "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+    "accuracy": { "type": "number", "exclusiveMinimum": 0, "maximum": 100, "description": "Reported horizontal accuracy in meters." },
+    "evidence": {
+      "type": "object",
+      "required": ["galileoUsed", "osnma", "egnos"],
+      "properties": {
+        "galileoUsed": { "type": "boolean", "description": "The receiver reported Galileo satellites used in the fix." },
+        "osnma": { "enum": ["simulated", "verified", "none"], "description": "'simulated' until real OSNMA verification exists (task 5 Stage B)." },
+        "egnos": { "enum": ["applied", "unknown"], "description": "'applied' only when the receiver reports SBAS used in the fix." }
+      },
+      "additionalProperties": false
+    },
+    "mode": { "enum": ["measured", "simulated", "replay"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "step": { "const": "exit-confirmed" } } },
+      "then": { "required": ["observedAt", "latitude", "longitude", "accuracy", "evidence", "mode"] },
+      "else": { "required": ["expectedVersion"] }
+    },
+    {
+      "if": { "properties": { "step": { "enum": ["acknowledgement", "moving", "position"] } } },
+      "then": { "not": { "anyOf": [{ "required": ["latitude"] }, { "required": ["evidence"] }, { "required": ["mode"] }] } }
+    }
+  ]
+}

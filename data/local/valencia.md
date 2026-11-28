@@ -32,6 +32,8 @@ Dla Dockera, po przygotowaniu danych i pobraniu obrazów bazowych, użyj `docker
 
    Dopasowania można sprawdzić w polu `reviewFeatures[].segmentIds` w zapytaniu Situation `GET /api/situation/queries/snapshot`. To osobny proces ćwiczeniowy. Do odczytowego podglądu Walencji i przekazania aktualnego grafu wystarczają mapa EMS i gotowa paczka etapu 03.
 
+W świeżym ćwiczeniu `python experiments/network/import_valencia_review.py --mock` pobiera syntetyczny wynik FlyPix z lokalnego API i dodaje go do tej samej kolejki. Opcja `--demo` wskazuje lokalny adres ćwiczenia na innym porcie. Samo dodanie wyniku pozostawia drogi otwarte. `python scripts/offline_demo.py --scenario valencia --test --valencia-inputs-only` sprawdza ten przebieg, eksport W1 i walidację zamknięć przy wyłączonym plannerze ewakuacji taska 03.
+
 ## Kontrakt dla taska 03
 
 [Gotowa paczka dla obszaru radaru](../demo/routing/valencia-task03.zip) · [Instrukcja jej odświeżania](valencia-task03.md)

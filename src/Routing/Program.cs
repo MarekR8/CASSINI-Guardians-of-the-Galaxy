@@ -2,10 +2,17 @@ using Cassini.Routing;
 using Cassini.Routing.Evacuation;
 using Cassini.Demo;
 using Cassini.Routing.Destinations;
+using Cassini.Routing.Publication;
+using Cassini.Demo.SiteCatalog;
+using Cassini.Messaging;
+#if MESSAGING_RABBITMQ
+using Cassini.Messaging.RabbitMq;
+#endif
 
 var builder = WebApplication.CreateBuilder(args);
 var scenario = builder.Configuration["Demo:Scenario"] is { Length: > 0 } configured ? configured : "sample";
 var valencia = scenario == "valencia";
+var evacuationEnabled = valencia && builder.Configuration.GetValue("Routing:EvacuationEnabled", true);
 if (scenario is not ("sample" or "valencia"))
     throw new InvalidDataException($"Unknown demo scenario '{scenario}'.");
 Network.Configure(valencia ? CityNetwork.Load(builder.Configuration["Demo:CityDirectory"], scenario) : null);
@@ -23,13 +30,34 @@ builder.Services.AddSingleton(_ => new DrawJournal(
     Path.Combine(builder.Environment.ContentRootPath, "artifacts", "routing-draws.json")));
 builder.Services.AddTransient<RoutingQueries>();
 builder.Services.AddTransient<RoutingCommands>();
-if (valencia)
+if (evacuationEnabled)
 {
     // Task 03 evacuation model: inputs prepared by experiments/routing, plan recomputed per Situation revision.
     var evacuationDirectory = builder.Configuration["Routing:EvacuationDirectory"] is { Length: > 0 } directory
         ? directory : Path.Combine(AppContext.BaseDirectory, "evacuation");
     var shelterFile = builder.Configuration["Routing:EvacuationShelters"] is { Length: > 0 } file ? file : null;
     builder.Services.AddSingleton(_ => EvacuationInputs.ReadDirectory(evacuationDirectory, shelterFile));
+    // T_safe per exit (task 03 Stage B). Mock reads the bundled forecast file; live calls the Open-Meteo Flood API.
+    var forecastFile = builder.Configuration["Routing:Forecast:File"] is { Length: > 0 } forecastPath
+        ? forecastPath : Path.Combine(evacuationDirectory, "valencia", "glofas-forecast.mock.json");
+    switch (builder.Configuration["Routing:Forecast:Mode"] ?? "mock")
+    {
+        case "mock":
+            builder.Services.AddSingleton<IHazardForecast>(_ => new MockGlofasForecast(forecastFile));
+            break;
+        case "live":
+            builder.Services.AddHttpClient("glofas", client => client.Timeout = TimeSpan.FromSeconds(10));
+            builder.Services.AddSingleton<IHazardForecast>(services => new LiveGlofasForecast(
+                services.GetRequiredService<IHttpClientFactory>().CreateClient("glofas"), forecastFile, TimeProvider.System,
+                TimeSpan.FromHours(builder.Configuration.GetValue("Routing:Forecast:MaxAgeHours", 6.0)),
+                services.GetRequiredService<ILogger<LiveGlofasForecast>>()));
+            break;
+        case "off":
+            builder.Services.AddSingleton<IHazardForecast>(_ => new NoHazardForecast(TimeProvider.System));
+            break;
+        default:
+            throw new InvalidOperationException("Routing:Forecast:Mode must be mock, live or off.");
+    }
     builder.Services.AddSingleton<EvacuationPlanner>();
     builder.Services.AddHostedService<EvacuationPlanRefresher>();
     builder.Services.AddTransient<EvacuationRouting>();
@@ -68,8 +96,12 @@ if (destinationsEnabled)
 {
     builder.Services.AddSingleton(new DestinationSources(
         new Uri((builder.Configuration["Situation:BaseUrl"] ?? "http://127.0.0.1:5082").TrimEnd('/') + "/"),
-        new Uri(builder.Configuration["Sheltering:BaseUrl"]!.TrimEnd('/') + "/")));
+        new Uri(builder.Configuration["Sheltering:BaseUrl"]!.TrimEnd('/') + "/"),
+        new Uri((builder.Configuration["Management:BaseUrl"] ?? "http://127.0.0.1:5081").TrimEnd('/') + "/"),
+        builder.Configuration["Grouping:ReadToken"]));
     builder.Services.AddSingleton(TimeProvider.System);
+    builder.Services.AddSingleton(DestinationEvidenceFixtures.Load(builder.Configuration["Routing:DestinationEvidenceFile"]));
+    builder.Services.AddTransient<DestinationRouteQueries>();
     builder.Services.AddHttpClient<DestinationQueries>(client => client.Timeout = TimeSpan.FromSeconds(4))
         .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
         {
@@ -77,6 +109,22 @@ if (destinationsEnabled)
             AllowAutoRedirect = false,
             UseCookies = false,
         });
+    // SH-T06: shelter guidance instructions with receipts and an outbox, next to the draw journal.
+    var instructionsPath = builder.Configuration["Routing:InstructionsPath"] ?? Path.Combine(
+        Path.GetDirectoryName(Path.GetFullPath(builder.Configuration["Routing:StatePath"] ??
+            Path.Combine(builder.Environment.ContentRootPath, "artifacts", "routing-draws.json")))!, "routing-instructions.json");
+    builder.Services.AddSingleton(services => new RouteInstructionStore(new CatalogStore<RouteInstruction>(
+        instructionsPath, () => [], RouteInstructionStore.Key, instruction => instruction.AggregateVersion),
+        services.GetRequiredService<TimeProvider>()));
+    builder.Services.AddSingleton<IOutboxStore>(services => services.GetRequiredService<RouteInstructionStore>());
+#if MESSAGING_RABBITMQ
+    builder.Services.AddLiveEventBus(builder.Configuration, uri => new RabbitMqEventBus(new RabbitMqOptions(uri, "routing")
+    {
+        RequireRoutingFor = new HashSet<string> { EventTypes.RoutePublished, EventTypes.RouteWithdrawn },
+    }));
+#else
+    builder.Services.AddLiveEventBus(builder.Configuration, null);
+#endif
 }
 
 var app = builder.Build();
@@ -106,6 +154,20 @@ if (destinationsEnabled)
 {
     queries.MapGet("/destinations", (string? incidentId, DateTimeOffset? at, DestinationQueries handler,
         CancellationToken cancellation) => handler.GetDestinations(incidentId, at, cancellation));
+    queries.MapGet("/destination-route", ([AsParameters] DestinationRouteRequest travel, string? destinationKind,
+        string? destinationId, string? recordedRouteId, string? expectedEvidenceId, string? transportId, DestinationRouteQueries handler,
+        CancellationToken cancellation) =>
+        handler.GetRoute(travel, destinationKind, destinationId, recordedRouteId, expectedEvidenceId, transportId, cancellation));
+    queries.MapGet("/first-leg", ([AsParameters] DestinationRouteRequest travel, string? reservationId,
+        string? transportId, DestinationRouteQueries handler, CancellationToken cancellation) =>
+        handler.GetFirstLeg(travel, reservationId, transportId, cancellation));
+    queries.MapGet("/route-instruction", (string? kind, string? id, RouteInstructionStore store) =>
+        store.Get(new RouteSubject(kind, id)));
+    queries.MapGet("/route-outbox", (long? after, RouteInstructionStore store) => new { entries = store.Outbox(after ?? 0) });
+    var publication = app.MapGroup("/commands");
+    publication.MapPost("/publish-route", (PublishRouteCommand command, RouteInstructionStore store,
+        DestinationRouteQueries routes, CancellationToken cancellation) => store.Publish(command, routes, cancellation));
+    publication.MapPost("/withdraw-route", (WithdrawRouteCommand command, RouteInstructionStore store) => store.Withdraw(command));
 }
 queries.MapGet("/network", () => new {
     Network.Nodes, Network.Segments, Network.Exits,
@@ -141,7 +203,7 @@ queries.MapGet("/assistance-restrictions",
         (DrawCommand command, RoutingCommands handlers, CancellationToken cancellationToken) =>
             handlers.DrawAsync(command, cancellationToken));
 }
-else
+else if (evacuationEnabled)
 {
     queries.MapGet("/evacuation-plan", (EvacuationRouting handlers, CancellationToken cancellationToken) =>
         handlers.PlanAsync(cancellationToken));

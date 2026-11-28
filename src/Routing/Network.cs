@@ -6,7 +6,7 @@ internal sealed record Node(string Id, string Label, double Longitude, double La
 internal sealed record Segment(
     string Id, string From, string To, int? WalkingSeconds, int? DrivingSeconds, bool BothWays,
     double[][]? Geometry = null, double[][]? DrivingGeometry = null,
-    double[][]? ReverseDrivingGeometry = null, int? ReverseDrivingSeconds = null);
+    double[][]? ReverseDrivingGeometry = null, int? ReverseDrivingSeconds = null, bool? StepFree = null);
 internal sealed record GraphPath(string[] Nodes, string[] Segments, int Seconds);
 
 internal static class Network
@@ -23,11 +23,11 @@ internal static class Network
 
     internal static Segment[] Segments { get; private set; } =
     [
-        new("walk-to-pickup", "walk-start", "pickup", 300, null, false),
+        new("walk-to-pickup", "walk-start", "pickup", 300, null, false, StepFree: true),
         new("east-link", "pickup", "east-junction", 360, 150, true),
         new("bridge-2", "east-junction", "exit-east", 120, 90, true),
-        new("north-link", "pickup", "north-junction", 600, 260, true),
-        new("north-exit-link", "north-junction", "exit-north", 180, 80, true),
+        new("north-link", "pickup", "north-junction", 600, 260, true, StepFree: true),
+        new("north-exit-link", "north-junction", "exit-north", 180, 80, true, StepFree: true),
         new("outside-connector", "exit-east", "exit-north", null, 300, true),
     ];
 
@@ -47,7 +47,8 @@ internal static class Network
     internal static bool ContainsSegment(string id) => Segments.Any(segment => segment.Id == id)
         || City?.Contains(id) == true;
 
-    internal static GraphPath? FindPath(string start, string destination, bool driving, IReadOnlySet<string> closed)
+    internal static GraphPath? FindPath(string start, string destination, bool driving, IReadOnlySet<string> closed,
+        Func<Segment, string, string, bool>? canTraverse = null)
     {
         var queue = new PriorityQueue<string, (int Duration, int Sequence)>();
         var best = new Dictionary<string, int>(StringComparer.Ordinal) { [start] = 0 };
@@ -69,9 +70,9 @@ internal static class Network
                 var next = segment.From == node ? segment.To
                     : segment.BothWays && segment.To == node ? segment.From
                     : null;
-                if (next is null)
+                if (next is null || canTraverse?.Invoke(segment, node, next) == false)
                     continue;
-                var seconds = driving ? segment.DrivingSeconds : segment.WalkingSeconds;
+                var seconds = SegmentSeconds(segment, driving);
                 if (seconds is null)
                     continue;
 
@@ -86,6 +87,9 @@ internal static class Network
 
         return null;
     }
+
+    internal static int? SegmentSeconds(Segment segment, bool driving) =>
+        driving ? segment.DrivingSeconds : segment.WalkingSeconds;
 
     private static GraphPath Reconstruct(
         string start, string destination, int seconds, Dictionary<string, (string Node, string Segment)> previous)

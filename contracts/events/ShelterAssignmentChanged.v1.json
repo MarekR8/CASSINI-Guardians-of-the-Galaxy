@@ -1,0 +1,27 @@
+{
+  "eventId": "00000000-0000-4000-8000-000000000002",
+  "type": "ShelterAssignmentChanged.v1",
+  "producer": "sheltering",
+  "subjectId": "incident-42/case-31/leg-shelter",
+  "subjectVersion": 2,
+  "occurredAt": "2026-11-27T19:20:00Z",
+  "correlationId": "corr-sh-t06",
+  "causationId": "cmd-02",
+  "payload": {
+    "incidentId": "incident-42",
+    "caseId": "case-31",
+    "legId": "leg-shelter",
+    "assignmentVersion": 2,
+    "status": "Reserved",
+    "shelterId": "shelter-a",
+    "reservationId": "book-a-case-31",
+    "arrivalWindow": {
+      "earliest": "2026-11-27T19:31:00Z",
+      "latestExclusive": "2026-11-27T19:31:01Z"
+    },
+    "withdrawnShelterId": null,
+    "withdrawnReservationId": null,
+    "withdrawnAssignmentVersion": null,
+    "reason": null
+  }
+}
