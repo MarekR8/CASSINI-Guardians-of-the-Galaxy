@@ -2,8 +2,11 @@
 
 import argparse
 from contextlib import contextmanager
+import hashlib
+import json
 import os
 from pathlib import Path
+import secrets
 import subprocess
 import tempfile
 import time
@@ -74,6 +77,7 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
         })
         if shelter_holds:
             env["Sheltering__HoldsFile"] = str(ROOT / "data" / "demo" / "sheltering" / "sample-holds.json")
+            env["Sheltering__OperatorsFile"] = str(exercise_operators(data_dir))
     children = []
     try:
         for directory, assembly, offset in services:
@@ -99,6 +103,28 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait()
+
+
+# Synthetic exercise accounts for the Stage B reception role boundary (SH-T05).
+EXERCISE_OPERATORS = {
+    "op-shelter-a": ("shelter-operator", "incident-42", ["shelter-a"]),
+    "op-shelter-b": ("shelter-operator", "incident-42", ["shelter-b"]),
+    "coordinator-42": ("coordinator", "incident-42", []),
+    "op-other-incident": ("shelter-operator", "incident-99", ["shelter-a"]),
+}
+
+
+def exercise_operators(data_dir):
+    """Generate random tokens once per state directory. Only their hashes go to the service; nothing is in Git."""
+    tokens_file, operators_file = data_dir / "operator-tokens.json", data_dir / "operators.json"
+    if not tokens_file.is_file():
+        tokens = {name: secrets.token_urlsafe(24) for name in EXERCISE_OPERATORS}
+        tokens_file.write_text(json.dumps(tokens), encoding="utf-8")
+        operators_file.write_text(json.dumps({"operators": [
+            {"operatorId": name, "role": role, "incidentId": incident, "shelterIds": shelters,
+             "tokenSha256": hashlib.sha256(tokens[name].encode()).hexdigest()}
+            for name, (role, incident, shelters) in EXERCISE_OPERATORS.items()]}), encoding="utf-8")
+    return operators_file
 
 
 def wait_ready(url, process, log):
@@ -172,7 +198,8 @@ def main():
                 for args_tail in ([], ["--after-restart"]):
                     with start_services(args.port, reception, sheltering=True, shelter_holds=True) as url:
                         subprocess.run([os.sys.executable, str(ROOT / "tests" / "shelter_reception_integration.py"),
-                                        url, *args_tail], cwd=ROOT, check=True)
+                                        url, str(reception / "operator-tokens.json"), *args_tail],
+                                       cwd=ROOT, check=True)
         return
     state_name = "sheltering-demo" if args.sheltering else "offline-demo" if args.scenario == "sample" else "valencia-demo"
     data = args.data or ARTIFACTS / state_name

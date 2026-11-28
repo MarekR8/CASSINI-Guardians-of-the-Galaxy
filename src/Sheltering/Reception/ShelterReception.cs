@@ -16,13 +16,17 @@ internal sealed record ShelterHold(
     string ReservationId, string IncidentId, string CaseId, string LegId, PlaceNeed Resources,
     SiteWindow? ArrivalWindow, DateTimeOffset? ExpiresAt);
 
-internal sealed record ShelterDeparture(string ReportId, DateTimeOffset ObservedAt, DateTimeOffset RecordedAt);
+internal sealed record ShelterDeparture(string ReportId, DateTimeOffset ObservedAt, DateTimeOffset RecordedAt,
+    string? ReportedBy = null);
+
+/// <summary>The stay a transfer leg came from. That admission keeps its places until its own departure.</summary>
+internal sealed record StayRef(string ShelterId, string AdmissionId, string LegId);
 
 /// <summary>One confirmed admission. Its places stay occupied until a departure is confirmed.</summary>
 internal sealed record ShelterAdmission(
     string AdmissionId, string IncidentId, string CaseId, string LegId, string? ReservationId, bool WalkIn,
     PlaceNeed Resources, string ReportId, DateTimeOffset ObservedAt, DateTimeOffset RecordedAt,
-    ShelterDeparture? Departure = null)
+    ShelterDeparture? Departure = null, string? ReportedBy = null, StayRef? TransferFrom = null)
 {
     internal bool Present => Departure is null;
 }
@@ -37,7 +41,8 @@ internal sealed record ReceptionEvent(
 
 internal sealed record ReceptionEventPayload(
     string ShelterId, string IncidentId, string AdmissionId, string CaseId, string LegId, string? ReservationId,
-    bool WalkIn, int Places, int AccessiblePlaces, string ReportId, DateTimeOffset ObservedAt);
+    bool WalkIn, int Places, int AccessiblePlaces, string ReportId, DateTimeOffset ObservedAt,
+    string? TransferFromShelterId = null);
 
 internal sealed record ShelterReception(
     ShelterHold[] Holds, ShelterAdmission[] Admissions, ReceptionReport[] Reports, ReceptionEvent[] Outbox)
@@ -55,7 +60,8 @@ internal sealed record ReceptionResult(
 /// Departed or AlreadyDeparted (no change).
 /// </summary>
 internal sealed record ReceptionEntry(
-    string CaseId, string LegId, string AdmissionId, string Outcome, string? ReservationId, PlaceNeed Resources);
+    string CaseId, string LegId, string AdmissionId, string Outcome, string? ReservationId, PlaceNeed Resources,
+    StayRef? TransferFrom = null);
 
 /// <summary>A hold at another shelter released because the person was admitted elsewhere as a walk-in.</summary>
 internal sealed record ReleasedHold(string ShelterId, string ReservationId, string CaseId, string LegId, PlaceNeed Resources);

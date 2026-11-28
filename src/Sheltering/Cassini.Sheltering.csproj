@@ -4,6 +4,16 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <!-- -p:EnableShelteringPostgres=true stores Sheltering in PostgreSQL (ConnectionStrings:Sheltering). -->
+  <PropertyGroup Condition="'$(EnableShelteringPostgres)' == 'true'">
+    <DefineConstants>$(DefineConstants);SHELTERING_POSTGRES</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableShelteringPostgres)' == 'true'">
+    <PackageReference Include="Npgsql" Version="10.0.4" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(EnableShelteringPostgres)' != 'true'">
+    <Compile Remove="Infrastructure/PostgresShelteringPersistence.cs" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Shared/Messaging/Cassini.Messaging.csproj" />
   </ItemGroup>

@@ -25,6 +25,7 @@ builder.Services.AddHttpClient("services", client => client.Timeout = TimeSpan.F
         AllowAutoRedirect = false,
         UseCookies = false,
     });
+var auth = builder.AddGatewayAuth();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IUpstreamCommands>(services =>
     new UpstreamCommands(services.GetRequiredService<IHttpClientFactory>(), upstreams));
@@ -41,11 +42,12 @@ app.Use(async (context, next) =>
         return;
     }
     context.Response.Headers.ContentSecurityPolicy =
-        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+        $"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src {auth.ConnectSrc}; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
     context.Response.Headers.XContentTypeOptions = "nosniff";
     context.Response.Headers.CacheControl = "no-store";
     await next();
 });
+app.UseGatewayAuth(auth);
 app.UseDefaultFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -103,11 +105,9 @@ async Task Forward(string service, string group, string operation, string? id, H
         uri += $"/{id}";
     uri += context.Request.QueryString.ToUriComponent();
     using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), uri);
-    var grouping = service == "management" && operation is ("evacuation-groups" or "travel-party-proposals" or
-        "approved-travel-plans" or "register-evacuation-group" or "update-group-composition" or
-        "record-care-handover" or "approve-travel-plan" or "flag-travel-plan-for-review");
-    if (grouping && context.Request.Headers.TryGetValue("Authorization", out var credentials))
-        request.Headers.TryAddWithoutValidation("Authorization", credentials.ToArray());
+    // Owner services authorise the caller themselves (Sheltering reception in Stage B); the Gateway only forwards.
+    if (context.Request.Headers.Authorization.ToString() is { Length: > 0 } authorization)
+        request.Headers.TryAddWithoutValidation("Authorization", authorization);
     if (group == "commands")
     {
         if (!context.Request.HasJsonContentType())

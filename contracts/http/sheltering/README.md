@@ -29,6 +29,7 @@ The allocation examples were recorded from one fresh exercise for `case-14` on `
 | `GET /api/sheltering/queries/shelter-assignment?incidentId&caseId&legId` | One assignment with `version`, `status`, `needs`, optional `groupPlanRef`, the current `reservation` and the last `withdrawn` hold. `404 AssignmentNotFound` when none was opened. |
 | `GET /api/sheltering/queries/shelter-assignments?incidentId` | All assignments in the incident, for the coordinator view. |
 | `GET /api/sheltering/queries/shelter-candidates` | Takes `incidentId`, `legId`, `caseIds`, `mode` and `at`, plus optional `node`, `clearBy`, `stepFree`, `groupId`, `groupRevision` and `transportId`. It lists only feasible shelters, ranked by group members already held there and then by earlier arrival. Each candidate carries the `route` object for a reservation. `rejected` gives the reason for every other shelter. |
+| `GET /api/sheltering/queries/allocation-evidence?incidentId&caseId&legId` | Reconciliation evidence for every committed assignment change: decision, status and version, shelter and its version, reservation, Routing evidence ID, Situation and plan revisions, withdrawn reservation, finding and evidence reference. `caseId` and `legId` are optional filters. |
 | `GET /api/sheltering/queries/allocation-outbox?after` | Committed `ShelterAssignmentChanged.v1` and `ShelterAvailabilityChanged.v1` events in the shared envelope, numbered by `sequence`, for SH-T06. |
 | `POST /api/sheltering/commands/open-shelter-assignment` | Opens a `Pending` assignment per case and leg with `needs.places` (1–10) and `needs.accessiblePlaces`. A `groupPlanRef` must name the current approved Grouping plan containing the case. The same needs return the existing assignment; different needs return `409 AssignmentAlreadyOpen`. |
 | `POST /api/sheltering/commands/reserve-shelter-places` | Holds every listed `Pending` or `AwaitingReplacement` assignment at one shelter or rejects the whole batch. Each entry carries `expectedVersion` and `route: { evidenceId, query }`. |
@@ -48,7 +49,7 @@ Business rejections are `422` with `InsufficientCapacity`, `InsufficientAccessib
 
 A `route.query` names either `caseIds`, which must include the assignment's case, or a graph `node` for synthetic exercise people that Management does not track. Each hold is written into the shelter's `reception.holds` with its commitments in the same commit as the assignment, so SH-T05 admission converts exactly that hold. The assignment then reads as `Admitted`, and as `Closed` after a confirmed departure. A hold released by a walk-in elsewhere leaves it `AwaitingReplacement`. Allocation commands never move or release admitted occupancy or the baseline occupancy configured in the catalog.
 
-Replay the exercise with `python tests/sheltering_reservations_integration.py`.
+Replay the exercise with `python tests/sheltering_reservations_integration.py`. With `-p:EnableShelteringPostgres=true` and `ConnectionStrings:Sheltering`, the same contract is served from PostgreSQL. `python tests/sheltering_postgres_integration.py` runs it on two instances against a fresh database.
 
 ## Admissions and departures (SH-T05)
 
@@ -79,3 +80,17 @@ These examples use the [hold fixture](../../../data/demo/sheltering/sample-holds
 - seeded places that no tracked case accounts for.
 
 `GET queries/shelter-reception-events` lists the [`ShelterAdmissionConfirmed.v1`](../../events/ShelterAdmissionConfirmed.v1.json) and [`ShelterDepartureConfirmed.v1`](../../events/ShelterDepartureConfirmed.v1.json) entries. Each is written in the same state change as its admission or departure. SH-T06 publishes them.
+
+### Operator scope and transfers (SH-T05 Stage B)
+
+When `Sheltering:OperatorsFile` is set, the reception commands and queries require `Authorization: Bearer <token>`. The Gateway forwards the header. Each account in the file has `operatorId`, `role` (`shelter-operator` or `coordinator`), `incidentId`, `shelterIds` and `tokenSha256`. Only the hash is stored. `scripts/offline_demo.py` writes random exercise tokens into the temporary state directory.
+
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `AuthenticationRequired` | 401 | No token, or a token that matches no account |
+| `RoleNotPermitted` | 403 | Only a shelter operator reports admissions and departures. A coordinator reads. |
+| `ShelterNotAssigned`, `IncidentNotAssigned` | 403 | Outside the account's shelters or incident |
+
+Admissions and departures record the reporting `operatorId`.
+
+A person moves between shelters as two legs. The person is admitted at the new shelter on the next leg, for example `leg-transfer`, while still present at the first. The admission result and the event then carry `transferFrom` and `transferFromShelterId`. The first shelter keeps its occupied places. Its view lists the stay's `onwardAdmission` and counts it under `transferredAwaitingDeparture` until that shelter confirms the departure. A person present at a shelter cannot be admitted there again on another leg (`409 AlreadyPresent`).

@@ -21,6 +21,7 @@ jobs:
         run: |
           docker compose config --quiet
           docker compose -f compose.yaml -f compose.sheltering.yaml config --quiet
+          SHELTERING_DB_CONNECTION=ci SHELTERING_DB_PASSWORD=ci docker compose -f compose.yaml -f compose.sheltering.yaml -f compose.sheltering-postgres.yaml --profile full config --quiet
       - name: Run the offline integration scenario
         run: python3 scripts/offline_demo.py --test
       - name: Verify the shelter and assembly point catalogs
@@ -117,6 +118,76 @@ jobs:
         env:
           ConnectionStrings__Dispatch: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=dispatch;Username=dispatch;Password=dispatch-ci-only
         run: python3 tests/dispatch_postgres_integration.py
+
+  verify-sheltering-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sheltering
+          POSTGRES_PASSWORD: sheltering-ci-only
+          POSTGRES_DB: sheltering
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U sheltering -d sheltering"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build the optional Sheltering PostgreSQL store
+        run: dotnet build Cassini.Offline.slnx -m:1 -p:NuGetAudit=false -p:EnableShelteringPostgres=true
+      - name: Verify two Sheltering instances, duplicates, stale writes and restart with PostgreSQL
+        env:
+          ConnectionStrings__Sheltering: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=sheltering;Username=sheltering;Password=sheltering-ci-only
+        run: python3 tests/sheltering_postgres_integration.py --no-build
+
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: tests/e2e
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: tests/e2e/package-lock.json
+      - name: Install Playwright
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build the stack
+        working-directory: .
+        run: docker compose build
+      - name: Start the stack (sample scenario)
+        working-directory: .
+        run: docker compose up -d --wait
+      - name: Run the end-to-end test
+        run: npx playwright test
+      - name: Show service logs
+        if: failure()
+        working-directory: .
+        run: docker compose logs --no-color
+      - name: Upload the Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/e2e/playwright-report/
+          retention-days: 14
+      - name: Stop the stack
+        if: always()
+        working-directory: .
+        run: docker compose down -v
 
   verify-management-full:
     runs-on: ubuntu-24.04
