@@ -50,6 +50,7 @@ h1 { font-size: clamp(1.8rem, 4vw, 3.15rem); letter-spacing: -.035em; line-heigh
 .legend span { display: flex; align-items: center; gap: .4rem; }
 .legend i { display: inline-block; width: 1rem; height: .25rem; border-radius: .1rem; }
 .legend .legend-hazard { background: #4e98ac; height: .75rem; }
+.legend .legend-archive { background: #eead83; height: .75rem; }
 .legend .legend-observed { background: #458bcc; height: .75rem; }
 .legend .legend-review { background: #d0a2f5; height: .75rem; }
 .legend [hidden] { display: none; }

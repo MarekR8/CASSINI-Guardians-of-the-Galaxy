@@ -67,5 +67,7 @@ To import an estimate with a flood layer, put the resulting JSON object in `haza
 in the Warsaw manifest. The top-level snapshot estimate refers to the last imported layer, or to the
 exercise polygon before any imports. A layer without an estimate returns `null`.
 
-The exercise polygons are synthetic. The EMS product or Sentinel-1 analysis and the overlap check with
-the Warsaw corridors remain pending.
+The exercise polygons are synthetic. The Kłodzko map includes a reference flood extent clipped from
+the public [EMSR756 AOI03 Sentinel-1 delineation](https://mapping.emergency.copernicus.eu/activations/EMSR756/),
+observed on 2024-09-15 at 05:01 UTC. The source product and observation time appear on the main map.
+A verified flood layer for Warsaw and the overlap check with the Warsaw corridors remain pending.

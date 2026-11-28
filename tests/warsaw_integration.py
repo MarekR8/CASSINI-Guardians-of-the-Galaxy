@@ -42,6 +42,7 @@ def command(name, payload, status=200):
 assert b'id="review-panel"' in request("/")
 scene = request("/maps/satellite.json")["warsaw"]
 assert scene["bounds"] == [20.830, 52.080, 21.300, 52.390]
+assert "floodArchive" not in scene
 assert request("/maps/" + scene["image"]).startswith(b"\xff\xd8\xff")
 network = request("/api/routing/queries/network")
 assert network["scenario"] == "warsaw" and "OpenStreetMap" in network["attribution"]

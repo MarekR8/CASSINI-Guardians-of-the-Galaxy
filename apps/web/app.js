@@ -144,6 +144,13 @@ async function refresh(epoch) {
     text('satellite-date', ' · Sentinel-2 L2A · obserwacja ' +
       formatObservation.format(new Date(scene.observedAt)) + ' UTC');
   }
+  const archive = scene?.floodArchive;
+  $('archive-credit').hidden = !archive;
+  if (archive) {
+    $('archive-source').href = archive.sourceUrl;
+    text('archive-source', '© European Union, Copernicus EMS · ' + archive.productId);
+    text('archive-date', ' · obserwacja ' + formatObservation.format(new Date(archive.observedAt)) + ' UTC');
+  }
   $('review-panel').hidden = !warsaw;
   text('clock', time(distribution.at) + ' UTC');
   text('revision', 'Rewizja ' + situation.revision);
@@ -246,7 +253,7 @@ function renderMap(route) {
   const city = state.network.city;
   const cityBounds = city?.bounds ?? (warsaw ? scene?.bounds : null);
   const overview = Boolean(cityBounds && state.cityOverview);
-  const bounds = overview ? cityBounds : state.network.bounds;
+  const bounds = overview ? cityBounds : scene?.viewBounds ?? state.network.bounds;
   $('city-overview').setAttribute('aria-pressed', overview);
   $('city-detail').setAttribute('aria-pressed', !overview);
   const [west, south, east, north] = bounds || [16.646, 50.431, 16.660, 50.442];
@@ -298,6 +305,14 @@ function renderMap(route) {
         'stroke-width': 1.8 }));
     }
   }
+  const archive = scene?.floodArchive;
+  $('archive-legend').hidden = !archive;
+  if (archive) {
+    for (const polygon of polygons(archive.geometry)) {
+      map.append(svg('path', { class: 'archive-flood', d: shape(polygon), 'fill-rule': 'evenodd',
+        fill: '#eead83', 'fill-opacity': .5, stroke: '#ffe0cb', 'stroke-width': 1.5 }));
+    }
+  }
   const pending = (state.situation.reviewFeatures || []).filter(feature => feature.status === 'Pending');
   $('review-legend').hidden = !pending.length;
   for (const feature of pending) {
@@ -335,7 +350,7 @@ function renderMap(route) {
     map.append(svg('circle', { cx: x, cy: y, r: isStart ? 9 : 6,
       fill: isExit ? '#fbd47e' : isStart ? '#8df0ce' : '#b7cbce', stroke: '#12232a', 'stroke-width': 2 }));
     const caption = warsaw ? warsawMapLabels[id] : [
-      label(id), id === 'exit-east' ? -5 : 10, id === 'pickup' || id === 'east-junction' ? 30 : -14,
+      label(id), id === 'pickup' ? -10 : 10, id === 'pickup' || id === 'east-junction' ? 26 : -14,
     ];
     if (caption) {
       const [name, dx, dy] = caption;

@@ -41,6 +41,9 @@ assert "Koordynacja ewakuacji" in page
 assert 'id="satellite-credit"' in page and 'type="file"' not in page
 assert "commands/draw" in request("/app.js")
 scene = request("/maps/satellite.json")["sample"]
+archive = scene["floodArchive"]
+assert archive["productId"] == "EMSR756_AOI03_DEL_PRODUCT_observedEventA_v1"
+assert archive["observedAt"] == "2024-09-15T05:01:00Z" and archive["geometry"]["coordinates"]
 with LOCAL_HTTP.open(BASE + "/maps/" + scene["image"], timeout=10) as image:
     assert image.headers.get_content_type() == "image/jpeg"
     assert image.read(3) == b"\xff\xd8\xff"
