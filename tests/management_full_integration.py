@@ -137,11 +137,19 @@ with tempfile.TemporaryDirectory(prefix="management-full-") as directory:
             first = assignment_event(str(uuid.uuid4()), 2, "PickupConfirmed")
             publish(first)
             publish(first)
-            publish(assignment_event(str(uuid.uuid4()), 1, "Assigned"))
+            last =assignment_event(str(uuid.uuid4()), 1, "Assigned")
+            publish(last)
             process = start(output, log)
-            case = eventually(lambda: (lambda item: item if item.get("assistance") and
-                                       rabbit("queues/%2F/management.events")["messages"] == 0 else None)(
-                call(BASE + "/queries/cases/case-15")))
+
+            def drained():
+                # The inbox receipt commits with the effect. Without SQL access, fall back to the broker's
+                # queue depth; the management API omits "messages" until its first statistics sample.
+                if os.environ.get("PSQL_URL") and shutil.which("psql"):
+                    return sql(f"SELECT count(*) FROM inbox WHERE \"Receipt\" = 'management.events:{last['eventId']}'") == "1"
+                return rabbit("queues/%2F/management.events").get("messages", 1) == 0
+
+            eventually(drained, timeout=30)
+            case = call(BASE + "/queries/cases/case-15")
             assert case["assistance"]["state"] == "PickupConfirmed" and case["assistance"]["subjectVersion"] == 2, case
             assert case["progress"] != "ExitConfirmed", "Pickup never confirms the exit."
             receipts = sql(f"SELECT count(*) FROM inbox WHERE \"Receipt\" = 'management.events:{first['eventId']}'")
