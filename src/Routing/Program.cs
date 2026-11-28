@@ -35,7 +35,7 @@ switch (providerMode)
             throw new InvalidOperationException("Configure Integrations:Ors:ApiKey for live routing.");
         builder.Services.AddHttpClient("openrouteservice", client =>
         {
-            client.BaseAddress = new Uri((ors["BaseUrl"] ?? "https://api.openrouteservice.org").TrimEnd('/') + "/");
+            client.BaseAddress = new Uri((ors["BaseUrl"] ?? "https://api.heigit.org/openrouteservice").TrimEnd('/') + "/");
             client.Timeout = TimeSpan.FromSeconds(1.5);
         }).AddTypedClient<IRouteProvider>(client => new OrsRouteProvider(client, apiKey))
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });

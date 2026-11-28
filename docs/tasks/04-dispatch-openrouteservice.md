@@ -34,7 +34,7 @@ A person without a car asks for transport. The dispatcher sees a unit, its posit
 
 ## Where to find data
 
-- ORS key: free account at `openrouteservice.org` (daily limit is enough for recordings).
+- ORS key: sign in to [HeiGIT Account](https://account.heigit.org/) and copy the basic key in the API Key tab.
 - Docs: `giscience.github.io/openrouteservice` → Directions, Routing options (`avoid_polygons`).
 - EGNOS: HPL/integrity descriptions on EUSPA pages; choose realistic mock values (HPL of a few to a dozen metres).
 
@@ -65,7 +65,7 @@ existing command receipt and active booking checks.
 | --- | --- |
 | `graph` (default) | Local exercise graph |
 | `mock` or `recorded` | Strict replay from the published `ors/recorded` directory or `Integrations:Ors:FixtureDirectory` |
-| `live` | ORS Directions GeoJSON over HTTP. Configure `Integrations:Ors:ApiKey` and optionally `Integrations:Ors:BaseUrl` |
+| `live` | ORS Directions GeoJSON at `https://api.heigit.org/openrouteservice`. Configure `Integrations:Ors:ApiKey` and optionally `Integrations:Ors:BaseUrl` |
 
 Use `Integrations__Ors__Mode=mock` with `scripts/offline_demo.py` to replay the
 bundled examples. The [request index](../../data/demo/ors/index.json) covers both

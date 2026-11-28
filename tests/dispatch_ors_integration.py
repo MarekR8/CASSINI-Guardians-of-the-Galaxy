@@ -62,7 +62,7 @@ class OrsStub(BaseHTTPRequestHandler):
     cross_closed_bridge = False
 
     def do_POST(self):
-        assert self.path == "/v2/directions/driving-car/geojson", self.path
+        assert self.path == "/openrouteservice/v2/directions/driving-car/geojson", self.path
         assert self.headers["Authorization"] == "test-ors-key"
         body = self.rfile.read(int(self.headers["Content-Length"]))
         data = json.loads(body)
@@ -151,7 +151,7 @@ def main():
     with ThreadingHTTPServer(("127.0.0.1", 0), OrsStub) as server:
         thread = Thread(target=server.serve_forever, daemon=True)
         thread.start()
-        ors_url = f"http://127.0.0.1:{server.server_port}"
+        ors_url = f"http://127.0.0.1:{server.server_port}/openrouteservice"
         try:
             check_capture(args.port, ors_url)
             with demo(args.port, Integrations__Ors__Mode="live", Integrations__Ors__ApiKey="test-ors-key",

@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ORS_URL = "https://api.openrouteservice.org"
+ORS_URL = "https://api.heigit.org/openrouteservice"
 
 
 class NoRedirect(HTTPRedirectHandler):
