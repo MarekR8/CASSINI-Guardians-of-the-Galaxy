@@ -9,5 +9,7 @@
     <Compile Include="../Demo/SiteCatalog/*.cs" Link="SiteCatalog/%(Filename)%(Extension)" />
     <Content Include="../../data/demo/population/estimate.json" Link="population-estimate.json"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../data/demo/sheltering/sample-sites.json" Link="sample-sites.json"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
