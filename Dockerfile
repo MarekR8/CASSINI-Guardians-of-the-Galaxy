@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG PROJECT
 ARG ENABLE_DISPATCH_POSTGRES=false
 ARG ENABLE_MANAGEMENT_POSTGRES=false
+ARG ENABLE_SHELTERING_POSTGRES=false
 ARG ENABLE_RABBITMQ=false
 WORKDIR /source
 COPY src/ src/
@@ -12,7 +13,8 @@ COPY data/demo/sheltering/sample-sites.json data/demo/sheltering/sample-sites.js
 COPY data/demo/routing/valencia-task03.zip data/demo/routing/params.json data/demo/routing/
 COPY data/demo/routing/valencia/population.json data/demo/routing/valencia/deadlines.json data/demo/routing/valencia/shelters.synthetic.json data/demo/routing/valencia/
 RUN dotnet publish "$PROJECT" -c Release -o /output -p:NuGetAudit=false -p:EnableDispatchPostgres="$ENABLE_DISPATCH_POSTGRES" \
-    -p:EnableManagementPostgres="$ENABLE_MANAGEMENT_POSTGRES" -p:EnableRabbitMq="$ENABLE_RABBITMQ"
+    -p:EnableManagementPostgres="$ENABLE_MANAGEMENT_POSTGRES" -p:EnableShelteringPostgres="$ENABLE_SHELTERING_POSTGRES" \
+    -p:EnableRabbitMq="$ENABLE_RABBITMQ"
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app

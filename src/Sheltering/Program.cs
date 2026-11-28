@@ -11,8 +11,21 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
 var seedFile = builder.Configuration["Sheltering:SeedFile"] ?? Path.Combine(AppContext.BaseDirectory, "sample-sites.json");
 var holdsFile = builder.Configuration["Sheltering:HoldsFile"];
 var stateFile = builder.Configuration["Sheltering:StateFile"] ?? Path.Combine("artifacts", "sheltering", "catalog.json");
-builder.Services.AddSingleton(new CatalogStore<Shelter>(stateFile,
-    () => ShelterSeed.WithHolds(ShelterSeed.Read(seedFile), holdsFile), shelter => shelter.ShelterId, shelter => shelter.Version));
+Shelter[] Seed() => ShelterSeed.WithHolds(ShelterSeed.Read(seedFile), holdsFile);
+static string ShelterKey(Shelter shelter) => shelter.ShelterId;
+static int ShelterVersion(Shelter shelter) => shelter.Version;
+var connectionString = builder.Configuration.GetConnectionString("Sheltering");
+if (string.IsNullOrWhiteSpace(connectionString))
+    builder.Services.AddSingleton(new CatalogStore<Shelter>(stateFile, Seed, ShelterKey, ShelterVersion));
+else
+{
+#if SHELTERING_POSTGRES
+    builder.Services.AddSingleton(new CatalogStore<Shelter>(new PostgresShelteringPersistence(connectionString,
+        () => CatalogStore<Shelter>.Initial(Seed, ShelterKey)), ShelterKey, ShelterVersion));
+#else
+    throw new InvalidOperationException("Build Sheltering with EnableShelteringPostgres=true to use a PostgreSQL connection.");
+#endif
+}
 builder.Services.AddSingleton<AllocationStore>();
 builder.Services.AddSingleton(new OperatorDirectory(builder.Configuration["Sheltering:OperatorsFile"]));
 builder.Services.AddSingleton(TimeProvider.System);
@@ -80,6 +93,8 @@ app.MapGet("/queries/shelter-assignments", (string? incidentId, AllocationQuerie
 app.MapGet("/queries/shelter-candidates", ([AsParameters] CandidateRequest request, AllocationQueries handler,
     CancellationToken cancellation) => handler.GetCandidates(request, cancellation));
 app.MapGet("/queries/allocation-outbox", (long? after, AllocationQueries handler) => handler.GetOutbox(after));
+app.MapGet("/queries/allocation-evidence", (string? incidentId, string? caseId, string? legId, AllocationQueries handler) =>
+    handler.GetEvidence(incidentId, caseId, legId));
 app.MapPost("/commands/open-shelter-assignment", (OpenShelterAssignmentCommand command, AllocationCommands handler,
     CancellationToken cancellation) => handler.Open(command, cancellation));
 app.MapPost("/commands/reserve-shelter-places", (ReserveShelterPlacesCommand command, AllocationCommands handler,

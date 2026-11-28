@@ -30,31 +30,30 @@ WALKERS = {"case-31": "walk-start", "case-32": "walk-start"}
 
 
 class Client:
-    def __init__(self, base):
+    """Calls owners through the Gateway; with `sheltering`, Sheltering paths go straight to that service instance."""
+
+    def __init__(self, base, sheltering=None):
         self.base = base
+        self.sheltering = sheltering
 
-    def call(self, path, body=None, expected=200, code=None):
+    def raw(self, path, body=None):
+        prefix = "sheltering/"
+        url = (self.sheltering + "/" + path[len(prefix):] if self.sheltering and path.startswith(prefix)
+               else self.base + "/api/" + path)
         data = json.dumps(body).encode("utf-8") if body is not None else None
-        req = Request(self.base + "/api/" + path, data, {"Content-Type": "application/json"})
         try:
-            response = LOCAL_HTTP.open(req, timeout=15)
-        except HTTPError as error:
-            response = error
-        with response:
-            status, payload = response.status, json.load(response)
-        assert status == expected, (path, status, payload)
-        if code is not None:
-            assert payload["code"] == code, (path, payload)
-        return payload
-
-    def raw(self, path, body):
-        req = Request(self.base + "/api/" + path, json.dumps(body).encode("utf-8"), {"Content-Type": "application/json"})
-        try:
-            response = LOCAL_HTTP.open(req, timeout=15)
+            response = LOCAL_HTTP.open(Request(url, data, {"Content-Type": "application/json"}), timeout=15)
         except HTTPError as error:
             response = error
         with response:
             return response.status, json.load(response)
+
+    def call(self, path, body=None, expected=200, code=None):
+        status, payload = self.raw(path, body)
+        assert status == expected, (path, status, payload)
+        if code is not None:
+            assert payload["code"] == code, (path, payload)
+        return payload
 
     def command(self, name, body, expected=200, code=None):
         return self.call("sheltering/commands/" + name, body, expected, code)
@@ -128,7 +127,8 @@ def setup_group(client):
     return {"incidentId": INCIDENT, "groupId": "group-household", "planRevision": 2}
 
 
-def exercise(client):
+def exercise(client, peer=None):
+    """Replay SH-A04 and SH-A06. With `peer`, the final-place race runs against a second Sheltering instance."""
     plan = setup_group(client)
     baseline = client.shelters()
     occupied_a = baseline["shelter-a"]["commitments"]["occupiedPlaces"]
@@ -167,8 +167,9 @@ def exercise(client):
                            "holdsExpireAt": EXPIRES, "approvalRef": "synthetic-coordinator",
                            "assignments": [target(client.assignment(case_id), best["route"])]}
     with ThreadPoolExecutor(max_workers=2) as pool:
-        outcomes = dict(zip(racers, pool.map(lambda body: client.raw("sheltering/commands/reserve-shelter-places", body),
-                                             racers.values())))
+        outcomes = dict(zip(racers, pool.map(
+            lambda sender, body: sender.raw("sheltering/commands/reserve-shelter-places", body),
+            [client, peer or client], racers.values())))
     statuses = sorted(status for status, _ in outcomes.values())
     assert statuses == [200, 422], outcomes
     winner = next(case for case, (status, _) in outcomes.items() if status == 200)
@@ -326,6 +327,13 @@ def after_restart(client, saved):
     assert client.assignment("case-16")["status"] == "Admitted"
 
 
+def use_fixtures():
+    """Synthetic route, transport and grouping evidence that the exercise depends on."""
+    os.environ["Routing__DestinationEvidenceFile"] = str(ROOT / "data/demo/sheltering/sample-destination-evidence.json")
+    os.environ["Grouping__EvidenceFile"] = str(ROOT / "data/demo/sheltering/sample-grouping.json")
+    ARTIFACTS.mkdir(exist_ok=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=5780)
@@ -333,9 +341,7 @@ def main():
     args = parser.parse_args()
     if not args.no_build:
         build()
-    os.environ["Routing__DestinationEvidenceFile"] = str(ROOT / "data/demo/sheltering/sample-destination-evidence.json")
-    os.environ["Grouping__EvidenceFile"] = str(ROOT / "data/demo/sheltering/sample-grouping.json")
-    ARTIFACTS.mkdir(exist_ok=True)
+    use_fixtures()
     with TemporaryDirectory(prefix="sheltering-reservations-", dir=ARTIFACTS) as directory:
         with start_services(args.port, Path(directory), sheltering=True) as base:
             saved = exercise(Client(base))

@@ -1,0 +1,32 @@
+# Use with compose.yaml and compose.sheltering.yaml. Stores Sheltering in its own PostgreSQL database (SH-T04 Stage B).
+services:
+  sheltering:
+    image: cassini-offline/sheltering:postgres
+    build:
+      args:
+        ENABLE_SHELTERING_POSTGRES: "true"
+    environment:
+      ConnectionStrings__Sheltering: ${SHELTERING_DB_CONNECTION:?Set SHELTERING_DB_CONNECTION}
+    depends_on:
+      sheltering-db:
+        condition: service_healthy
+      situation:
+        condition: service_started
+
+  sheltering-db:
+    profiles: [full]
+    image: postgres:17
+    environment:
+      POSTGRES_DB: sheltering
+      POSTGRES_USER: sheltering
+      POSTGRES_PASSWORD: ${SHELTERING_DB_PASSWORD:?Set SHELTERING_DB_PASSWORD}
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U sheltering -d sheltering"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    networks: [operations]
+    volumes: [sheltering-db:/var/lib/postgresql/data]
+
+volumes:
+  sheltering-db:
