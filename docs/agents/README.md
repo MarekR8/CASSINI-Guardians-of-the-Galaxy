@@ -1,5 +1,7 @@
 # Agent guide
 
+The [CASSINI refactoring prompt](refactoring-prompt.md) is ready to copy into a new conversation for the repository-wide refactoring and Sheltering integration.
+
 - Check the working tree before editing and preserve other people's changes.
 - Use the [business processes](../domain/business-processes.md) and [domain invariants](../domain/domain-invariants.md) for domain decisions. Use the [pitch](../pitch/README.md) for demo scope.
 - Follow the [source layout](../../src/README.md). Coordinate changes to shared identifiers, formats and units across .NET and Python.
