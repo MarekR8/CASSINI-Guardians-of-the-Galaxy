@@ -54,8 +54,13 @@ def check_plan(plan):
     assert 0 <= plan["complianceShare"] <= 1
     assert plan["status"].get("Ok", 0) > 0.5 * routed, plan["status"]
     assert sum(shelter["expectedLoad"] for shelter in plan["shelters"]) <= routed + 1
-    assert all(shelter["overflow"] < 0.02 * shelter["capacity"] + 500 for shelter in plan["shelters"]), plan["shelters"]
+    # Places are a hard limit: the excess is counted as ShelterCapacityExhausted, never as overflow.
+    assert all(shelter["overflow"] <= 1 for shelter in plan["shelters"]), plan["shelters"]
     assert all(0 < wave["iterations"] < 100 for wave in plan["waves"]), plan["waves"]
+    forecast = plan["forecast"]
+    assert forecast["mode"] == "mock" and forecast["label"] == "synthetic" and forecast["status"] == "Ok", forecast
+    safety = {item["shelterId"]: item for item in forecast["shelters"]}
+    assert safety["shelter-a"]["safeUntilMinutes"] == 60 and safety["shelter-d"]["status"] == "NotAssessed", safety
 
 
 def find_nodes(base):

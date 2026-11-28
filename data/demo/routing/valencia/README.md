@@ -9,6 +9,7 @@ These files complement the graph in [valencia-task03.zip](../valencia-task03.zip
 | `flood-source.geojson` | Reference geometry | OSM way 41726575 *Barranc de Xiva*, the lower Poyo ravine that overflowed through Paiporta. |
 | `shelters.synthetic.json` | **Synthetic** | Exercise shelters in `cassini.shelters.v1`. Not real facilities. Replace with the client file. |
 | `deadlines.json` | Model assumption | Deadline per hazard node from the rule below, read by the Routing service. Rewrite with `python experiments/routing/deadlines.py --output data/demo/routing/valencia/deadlines.json` after changing the inputs or the deadline parameters. |
+| `glofas-forecast.mock.json` | **Synthetic** | Hazard forecast in `cassini.hazard-forecast.v1`. It holds hydrographs shaped like the Poyo flood at two river points and, per shelter, the discharge at which the site floods. It gives T_safe per shelter (A 60, E 72, B 96 min after 17:00 UTC). It is not a GloFAS product. Live mode (`Routing:Forecast:Mode=live`) keeps the points and thresholds and reads GloFAS discharge from the Open-Meteo Flood API. |
 
 ## Deadline to leave the flood
 

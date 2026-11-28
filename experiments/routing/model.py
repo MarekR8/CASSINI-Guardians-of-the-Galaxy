@@ -32,10 +32,12 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra
 
 import deadlines as deadline_rules
+import forecast as hazard_forecast
 from graph import DEFAULT_GRAPH, EvacuationGraph
 import shelters as shelter_file
 
 OUT = Path(__file__).resolve().parent / "out"
+STALL = 200  # price iterations without a 1 % lower excess before the capacity step gives up
 
 
 class ProfileNetwork:
@@ -155,6 +157,9 @@ class Model:
         self.capacity = np.array([item["capacity"] for item in shelters], dtype=float)
         self.intake = np.array([item["intakePerHour"] or math.inf for item in shelters], dtype=float)
         self.step_free = np.array([item["stepFree"] for item in shelters])
+        # T_safe per shelter (minutes after the plan start) from the hazard forecast; no forecast means no limit.
+        self.safe_until = np.array([math.inf if item.get("safeUntilMinutes") is None else float(item["safeUntilMinutes"])
+                                    for item in shelters])
         profiles = {name: value for name, value in params["profiles"].items() if isinstance(value, dict)}
         self.handed_over = sum(value["share"] for value in profiles.values() if value.get("handedOver"))
         self.profiles = {name: value for name, value in profiles.items() if not value.get("handedOver")}
@@ -223,6 +228,10 @@ class Model:
         usable = np.isfinite(distance)
         return usable & self.step_free if self.profiles[name]["stepFreeOnly"] else usable
 
+    def safe_on_arrival(self, real, start_minutes):
+        """Shelters still safe when the group arrives (real seconds to each shelter), per the forecast T_safe."""
+        return start_minutes + real / 60 <= self.safe_until
+
     def choice_entries(self, groups, trees, residual, start_minutes, deadline_check=True):
         """Per group: (usable shelters or None, status, leave seconds, perceived cost to each shelter)."""
         exits = self.exit_times(trees)
@@ -230,7 +239,7 @@ class Model:
         for node, name, count, deadline in groups:
             distance = trees[name][0][:, node]
             leave = exits[name][:, node]
-            routable = self.routable(name, distance)
+            routable = self.routable(name, distance) & self.safe_on_arrival(trees[name][2][:, node], start_minutes)
             if not routable.any():
                 entries.append((None, "NoEligibleExit", leave, distance))
                 continue
@@ -264,9 +273,11 @@ class Model:
         return self.logit(self.choice_entries(groups, trees, residual, start_minutes, deadline_check), delay)
 
     def enforce_capacity(self, groups, entries, shelter_people, residual, price):
-        """Raise shelter prices on the final routes until no shelter takes more people than it has places left."""
+        """Raise shelter prices on the final routes until no shelter takes more people than it has places left.
+        Stops early when the excess has not improved by 1 % for STALL iterations; ration() then cuts what is left."""
         queue = self.shelter_delay(shelter_people, np.zeros(len(self.shelters)))
         counts = np.array([group[2] for group in groups])
+        best, since = math.inf, 0
         for iteration in range(1, self.settings["maxPriceIterations"] + 1):
             choices = self.logit(entries, queue + price * 60)
             loads = np.zeros(len(self.shelters))
@@ -276,7 +287,36 @@ class Model:
             price, excess = self.update_price(price, loads, residual)
             if excess <= self.settings["capacityTolerance"]:
                 return choices, iteration
+            if excess < best * 0.99:
+                best, since = excess, 0
+            else:
+                since += 1
+                if since >= STALL:
+                    break
         return choices, iteration
+
+    def ration(self, groups, choices, residual):
+        """Places are a hard limit. Where a shelter is still over its places (a group's in-time shelters are all
+        full), every group sent there is cut proportionally. The placed share keeps a normalised distribution, so the
+        group is still guided out of the flood; the rest is counted as ShelterCapacityExhausted."""
+        loads = np.zeros(len(self.shelters))
+        for (_node, _name, count, _deadline), (share, *_rest) in zip(groups, choices):
+            if share is not None:
+                loads += count * share
+        over = loads > np.maximum(residual, 0) * (1 + self.settings["capacityTolerance"])
+        factor = np.where(over, np.maximum(residual, 0) / np.maximum(loads, 1e-12), 1.0)
+        result = []
+        for share, status, leave, distance in choices:
+            if share is None or not over.any():
+                result.append((share, status, leave, distance, 1.0 if share is not None else 0.0))
+                continue
+            kept = share * factor
+            placed = float(kept.sum())
+            if placed <= 1e-12:
+                result.append((None, "ShelterCapacityExhausted", leave, distance, 0.0))
+            else:
+                result.append((kept / placed, status, leave, distance, placed))
+        return result
 
     def load(self, groups, choices, trees):
         """People per road (both directions) and per shelter for the given choices."""
@@ -357,7 +397,7 @@ class Model:
             if share is None:
                 reserve.append(-math.inf)
                 continue
-            usable = self.routable(name, distance) & np.isfinite(leave)
+            usable = self.routable(name, distance) & self.safe_on_arrival(free[name][2][:, node], 0) & np.isfinite(leave)
             reserve.append(deadline - leave[usable].min() / 60)
         order = np.argsort(reserve, kind="stable")
         counts = np.array([group[2] for group in self.groups])
@@ -418,20 +458,22 @@ class Model:
             trees = self.solve_trees(background + x_road / window_hours, weight)
             price_iterations = 0
             if baseline:
-                final = self.baseline_choice(groups, trees, residual, start)
+                final = [(*choice, 1.0 if choice[0] is not None else 0.0)
+                         for choice in self.baseline_choice(groups, trees, residual, start)]
             else:
                 entries = self.choice_entries(groups, trees, residual, start)
-                final, price_iterations = self.enforce_capacity(groups, entries, x_shelter, residual, price)
+                priced, price_iterations = self.enforce_capacity(groups, entries, x_shelter, residual, price)
+                final = self.ration(groups, priced, residual)
             assigned = np.zeros(len(self.shelters))
-            for number, (share, status, leave, distance) in zip(members, final):
+            for number, (share, status, leave, distance, placed) in zip(members, final):
                 group = self.groups[number]
                 if share is not None:
-                    assigned += group[2] * share
+                    assigned += group[2] * placed * share
                     left = float(np.dot(share, np.where(np.isfinite(leave), leave, 0))) / 60
                     status = "Ok" if start + left <= group[3] else "DeadlineInfeasible"
                 else:
                     left = None
-                outcome[number] = {"share": share, "status": status, "wave": wave, "start": start,
+                outcome[number] = {"share": share, "status": status, "wave": wave, "start": start, "placed": placed,
                                    "leaveMinutes": left, "reserveFreeFlow": float(reserve[number])}
             background += x_road / window_hours
             residual -= assigned  # the places actually given to this wave, after the capacity prices
@@ -448,7 +490,7 @@ class Model:
         for node, name, count, deadline in groups:
             distance = trees[name][0][:, node]
             leave = exits[name][:, node]
-            reachable = self.routable(name, distance)
+            reachable = self.routable(name, distance) & self.safe_on_arrival(trees[name][2][:, node], start)
             if not reachable.any():
                 result.append((None, "NoEligibleExit", leave, distance))
                 continue
@@ -475,13 +517,17 @@ class Model:
         leave_times = []
         per_node = defaultdict(dict)
         for (node, name, count, deadline), item in zip(self.groups, outcome):
-            status_people[item["status"]] += count
+            placed = item["placed"] if item["share"] is not None else 1.0
+            status_people[item["status"]] += count * placed
+            if placed < 1 - 1e-12:
+                status_people["ShelterCapacityExhausted"] += count * (1 - placed)
             if item["share"] is not None:
-                shelter_people += count * item["share"]
-                leave_times.append((item["start"] + item["leaveMinutes"], count))
+                shelter_people += count * placed * item["share"]
+                leave_times.append((item["start"] + item["leaveMinutes"], count * placed))
             per_node[self.graph.nodes[node]["id"]][name] = {
                 "people": rnd(count, 2), "wave": item["wave"] + 1, "startMinute": item["start"],
                 "deadlineMinutes": deadline, "status": item["status"],
+                "placedShare": rnd(item["placed"], 4) if item["share"] is not None else 0.0,
                 "leaveFloodMinutes": None if item["leaveMinutes"] is None else rnd(item["leaveMinutes"], 1),
                 "shares": None if item["share"] is None else
                 {shelter["id"]: rnd(float(value), 4) for shelter, value in zip(self.shelters, item["share"])
@@ -530,13 +576,17 @@ def build(args):
     shelters = shelter_file.load(args.shelters or args.inputs / "shelters.synthetic.json", graph)
     if shelters["rejected"]:
         raise ValueError(f"Shelter file has rejected entries: {shelters['rejected']}")
+    sites = shelters["shelters"]
+    if getattr(args, "forecast", None) is not None:
+        safety = hazard_forecast.evaluate(hazard_forecast.load(args.forecast), [item["id"] for item in sites])
+        sites = hazard_forecast.apply(sites, safety)
     if args.theta is not None:
         params["model"]["thetaPerMinute"] = args.theta
     if getattr(args, "compliance", None) is not None:
         params["model"]["complianceShare"] = args.compliance
     if getattr(args, "hazard_weight", None) is not None:
         params["model"]["hazardTimeWeight"] = args.hazard_weight
-    return Model(graph, people, deadline, shelters["shelters"], params, closed=args.close)
+    return Model(graph, people, deadline, sites, params, closed=args.close)
 
 
 def on_time(status):
@@ -569,6 +619,10 @@ def main():
     parser.add_argument("--inputs", type=Path, default=deadline_rules.INPUTS)
     parser.add_argument("--params", type=Path, default=deadline_rules.PARAMS)
     parser.add_argument("--shelters", type=Path, help="Client shelter file (default: synthetic exercise shelters)")
+    parser.add_argument("--forecast", type=Path, default=hazard_forecast.MOCK,
+                        help="Hazard forecast for T_safe per shelter (default: the synthetic Valencia mock)")
+    parser.add_argument("--no-forecast", dest="forecast", action="store_const", const=None,
+                        help="Ignore the forecast: no T_safe limit")
     parser.add_argument("--close", nargs="*", default=[], help="Extra road IDs to treat as closed")
     parser.add_argument("--theta", type=float, help="Override thetaPerMinute")
     parser.add_argument("--compliance", type=float, help="Override complianceShare: share reached by the system (0-1)")

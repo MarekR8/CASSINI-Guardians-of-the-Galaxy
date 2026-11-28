@@ -10,7 +10,7 @@ COPY data/demo/population/estimate.json data/demo/population/estimate.json
 COPY data/demo/ors/ data/demo/ors/
 COPY data/demo/sheltering/sample-sites.json data/demo/sheltering/sample-sites.json
 COPY data/demo/routing/valencia-task03.zip data/demo/routing/params.json data/demo/routing/
-COPY data/demo/routing/valencia/population.json data/demo/routing/valencia/deadlines.json data/demo/routing/valencia/shelters.synthetic.json data/demo/routing/valencia/
+COPY data/demo/routing/valencia/population.json data/demo/routing/valencia/deadlines.json data/demo/routing/valencia/shelters.synthetic.json data/demo/routing/valencia/glofas-forecast.mock.json data/demo/routing/valencia/
 RUN dotnet publish "$PROJECT" -c Release -o /output -p:NuGetAudit=false -p:EnableDispatchPostgres="$ENABLE_DISPATCH_POSTGRES" \
     -p:EnableManagementPostgres="$ENABLE_MANAGEMENT_POSTGRES" -p:EnableRabbitMq="$ENABLE_RABBITMQ"
 

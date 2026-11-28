@@ -46,9 +46,12 @@ def graph(nodes, roads):
     }
 
 
-def shelter(identifier, node, capacity, step_free=True, intake=None):
-    return {"id": identifier, "name": identifier, "nodeId": node, "capacity": capacity,
+def shelter(identifier, node, capacity, step_free=True, intake=None, safe_until=None):
+    item = {"id": identifier, "name": identifier, "nodeId": node, "capacity": capacity,
             "intakePerHour": intake, "stepFree": step_free}
+    if safe_until is not None:
+        item["safeUntilMinutes"] = safe_until
+    return item
 
 
 # Two flooded nodes (1, 2) and two dry shelters (10, 20). Path costs differ, so shortest paths are unique.
@@ -103,6 +106,18 @@ def cases(params):
                wet_or_dry, {1: 500}, {1: 30}, [shelter("s10", 10, 2000)])
     yield case("hazard-weight-off", "The same network with lambda 1: plain travel time keeps people in the water.",
                wet_or_dry, {1: 500}, {1: 30}, [shelter("s10", 10, 2000)], hazardTimeWeight=1.0)
+    yield case("exit-unsafe-before-arrival", "The forecast makes s10 unsafe 6 minutes after the start. Independent "
+               "walkers from node 1 still reach it over the bridge (5 min); slower profiles and node 2 (lane, 8 min) "
+               "must use s20.",
+               TWO_SHELTERS, {1: 600, 2: 400}, {1: 30, 2: 30},
+               [shelter("s10", 10, 2000, safe_until=6), shelter("s20", 20, 2000)])
+    yield case("forecast-no-exit", "Both shelters are forecast unsafe from the start: NoEligibleExit, never a distribution.",
+               TWO_SHELTERS, {1: 600, 2: 400}, {1: 30, 2: 30},
+               [shelter("s10", 10, 2000, safe_until=0), shelter("s20", 20, 2000, safe_until=0)])
+    yield case("capacity-rationed", "s10 is forecast unsafe from the start and s20 has 300 places for 950 people: "
+               "everyone keeps a route out of the flood, 650 are counted as ShelterCapacityExhausted, no overflow.",
+               TWO_SHELTERS, {1: 600, 2: 400}, {1: 30, 2: 30},
+               [shelter("s10", 10, 2000, safe_until=0), shelter("s20", 20, 300)])
     yield case("no-reentry", "A short path re-enters the flood from dry ground; the dry detour must be used.",
                graph([(1, "hazard"), (2, "safe"), (3, "safe"), (10, "safe")],
                      [road("a", 1, 2, 50), road("wet", 2, 10, 60), road("b", 1, 3, 200),

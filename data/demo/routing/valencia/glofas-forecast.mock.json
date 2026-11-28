@@ -1,0 +1,47 @@
+{
+  "forecastVersion": "cassini.hazard-forecast.v1",
+  "label": "synthetic",
+  "source": "synthetic-glofas-mock",
+  "note": "Synthetic hydrographs shaped like the 29 October 2024 Barranc del Poyo flood, for the exercise only. Not a GloFAS product. Thresholds are assumed discharges at which a shelter site or its last approach floods. Live mode keeps these points and thresholds and reads GloFAS river discharge from the Open-Meteo Flood API.",
+  "issuedAt": "2024-10-29T16:00:00Z",
+  "planStart": "2024-10-29T17:00:00Z",
+  "points": [
+    {
+      "pointId": "poyo-paiporta",
+      "name": "Barranc del Poyo at Paiporta",
+      "latitude": 39.428,
+      "longitude": -0.418,
+      "series": [
+        { "time": "2024-10-29T15:00:00Z", "dischargeM3s": 120 },
+        { "time": "2024-10-29T16:00:00Z", "dischargeM3s": 400 },
+        { "time": "2024-10-29T17:00:00Z", "dischargeM3s": 900 },
+        { "time": "2024-10-29T18:00:00Z", "dischargeM3s": 1700 },
+        { "time": "2024-10-29T19:00:00Z", "dischargeM3s": 2200 },
+        { "time": "2024-10-29T20:00:00Z", "dischargeM3s": 1900 },
+        { "time": "2024-10-29T22:00:00Z", "dischargeM3s": 900 },
+        { "time": "2024-10-30T02:00:00Z", "dischargeM3s": 300 }
+      ]
+    },
+    {
+      "pointId": "turia-new-channel",
+      "name": "Turia new channel south of the city",
+      "latitude": 39.44,
+      "longitude": -0.37,
+      "series": [
+        { "time": "2024-10-29T15:00:00Z", "dischargeM3s": 60 },
+        { "time": "2024-10-29T17:00:00Z", "dischargeM3s": 250 },
+        { "time": "2024-10-29T19:00:00Z", "dischargeM3s": 700 },
+        { "time": "2024-10-29T21:00:00Z", "dischargeM3s": 900 },
+        { "time": "2024-10-30T02:00:00Z", "dischargeM3s": 400 }
+      ]
+    }
+  ],
+  "exposure": [
+    { "shelterId": "shelter-a", "pointId": "poyo-paiporta", "thresholdM3s": 1700 },
+    { "shelterId": "shelter-b", "pointId": "poyo-paiporta", "thresholdM3s": 2000 },
+    { "shelterId": "shelter-e", "pointId": "poyo-paiporta", "thresholdM3s": 1800 },
+    { "shelterId": "shelter-c", "pointId": "turia-new-channel", "thresholdM3s": 3000 },
+    { "shelterId": "shelter-f", "pointId": "turia-new-channel", "thresholdM3s": 3000 },
+    { "shelterId": "shelter-g", "pointId": "turia-new-channel", "thresholdM3s": 3000 }
+  ]
+}

@@ -4,13 +4,13 @@ namespace Cassini.Routing.Evacuation;
 
 internal sealed record EvacuationPlan(
     long Revision, string[] Closed, EvacuationModel Model, EvacuationResult Result, DateTimeOffset ComputedAt,
-    double DurationSeconds);
+    double DurationSeconds, HazardForecast Forecast);
 
 /// <summary>
 /// Keeps one evacuation plan per Situation revision. A plan is computed in the background when the revision or its
 /// closures change; until it is ready, queries answer PlanCalculating instead of returning stale guidance.
 /// </summary>
-internal sealed class EvacuationPlanner(EvacuationCase input, ILogger<EvacuationPlanner> log)
+internal sealed class EvacuationPlanner(EvacuationCase input, IHazardForecast forecasts, ILogger<EvacuationPlanner> log)
 {
     private readonly object gate = new();
     private EvacuationPlan? current;
@@ -46,21 +46,25 @@ internal sealed class EvacuationPlanner(EvacuationCase input, ILogger<Evacuation
         _ = Task.Run(() => Compute(snapshot.Revision, closed));
     }
 
-    private void Compute(long revision, string[] closed)
+    private async Task Compute(long revision, string[] closed)
     {
         try
         {
             var watch = Stopwatch.StartNew();
-            var model = new EvacuationModel(input.Graph, input.People, input.Deadlines, input.Shelters, input.Params, closed);
+            // T_safe per shelter from the hazard forecast: shelters reached after it are not eligible.
+            var forecast = await forecasts.ReadAsync(input.Shelters, CancellationToken.None);
+            var model = new EvacuationModel(input.Graph, input.People, input.Deadlines, forecast.Apply(input.Shelters),
+                input.Params, closed);
             var result = model.Run();
-            var plan = new EvacuationPlan(revision, closed, model, result, DateTimeOffset.UtcNow, watch.Elapsed.TotalSeconds);
+            var plan = new EvacuationPlan(revision, closed, model, result, DateTimeOffset.UtcNow, watch.Elapsed.TotalSeconds,
+                forecast);
             lock (gate)
             {
                 if (requested == revision)
                     current = plan;
             }
-            log.LogInformation("Evacuation plan for revision {Revision} ready in {Seconds:F1} s ({Closed} closures).",
-                revision, plan.DurationSeconds, closed.Length);
+            log.LogInformation("Evacuation plan for revision {Revision} ready in {Seconds:F1} s ({Closed} closures, " +
+                "forecast {Mode} {Status}).", revision, plan.DurationSeconds, closed.Length, forecast.Mode, forecast.Status);
         }
         catch (Exception exception)
         {
