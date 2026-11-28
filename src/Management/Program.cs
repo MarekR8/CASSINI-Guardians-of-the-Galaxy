@@ -1,4 +1,5 @@
 using Cassini.Management;
+using Cassini.Management.Grouping;
 using Cassini.Messaging;
 #if MESSAGING_RABBITMQ
 using Cassini.Messaging.RabbitMq;
@@ -46,6 +47,9 @@ var commands = app.MapGroup("/commands");
 commands.MapPost("/alert", (RecordAlert command, IncidentCommands handler) => handler.RecordAlert(command));
 commands.MapPost("/progress", (RecordProgress command, IncidentCommands handler) => handler.RecordProgress(command));
 commands.MapPost("/ewss-alert", (BroadcastEwssAlert command, EwssCommands handler) => handler.Broadcast(command));
+
+if (app.Configuration["Grouping:EvidenceFile"] is { Length: > 0 } evidenceFile)
+    app.MapGrouping(GroupingEvidence.Load(evidenceFile));
 
 app.Run();
 

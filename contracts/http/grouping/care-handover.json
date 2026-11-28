@@ -1,0 +1,45 @@
+{
+  "updateComposition": {
+    "commandId": "group-add-care",
+    "incidentId": "incident-42",
+    "groupId": "group-household",
+    "expectedGroupRevision": 1,
+    "caseIds": ["case-14", "case-15", "case-16"],
+    "relationships": [
+      {"kind": "household", "caseId": "case-14", "relatedCaseId": "case-15", "evidenceRef": "synthetic-household-report"},
+      {"kind": "required-care", "caseId": "case-15", "relatedCaseId": "case-14", "evidenceRef": "synthetic-care-report"}
+    ],
+    "evidenceRef": "synthetic-care-report"
+  },
+  "handover": {
+    "commandId": "group-handover-1",
+    "incidentId": "incident-42",
+    "groupId": "group-household",
+    "expectedGroupRevision": 2,
+    "handover": {
+      "caseId": "case-15",
+      "fromCaregiverCaseId": "case-14",
+      "toCaregiverCaseId": "case-16",
+      "effectiveAt": "2026-11-27T19:19:00Z",
+      "evidenceRef": "synthetic-confirmed-handover",
+      "authorizedBy": "synthetic-operator",
+      "role": "field-operator",
+      "confirmed": true
+    }
+  },
+  "approve": {
+    "commandId": "group-approve-care",
+    "incidentId": "incident-42",
+    "groupId": "group-household",
+    "expectedGroupRevision": 3,
+    "expectedPlanRevision": 2,
+    "legId": "leg-shelter",
+    "evidenceId": "care-handover"
+  },
+  "expected": {
+    "planRevision": 3,
+    "status": "Approved",
+    "reason": "SharedShelterNotFeasible",
+    "routes": {"paired-pickup-north": "shelter-b", "walk-east": "shelter-a"}
+  }
+}

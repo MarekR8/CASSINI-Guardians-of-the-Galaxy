@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Cassini.Management.Grouping;
 using Cassini.Messaging;
 
 namespace Cassini.Management;
@@ -32,11 +33,12 @@ internal sealed record Receipt(string Command, JsonElement Result);
 
 /// <summary>
 /// Everything Management commits at once. <c>Outbox</c> holds events not yet confirmed by the bus;
-/// <c>Inbox</c> holds the last processed <c>consumer:eventId</c> receipts.
+/// <c>Inbox</c> holds the last processed <c>consumer:eventId</c> receipts. <c>Groups</c> belongs to Grouping.
 /// </summary>
 internal sealed record ManagementState(
     IncidentView Incident, Dictionary<string, Receipt> Receipts, EwssBroadcast[]? Broadcasts = null,
-    IntegrationEvent[]? Outbox = null, string[]? Inbox = null)
+    IntegrationEvent[]? Outbox = null, string[]? Inbox = null,
+    Dictionary<string, EvacuationGroup>? Groups = null)
 {
     internal const int MaxInbox = 2000;
 
@@ -72,6 +74,18 @@ internal sealed class ManagementStore(IManagementPersistence persistence, Outbox
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public ManagementState Read() => persistence.Read();
+
+    /// <summary>Grouping's name for <see cref="Read"/>.</summary>
+    public ManagementState ReadSnapshot() => Read();
+
+    /// <summary>Grouping's tuple form of <see cref="Execute{TCommand}"/>.</summary>
+    public IResult ExecuteState<TCommand>(
+        string? id, TCommand command, Func<ManagementState, (ManagementState? Changed, object Payload, int Status)> apply) =>
+        Execute(id, command, state =>
+        {
+            var (changed, payload, status) = apply(state);
+            return new Outcome(changed, payload, status);
+        });
 
     /// <summary>
     /// Applies a command once. An exact retry returns the original result; another body under the same ID is a conflict.

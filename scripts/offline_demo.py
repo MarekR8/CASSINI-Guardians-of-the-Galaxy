@@ -36,7 +36,7 @@ def local_url(port):
 
 
 @contextmanager
-def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False):
+def start_services(port, data_dir, scenario="sample", city_directory=None, sheltering=False, *, auto_replan=None):
     data_dir.mkdir(parents=True, exist_ok=True)
     services = [*SERVICES, ("Sheltering", "Cassini.Sheltering", 5)] if sheltering else SERVICES
     env = dict(os.environ)
@@ -58,6 +58,8 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
         **{f"Services__{service}": local_url(port + offset)
            for service, _, offset in services if service != "Gateway"},
     })
+    if auto_replan is not None:
+        env["Dispatch__AutoReplan"] = str(auto_replan).lower()
     if sheltering:
         fixture = ROOT / "data" / "demo" / "sheltering" / "sample-sites.json"
         env.update({
@@ -145,7 +147,8 @@ def main():
                          "valencia_integration.py" if args.scenario == "valencia" else "offline_integration.py")
             scripts = [test_file, "connectivity_integration.py"] if test_file == "offline_integration.py" else [test_file]
             with start_services(args.port, Path(directory), args.scenario,
-                                city.resolve() if city else None, sheltering=args.sheltering) as url:
+                                city.resolve() if city else None, sheltering=args.sheltering,
+                                auto_replan=False) as url:
                 for script in scripts:
                     subprocess.run([os.sys.executable, str(ROOT / "tests" / script), url], cwd=ROOT, check=True)
             if args.sheltering:

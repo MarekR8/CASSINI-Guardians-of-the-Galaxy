@@ -1,0 +1,283 @@
+{
+  "exerciseAt": "2026-11-27T19:20:00Z",
+  "evidence": [
+    {
+      "evidenceId": "household-shared",
+      "incidentId": "incident-42",
+      "legId": "leg-shelter",
+      "situationRevision": 0,
+      "source": "synthetic-grouping-routes-v1",
+      "observedAt": "2026-11-27T19:18:00Z",
+      "validUntil": "2026-11-27T19:45:00Z",
+      "cases": [
+        {
+          "caseId": "case-14",
+          "node": "walk-start",
+          "caseVersion": 1,
+          "clearanceDeadline": "2026-11-27T19:37:00Z"
+        },
+        {
+          "caseId": "case-15",
+          "node": "pickup",
+          "caseVersion": 1,
+          "clearanceDeadline": "2026-11-27T19:37:00Z"
+        }
+      ],
+      "candidates": [
+        {
+          "routeId": "walk-east",
+          "caseIds": [
+            "case-14"
+          ],
+          "startNode": "walk-start",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-a",
+          "eligible": true,
+          "supportedMobility": [
+            "Walking"
+          ],
+          "departsAt": "2026-11-27T19:21:00Z",
+          "clearsHazardAt": "2026-11-27T19:25:00Z",
+          "arrivesAt": "2026-11-27T19:29:00Z"
+        },
+        {
+          "routeId": "pickup-east",
+          "caseIds": [
+            "case-15"
+          ],
+          "startNode": "pickup",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-a",
+          "eligible": true,
+          "supportedMobility": [
+            "Assisted"
+          ],
+          "departsAt": "2026-11-27T19:23:00Z",
+          "clearsHazardAt": "2026-11-27T19:30:00Z",
+          "arrivesAt": "2026-11-27T19:33:00Z"
+        },
+        {
+          "routeId": "pickup-north",
+          "caseIds": [
+            "case-15"
+          ],
+          "startNode": "pickup",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-b",
+          "eligible": true,
+          "supportedMobility": [
+            "Assisted"
+          ],
+          "departsAt": "2026-11-27T19:22:00Z",
+          "clearsHazardAt": "2026-11-27T19:28:00Z",
+          "arrivesAt": "2026-11-27T19:31:00Z"
+        },
+        {
+          "routeId": "late-meet",
+          "caseIds": [
+            "case-14",
+            "case-15"
+          ],
+          "startNode": "pickup",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-a",
+          "eligible": true,
+          "supportedMobility": [
+            "Walking",
+            "Assisted"
+          ],
+          "departsAt": "2026-11-27T19:35:00Z",
+          "clearsHazardAt": "2026-11-27T19:39:00Z",
+          "arrivesAt": "2026-11-27T19:41:00Z"
+        }
+      ],
+      "options": [
+        [
+          "late-meet"
+        ],
+        [
+          "walk-east",
+          "pickup-north"
+        ],
+        [
+          "walk-east",
+          "pickup-east"
+        ]
+      ]
+    },
+    {
+      "evidenceId": "household-separated",
+      "incidentId": "incident-42",
+      "legId": "leg-shelter",
+      "situationRevision": 1,
+      "source": "synthetic-grouping-routes-v1",
+      "observedAt": "2026-11-27T19:18:00Z",
+      "validUntil": "2026-11-27T19:45:00Z",
+      "cases": [
+        {
+          "caseId": "case-14",
+          "node": "walk-start",
+          "caseVersion": 1,
+          "clearanceDeadline": "2026-11-27T19:37:00Z"
+        },
+        {
+          "caseId": "case-15",
+          "node": "pickup",
+          "caseVersion": 1,
+          "clearanceDeadline": "2026-11-27T19:37:00Z"
+        }
+      ],
+      "candidates": [
+        {
+          "routeId": "walk-east",
+          "caseIds": [
+            "case-14"
+          ],
+          "startNode": "walk-start",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-a",
+          "eligible": true,
+          "supportedMobility": [
+            "Walking"
+          ],
+          "departsAt": "2026-11-27T19:21:00Z",
+          "clearsHazardAt": "2026-11-27T19:25:00Z",
+          "arrivesAt": "2026-11-27T19:29:00Z"
+        },
+        {
+          "routeId": "pickup-east",
+          "caseIds": [
+            "case-15"
+          ],
+          "startNode": "pickup",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-a",
+          "eligible": false,
+          "supportedMobility": [
+            "Assisted"
+          ],
+          "departsAt": "2026-11-27T19:23:00Z",
+          "clearsHazardAt": "2026-11-27T19:30:00Z",
+          "arrivesAt": "2026-11-27T19:33:00Z"
+        },
+        {
+          "routeId": "pickup-north",
+          "caseIds": [
+            "case-15"
+          ],
+          "startNode": "pickup",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-b",
+          "eligible": true,
+          "supportedMobility": [
+            "Assisted"
+          ],
+          "departsAt": "2026-11-27T19:22:00Z",
+          "clearsHazardAt": "2026-11-27T19:28:00Z",
+          "arrivesAt": "2026-11-27T19:31:00Z"
+        },
+        {
+          "routeId": "late-meet",
+          "caseIds": [
+            "case-14",
+            "case-15"
+          ],
+          "startNode": "pickup",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-a",
+          "eligible": true,
+          "supportedMobility": [
+            "Walking",
+            "Assisted"
+          ],
+          "departsAt": "2026-11-27T19:35:00Z",
+          "clearsHazardAt": "2026-11-27T19:39:00Z",
+          "arrivesAt": "2026-11-27T19:41:00Z"
+        }
+      ],
+      "options": [
+        [
+          "late-meet"
+        ],
+        [
+          "walk-east",
+          "pickup-east"
+        ],
+        [
+          "walk-east",
+          "pickup-north"
+        ]
+      ]
+    },
+    {
+      "evidenceId": "care-handover",
+      "incidentId": "incident-42",
+      "legId": "leg-shelter",
+      "situationRevision": 1,
+      "source": "synthetic-grouping-routes-v1",
+      "observedAt": "2026-11-27T19:18:00Z",
+      "validUntil": "2026-11-27T19:45:00Z",
+      "cases": [
+        {
+          "caseId": "case-14",
+          "node": "walk-start",
+          "caseVersion": 1,
+          "clearanceDeadline": "2026-11-27T19:37:00Z"
+        },
+        {
+          "caseId": "case-15",
+          "node": "pickup",
+          "caseVersion": 1,
+          "clearanceDeadline": "2026-11-27T19:37:00Z"
+        },
+        {
+          "caseId": "case-16",
+          "node": "pickup",
+          "caseVersion": 1,
+          "clearanceDeadline": "2026-11-27T19:37:00Z"
+        }
+      ],
+      "candidates": [
+        {
+          "routeId": "walk-east",
+          "caseIds": [
+            "case-14"
+          ],
+          "startNode": "walk-start",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-a",
+          "eligible": true,
+          "supportedMobility": [
+            "Walking"
+          ],
+          "departsAt": "2026-11-27T19:21:00Z",
+          "clearsHazardAt": "2026-11-27T19:25:00Z",
+          "arrivesAt": "2026-11-27T19:29:00Z"
+        },
+        {
+          "routeId": "paired-pickup-north",
+          "caseIds": [
+            "case-15",
+            "case-16"
+          ],
+          "startNode": "pickup",
+          "destinationKind": "shelter",
+          "destinationId": "shelter-b",
+          "eligible": true,
+          "supportedMobility": [
+            "Assisted"
+          ],
+          "departsAt": "2026-11-27T19:22:00Z",
+          "clearsHazardAt": "2026-11-27T19:28:00Z",
+          "arrivesAt": "2026-11-27T19:31:00Z"
+        }
+      ],
+      "options": [
+        [
+          "walk-east",
+          "paired-pickup-north"
+        ]
+      ]
+    }
+  ]
+}

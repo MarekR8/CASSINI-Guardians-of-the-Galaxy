@@ -82,6 +82,20 @@ namespace Cassini.Management.Postgres.Migrations
                     b.ToTable("alerts", (string)null);
                 });
 
+            modelBuilder.Entity("Cassini.Management.Postgres.GroupRow", b =>
+                {
+                    b.Property<string>("GroupId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("GroupId");
+
+                    b.ToTable("evacuation_groups", (string)null);
+                });
+
             modelBuilder.Entity("Cassini.Management.Postgres.InboxRow", b =>
                 {
                     b.Property<string>("Receipt")

@@ -64,7 +64,7 @@ Each row is a binding from the durable topic exchange `evacuation.events`. A ser
 | Publisher | Event and routing key | Queue receiving the event | Processing result |
 | --- | --- | --- | --- |
 | Management | `HazardAlertRecorded.v1` → `management.hazard-alert-recorded.v1` | `situation.events` | Refresh the snapshot for the reported area, preserving the evidence status. |
-| Situation Data | `SituationChanged.v1` → `situation.changed.v1` | `routing.events`, `management.events` | Routing revalidates affected instructions. Management marks the relevant map layer for refresh. |
+| Situation Data | `SituationChanged.v1` → `situation.changed.v1` | `routing.events`, `management.events`, `dispatch.events` | Routing revalidates affected instructions. Management marks the relevant map layer for refresh. Dispatch checks active response routes. |
 | Routing | `RoutePublished.v1` → `routing.route-published.v1` | `management.events`, `dispatch.events` | Management updates the monitor. Dispatch handles response subjects, associates the version with the assignment and makes a booked task ready. |
 | Routing | `RouteWithdrawn.v1` → `routing.route-withdrawn.v1` | `management.events`, `dispatch.events` | Mark the named version withdrawn. Dispatch tracks affected tasks for route review. The monitor keeps a later current version if it already exists. |
 | Dispatch | `AssistanceRequested.v1` → `dispatch.assistance-requested.v1` | `management.events` | Show that the case has an open request. |
@@ -72,6 +72,8 @@ Each row is a binding from the durable topic exchange `evacuation.events`. A ser
 | Management | `CaseProgressChanged.v1` → `management.case-progress-changed.v1` | No remote binding is required for the MVP monitor. | Management serves confirmed case progress through its own read view. The event is available if a downstream projection is added. |
 
 Keep shared event payloads minimal. Consumers fetch detailed positions, routes or pickup details from the owner under the applicable role. Deduplicate using `(consumerName, eventId)` and commit a consumer receipt with its state change. Use publisher confirms and verify broker routing for messages that require a subscriber before marking the outbox entry sent. Send processing failures to a dead-letter queue after bounded retries. For a missing revision that affects an outcome, read current state from the owner. Ordering protection uses the producer's `subjectVersion` and the target `routeVersion` for route events. A late withdrawal of version 1 cannot retire version 2.
+
+The offline Dispatch adapter uses both notifications to wake its periodic reconciliation. It acknowledges the wakeup and looks up current restrictions in Routing. The Dispatch command checks the assignment version before writing. [Demo API, broker settings and integration test](tasks/04-dispatch-openrouteservice.md#ranking-i-automatyczne-przeliczenie).
 
 ## Worked contract example for the bridge closure
 

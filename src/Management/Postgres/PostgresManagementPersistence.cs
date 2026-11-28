@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Cassini.Management.Grouping;
 using Cassini.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -90,7 +91,10 @@ internal sealed class PostgresManagementPersistence : IManagementPersistence
         var outbox = context.Outbox.AsNoTracking().OrderBy(row => row.Sequence)
             .Select(row => row.Payload).AsEnumerable().Select(Parse<IntegrationEvent>).ToArray();
         var inbox = context.Inbox.AsNoTracking().OrderBy(row => row.Sequence).Select(row => row.Receipt).ToArray();
-        return new(new IncidentView(incident.IncidentId, alerts, cases), receipts, broadcasts, outbox, inbox);
+        var groups = context.Groups.AsNoTracking().AsEnumerable()
+            .ToDictionary(row => row.GroupId, row => Parse<EvacuationGroup>(row.Payload));
+        return new(new IncidentView(incident.IncidentId, alerts, cases), receipts, broadcasts, outbox, inbox,
+            groups.Count == 0 ? null : groups);
     }
 
     private static void Write(ManagementDbContext context, ManagementState current, ManagementState next)
@@ -126,6 +130,17 @@ internal sealed class PostgresManagementPersistence : IManagementPersistence
         var previouslyPending = current.Outbox.Select(message => message.EventId).ToHashSet();
         foreach (var message in next.Outbox.Where(message => !previouslyPending.Contains(message.EventId)))
             context.Outbox.Add(new OutboxRow { EventId = message.EventId, Payload = Serialize(message) });
+
+        // Groups hold arrays, so compare their serialized form instead of record equality.
+        var knownGroups = current.Groups ?? [];
+        foreach (var (groupId, group) in next.Groups ?? [])
+        {
+            var payload = Serialize(group);
+            if (!knownGroups.TryGetValue(groupId, out var previous))
+                context.Groups.Add(new GroupRow { GroupId = groupId, Payload = payload });
+            else if (Serialize(previous) != payload)
+                context.Groups.Update(new GroupRow { GroupId = groupId, Payload = payload });
+        }
 
         var kept = next.Inbox.ToHashSet();
         var pruned = current.Inbox.Where(receipt => !kept.Contains(receipt)).ToArray();

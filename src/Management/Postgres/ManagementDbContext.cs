@@ -16,6 +16,7 @@ internal sealed class ManagementDbContext(DbContextOptions<ManagementDbContext> 
     public DbSet<ReceiptRow> Receipts => Set<ReceiptRow>();
     public DbSet<OutboxRow> Outbox => Set<OutboxRow>();
     public DbSet<InboxRow> Inbox => Set<InboxRow>();
+    public DbSet<GroupRow> Groups => Set<GroupRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -63,6 +64,12 @@ internal sealed class ManagementDbContext(DbContextOptions<ManagementDbContext> 
             entity.ToTable("inbox");
             entity.HasKey(row => row.Receipt);
             entity.Property(row => row.Sequence).UseIdentityAlwaysColumn();
+        });
+        model.Entity<GroupRow>(entity =>
+        {
+            entity.ToTable("evacuation_groups");
+            entity.HasKey(row => row.GroupId);
+            entity.Property(row => row.Payload).HasColumnType("jsonb");
         });
     }
 }
@@ -113,6 +120,12 @@ internal sealed class InboxRow
     public required string Receipt { get; set; }
     public long Sequence { get; set; }
     public DateTimeOffset ProcessedAt { get; set; }
+}
+
+internal sealed class GroupRow
+{
+    public required string GroupId { get; set; }
+    public required string Payload { get; set; }
 }
 
 /// <summary>Used by <c>dotnet ef migrations</c>; the connection is never opened at design time.</summary>
