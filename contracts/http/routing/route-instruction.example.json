@@ -1,0 +1,14 @@
+{
+  "kind": "shelter-assignment",
+  "id": "incident-42/case-31/leg-shelter",
+  "aggregateVersion": 3,
+  "current": null,
+  "lastWithdrawal": {
+    "routeVersion": 2,
+    "reasonCode": "ShelterClosed",
+    "evidenceRef": "synthetic-closure-report",
+    "reservationId": "move-a-case-31",
+    "withdrawnAt": "2026-11-28T18:16:41.4425939+00:00",
+    "commandId": "withdraw-a"
+  }
+}

@@ -6,11 +6,20 @@
     <UserSecretsId>Cassini.Routing</UserSecretsId>
     <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
+  <!-- -p:EnableRabbitMq=true adds the RabbitMQ bus (Integrations:Bus:Mode=live) for the instruction outbox (SH-T06). -->
+  <PropertyGroup Condition="'$(EnableRabbitMq)' == 'true'">
+    <DefineConstants>$(DefineConstants);MESSAGING_RABBITMQ</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableRabbitMq)' == 'true'">
+    <ProjectReference Include="../Shared/Messaging/RabbitMq/Cassini.Messaging.RabbitMq.csproj" />
+  </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../Shared/Messaging/Cassini.Messaging.csproj" />
     <InternalsVisibleTo Include="Cassini.Routing.Tests" />
     <Compile Include="../Demo/CityNetwork.cs" Link="CityNetwork.cs" />
     <Compile Include="../Demo/RoadBounds.cs" Link="RoadBounds.cs" />
     <Compile Include="../Demo/SiteCatalog/SiteRules.cs" Link="SiteRules.cs" />
+    <Compile Include="../Demo/SiteCatalog/CatalogStore.cs" Link="CatalogStore.cs" />
     <Content Include="../../data/demo/ors/recorded/*.json" Link="ors/recorded/%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <!-- Task 03 evacuation model inputs for the Valencia scenario. -->

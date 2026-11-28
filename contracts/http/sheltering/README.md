@@ -17,6 +17,7 @@ These examples use the [Sheltering and Grouping interfaces](../../../docs/shelte
 | [Confirm admission](confirm-shelter-admission.request.json) and [result](confirm-shelter-admission.response.json) | Request to and response from `POST /api/sheltering/commands/confirm-shelter-admission`. | SH-T05 |
 | [Confirm departure](confirm-shelter-departure.request.json) | Request to `POST /api/sheltering/commands/confirm-shelter-departure`. The response has the same shape as an admission. | SH-T05 |
 | [Shelter reception](shelter-reception.response.json) | Illustrative response to `GET /api/sheltering/queries/shelter-reception?shelterId=shelter-a&at=2026-11-27T19:51:00Z`. | SH-W5 (SH-T05) |
+| Instruction state: [pending](shelter-instruction.pending.response.json), [current](shelter-instruction.current.response.json) and [withdrawn](shelter-instruction.withdrawn.response.json) | Responses to `GET /api/sheltering/queries/shelter-instruction` and `POST /api/sheltering/commands/reconcile-shelter-instruction`. | SH-W5 (SH-T06) |
 
 The catalog command examples use separate IDs from the seeded catalog so they can create entries with `expectedVersion: 0`. Repeating either command with the same payload returns its original result. For a subsequent change, use a new command ID and the site's returned version.
 
@@ -50,6 +51,38 @@ Business rejections are `422` with `InsufficientCapacity`, `InsufficientAccessib
 A `route.query` names either `caseIds`, which must include the assignment's case, or a graph `node` for synthetic exercise people that Management does not track. Each hold is written into the shelter's `reception.holds` with its commitments in the same commit as the assignment, so SH-T05 admission converts exactly that hold. The assignment then reads as `Admitted`, and as `Closed` after a confirmed departure. A hold released by a walk-in elsewhere leaves it `AwaitingReplacement`. Allocation commands never move or release admitted occupancy or the baseline occupancy configured in the catalog.
 
 Replay the exercise with `python tests/sheltering_reservations_integration.py`. With `-p:EnableShelteringPostgres=true` and `ConnectionStrings:Sheltering`, the same contract is served from PostgreSQL. `python tests/sheltering_postgres_integration.py` runs it on two instances against a fresh database.
+
+## SH-W5 instruction publication (SH-T06)
+
+A committed booking is not a route. The coordinator publishes it through Routing in a separate step, after the booking commits. The examples were recorded from `python tests/sheltering_publication_integration.py`.
+
+| Method and Gateway path | Behaviour |
+| --- | --- |
+| `GET /api/sheltering/queries/shelter-instruction?incidentId&caseId&legId` | Reads the assignment here and the [Routing instruction](../routing/README.md#shelter-instruction-publication-sh-t06) for the same leg. Returns `state`, `reason`, `assignment` and `instruction`. |
+| `POST /api/sheltering/commands/reconcile-shelter-instruction` | Takes `commandId`, `correlationId`, `incidentId`, `caseId`, `legId` and `expectedAssignmentVersion`. Reads both owners, then publishes the current hold, withdraws guidance the assignment no longer supports, or changes nothing. Returns the new state. |
+| `GET /api/sheltering/queries/shelter-instruction-board?incidentId` | Stage B only (`Integrations:Bus:Mode=live`). The event-driven board, with one row per leg and `counts` per state. |
+
+The `state` field takes these values:
+
+| State | Meaning |
+| --- | --- |
+| `PendingPublication` | The hold is reserved, but Routing has no instruction for exactly this reservation. This is the state after booking, after a failed publication and after a transfer until it is published. |
+| `Current` | Routing's current route was published for this reservation. |
+| `WithdrawalPending` | Guidance is still current, but the assignment no longer holds that reservation, for example after a closure. |
+| `Withdrawn` | No guidance is current. The last withdrawal carries its reason. |
+| `NoInstruction` | Nothing was ever published, for example while the assignment is `Pending`. |
+| `PublicationUnknown` | Routing did not answer. This state is never shown as an issued route. |
+
+Before publishing, the reconcile command repeats the `destination-route` proposal with the hold's route inputs. The hold must still cover the expected arrival. Routing then rechecks the proposal's evidence ID before it commits.
+
+The `commandId` is passed to Routing unchanged. A retry after an unknown outcome therefore finds the instruction already committed, or Routing's receipt, and never adds a route version. An old command cannot restore earlier guidance: it fails with `409 AssignmentVersionConflict` once the assignment has moved on.
+
+Errors:
+- `422 RouteIneligible` or `HoldExpiresBeforeArrival`: the booking stays visibly pending. Invalidate or transfer it before reconciling again.
+- `409 AssignmentChanged`: the assignment changed while Routing committed. Reconcile again with a new command ID.
+- `503 RoutingUnavailable`: the outcome is unknown. Read the instruction state before retrying.
+
+In Stage B, both Sheltering outboxes go to RabbitMQ: the allocation outbox and each shelter's reception events. An event stays pending until the broker confirms it. The confirmed event IDs are stored next to the outbox, in the PostgreSQL table `sheltering_published` when that store is used. The board consumes `ShelterAssignmentChanged.v1`, `RoutePublished.v1` and `RouteWithdrawn.v1` from the `sheltering.events` queue. It counts only committed facts. The ordering rules are in [`contracts/events/README.md`](../../events/README.md#sh-w5-instruction-events-sh-t06).
 
 ## Admissions and departures (SH-T05)
 

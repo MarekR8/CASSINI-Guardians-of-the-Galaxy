@@ -1,0 +1,20 @@
+{
+  "eventId": "00000000-0000-4000-8000-000000000003",
+  "type": "ShelterAvailabilityChanged.v1",
+  "producer": "sheltering",
+  "subjectId": "shelter-a",
+  "subjectVersion": 2,
+  "occurredAt": "2026-11-27T19:20:00Z",
+  "correlationId": "corr-sh-t06",
+  "causationId": "cmd-03",
+  "payload": {
+    "shelterId": "shelter-a",
+    "shelterVersion": 2,
+    "allocationRevision": 2,
+    "held": {
+      "places": 3,
+      "accessiblePlaces": 1
+    },
+    "reason": "Reserved"
+  }
+}

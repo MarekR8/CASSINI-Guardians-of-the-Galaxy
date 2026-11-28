@@ -22,11 +22,12 @@ internal sealed record AllocationEvidence(
     string? RouteEvidenceId, long? SituationRevision, int? GroupPlanRevision, string? WithdrawnReservationId,
     string? Finding, string? EvidenceRef, DateTimeOffset RecordedAt);
 
+/// <summary><c>Published</c> lists the outbox event IDs the broker has confirmed (SH-T06 Stage B).</summary>
 internal sealed record AllocationState(
     int Revision, Dictionary<string, ShelterAssignment> Assignments, Dictionary<string, AllocationReceipt> Receipts,
-    OutboxEntry[] Outbox, AllocationEvidence[]? Evidence = null)
+    OutboxEntry[] Outbox, AllocationEvidence[]? Evidence = null, string[]? Published = null)
 {
-    internal static AllocationState Empty() => new(0, new(StringComparer.Ordinal), new(StringComparer.Ordinal), [], []);
+    internal static AllocationState Empty() => new(0, new(StringComparer.Ordinal), new(StringComparer.Ordinal), [], [], []);
 
     internal ShelterAssignment? Find(AssignmentRef reference) => Assignments.GetValueOrDefault(reference.Key);
 }
@@ -47,9 +48,31 @@ internal sealed record AllocationChange(
 /// reception ledgers (SH-T05). Holds are written into <c>reception.holds</c>, so one commit changes an assignment,
 /// the hold, the shelter commitments and the outbox together, and admission converts exactly the hold issued here.
 /// </summary>
-internal sealed class AllocationStore(CatalogStore<Shelter> catalog, TimeProvider clock)
+internal sealed class AllocationStore(CatalogStore<Shelter> catalog, TimeProvider clock) : IOutboxStore
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
+    /// <summary>
+    /// Both Sheltering outboxes, the allocation outbox and every reception ledger's, in commit order. An event stays
+    /// pending until the broker confirmed it, so a restart after commit publishes it then (at least once).
+    /// </summary>
+    public IReadOnlyList<IntegrationEvent> PendingEvents()
+    {
+        var (_, shelters, state) = catalog.ReadWith<AllocationState>();
+        var published = (state?.Published ?? []).ToHashSet(StringComparer.Ordinal);
+        return (state?.Outbox ?? []).Select(entry => entry.Event)
+            .Concat(shelters.Values.SelectMany(shelter => shelter.Ledger.Outbox).Select(item => new IntegrationEvent(
+                item.EventId.ToString("D"), item.Type, item.Producer, item.SubjectId, item.SubjectVersion, item.OccurredAt,
+                item.CorrelationId, item.CausationId, JsonSerializer.SerializeToElement(item.Payload, Json))))
+            .Where(message => !published.Contains(message.EventId)).OrderBy(message => message.OccurredAt).ToArray();
+    }
+
+    public void MarkPublished(IReadOnlyCollection<string> eventIds) => catalog.Mutate<AllocationState, int>((_, stored) =>
+    {
+        var state = stored ?? AllocationState.Empty();
+        var published = state.Published ?? [];
+        return ([], state with { Published = [.. published, .. eventIds.Except(published, StringComparer.Ordinal)] }, 0);
+    });
 
     internal AllocationView Read()
     {
@@ -95,7 +118,10 @@ internal sealed class AllocationStore(CatalogStore<Shelter> catalog, TimeProvide
             var next = evidence.Length == 0 ? 0 : evidence[^1].Sequence;
             var now = clock.GetUtcNow();
             evidence = [.. evidence, .. change.Assignments.Select(item => Evidence(++next, commandId, decision, item, now))];
-            return (change.Shelters.ToArray(), new AllocationState(revision, assignments, receipts, outbox, evidence), result);
+            return (change.Shelters.ToArray(), state with
+            {
+                Revision = revision, Assignments = assignments, Receipts = receipts, Outbox = outbox, Evidence = evidence,
+            }, result);
         });
     }
 

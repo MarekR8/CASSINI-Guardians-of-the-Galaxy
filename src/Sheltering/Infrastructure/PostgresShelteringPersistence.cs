@@ -70,6 +70,9 @@ internal sealed class PostgresShelteringPersistence : ICatalogPersistence<Shelte
             );
             CREATE INDEX allocation_evidence_subject ON allocation_evidence (incident_id, case_id, leg_id);
             """),
+        (2, "outbox-publication", """
+            CREATE TABLE sheltering_published (event_id text PRIMARY KEY);
+            """),
     ];
 
     private sealed record Loaded(
@@ -194,7 +197,9 @@ internal sealed class PostgresShelteringPersistence : ICatalogPersistence<Shelte
             reader => Parse<OutboxEntry>(reader.GetString(0))).ToArray();
         var evidence = Query(connection, transaction, "SELECT document::text FROM allocation_evidence ORDER BY sequence",
             reader => Parse<AllocationEvidence>(reader.GetString(0))).ToArray();
-        var allocation = new AllocationState(meta.Allocation, assignments, allocationReceipts, outbox, evidence);
+        var published = Query(connection, transaction, "SELECT event_id FROM sheltering_published ORDER BY event_id",
+            reader => reader.GetString(0)).ToArray();
+        var allocation = new AllocationState(meta.Allocation, assignments, allocationReceipts, outbox, evidence, published);
         var state = new CatalogState<Shelter>(meta.Catalog, shelters, catalogReceipts, outcomes,
             JsonSerializer.SerializeToElement(allocation, Json));
         return new(state, allocation, meta.Seq, shelterRows, assignmentRows);
@@ -260,6 +265,10 @@ internal sealed class PostgresShelteringPersistence : ICatalogPersistence<Shelte
                 VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
                 """, item.Sequence, item.CommandId, item.IncidentId, item.CaseId, item.LegId, item.AssignmentVersion,
                 JsonSerializer.Serialize(item, Json));
+        // Another instance may confirm the same event: publication is at least once, the marker is set once.
+        foreach (var eventId in (allocation.Published ?? []).Except(loaded.Allocation.Published ?? [], StringComparer.Ordinal))
+            Execute(connection, transaction,
+                "INSERT INTO sheltering_published (event_id) VALUES ($1) ON CONFLICT DO NOTHING", eventId);
         return allocation.Revision;
     }
 

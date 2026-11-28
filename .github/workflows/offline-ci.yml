@@ -22,12 +22,17 @@ jobs:
           docker compose config --quiet
           docker compose -f compose.yaml -f compose.sheltering.yaml config --quiet
           SHELTERING_DB_CONNECTION=ci SHELTERING_DB_PASSWORD=ci docker compose -f compose.yaml -f compose.sheltering.yaml -f compose.sheltering-postgres.yaml --profile full config --quiet
+          RABBITMQ_PASSWORD=ci docker compose -f compose.yaml -f compose.sheltering.yaml -f compose.sheltering-full.yaml --profile full config --quiet
       - name: Run the offline integration scenario
         run: python3 scripts/offline_demo.py --test
       - name: Verify the shelter and assembly point catalogs
         run: python3 scripts/offline_demo.py --sheltering --test --no-build
       - name: Verify shelter reservations and reassignment (SH-A04, SH-A06)
         run: python3 tests/sheltering_reservations_integration.py --no-build
+      - name: Verify shelter route publication and withdrawal (SH-A06, SH-A07)
+        run: python3 tests/sheltering_publication_integration.py --no-build
+      - name: Verify the SH-W5 instruction replay without a broker
+        run: dotnet run --no-build --project src/Sheltering/tests/Cassini.Sheltering.Tests.csproj
       - name: Verify Dispatch with replay and an ORS HTTP stub
         run: python3 tests/dispatch_ors_integration.py
       - name: Verify Routing rules
@@ -145,6 +150,47 @@ jobs:
         env:
           ConnectionStrings__Sheltering: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=sheltering;Username=sheltering;Password=sheltering-ci-only
         run: python3 tests/sheltering_postgres_integration.py --no-build
+
+  verify-sheltering-events:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sheltering
+          POSTGRES_PASSWORD: sheltering-ci-only
+          POSTGRES_DB: sheltering
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U sheltering -d sheltering"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+      rabbitmq:
+        image: rabbitmq:4.4-management
+        ports:
+          - 5672/tcp
+          - 15672/tcp
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build Sheltering and Routing with RabbitMQ and the PostgreSQL store
+        run: dotnet build Cassini.Offline.slnx -m:1 -p:NuGetAudit=false -p:EnableRabbitMq=true -p:EnableShelteringPostgres=true
+      - name: Verify outboxes on RabbitMQ, redelivery, reordering and restart after commit
+        env:
+          RABBITMQ_URI: amqp://guest:guest@127.0.0.1:${{ job.services.rabbitmq.ports[5672] }}/
+          RABBITMQ_API: http://127.0.0.1:${{ job.services.rabbitmq.ports[15672] }}
+          ConnectionStrings__Sheltering: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=sheltering;Username=sheltering;Password=sheltering-ci-only
+        run: python3 tests/sheltering_events_integration.py --no-build
 
   e2e:
     runs-on: ubuntu-24.04
