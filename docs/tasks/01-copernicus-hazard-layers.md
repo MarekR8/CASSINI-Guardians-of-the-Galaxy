@@ -19,8 +19,9 @@ After a flood report the map shows the observed flood extent (EMS), a Sentinel-1
 ### Stage A (demo)
 - [ ] Agree the AOI with person 2 (W0). The EMS extent must intersect the bridge and one exit; the other exit must stay dry.
 - [ ] `IHazardLayerSource` interface with `MockEmsSource`, `MockSentinel1Source` (files from `data/demo/hazards/`) and `LiveOpenEoSentinel1Source` (openEO call, URL and token from configuration).
-- [ ] `IPopulationEstimator`: `MockGhslEstimator` returns the precomputed value from `data/demo/population/estimate.json`; the script `experiments/eo/ghsl_zonal.py` computes it from the raster.
-- [ ] Extend `GET /queries/snapshot` with a list of layers with `provenance` and `populationEstimate { value, method, source, year }`. Agree the DTO with person 7.
+- [x] `IPopulationEstimator`: `MockGhslEstimator` returns the precomputed value from `data/demo/population/estimate.json`; the script `experiments/eo/ghsl_zonal.py` computes it from the raster.
+- [x] Extend `GET /queries/snapshot` with layer `provenance` and `populationEstimate { value, method, source, year }`. The dashboard reads both.
+- [ ] Confirm the additive snapshot contract with the task 7 owner.
 
 ### Stage B (completion)
 - [ ] Move layers to PostGIS (`situation_db`, SRID 4326, spatial index), EF Core + NetTopologySuite.
@@ -54,4 +55,29 @@ curl http://127.0.0.1:5080/api/situation/queries/snapshot   # layers + provenanc
 
 ## Results
 
-_(fill in: EMS product, observation date, S1 threshold parameters, GHSL result, what was not verified)_
+The two synthetic exercise polygons have precomputed estimates of 65 (Warsaw) and 4,872 (sample)
+residents. The input was JRC's [GHS-POP R2023A, 2025 projection, 100 m, Mollweide](https://jrc-ghsl.s3.eu-central-1.amazonaws.com/ghs-pop/r2023a/54009/100m/2025/GHS_POP_E2025_GLOBE_R2023A_54009_100_V1_0.tif),
+accessed on 2026-11-28. The calculation sums valid cells whose centres are inside the polygon.
+
+```sh
+python experiments/eo/ghsl_zonal.py population.tif flood.geojson --year 2025 --output estimate.json
+```
+
+To import an estimate with a flood layer, put the resulting JSON object in `hazards[].populationEstimate`
+in the Warsaw manifest. The top-level snapshot estimate refers to the last imported layer, or to the
+exercise polygon before any imports. A layer without an estimate returns `null`.
+
+The exercise polygons are synthetic. The Kłodzko map includes a reference flood extent clipped from
+the public [EMSR756 AOI03 Sentinel-1 delineation](https://mapping.emergency.copernicus.eu/activations/EMSR756/),
+observed on 2024-09-15 at 05:01 UTC.
+
+Warsaw includes the Copernicus EMS Global Flood Monitoring [Observed Flood Extent product](https://stac.eodc.eu/api/v1/collections/GFM/items/ENSEMBLE_FLOOD_20190528T045228_VV_EU020M_E054N018T3),
+observed by Sentinel-1 on 2019-05-28 at 04:52:28 UTC with a 20 m pixel size. The `ensemble_flood_extent`
+raster was clipped to the Warsaw map AOI. The 723 cells classified as floodwater (value 1) were
+vectorised into four polygons in WGS 84. The polygons are on the southern Vistula reach within the
+map AOI, partly within Warsaw's administrative boundary. The layer is bundled with the dashboard,
+which shows the source, product ID and observation time on the main map.
+
+The Warsaw polygons were checked against the exercise graph. They intersect neither
+Most Świętokrzyski nor either exercise exit, so the W0 overlap requirement remains open.
+The 2019 observation serves as historical context alongside the synthetic exercise.

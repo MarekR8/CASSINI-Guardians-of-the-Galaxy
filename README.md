@@ -15,7 +15,7 @@ docker compose build
 docker compose up -d --no-build --pull never
 ```
 
-Otwórz [panel CASSINI](http://127.0.0.1:5080). Po zbudowaniu obrazów panel, wszystkie serwisy i mapa startują bez dostępu do internetu. Alternatywa z .NET 10 SDK i Pythonem 3 to `python scripts/offline_demo.py`.
+Otwórz [panel CASSINI](http://127.0.0.1:5080). Po zbudowaniu obrazów panel, wszystkie serwisy i mapa z dołączonym zobrazowaniem Sentinel‑2 startują bez dostępu do internetu. Alternatywa z .NET 10 SDK i Pythonem 3 to `python scripts/offline_demo.py`.
 
 Zobacz [instrukcję demo i transportu obrazów](docs/offline-demo.md), [aplikację Android](apps/offline-android/README.md), [pola na dane zespołu](data/local/README.md) i [instrukcje dla agentów](AGENTS.md).
 

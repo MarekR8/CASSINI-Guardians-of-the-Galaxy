@@ -40,6 +40,15 @@ def command(name, payload, status=200):
 
 
 assert b'id="review-panel"' in request("/")
+scene = request("/maps/satellite.json")["warsaw"]
+assert scene["bounds"] == [20.830, 52.080, 21.300, 52.390]
+archive = scene["floodArchive"]
+assert archive["label"] == "GFM / Sentinel-1"
+assert archive["productId"] == "ENSEMBLE_FLOOD_20190528T045228_VV_EU020M_E054N018T3"
+assert archive["observedAt"] == "2019-05-28T04:52:28Z" and archive["resolutionMeters"] == 20
+assert archive["geometry"]["type"] == "MultiPolygon" and archive["geometry"]["coordinates"]
+assert request("/maps/" + scene["image"]).startswith(b"\xff\xd8\xff")
+assert request("/maps/" + scene["detail"]["image"]).startswith(b"\xff\xd8\xff")
 network = request("/api/routing/queries/network")
 assert network["scenario"] == "warsaw" and "OpenStreetMap" in network["attribution"]
 assert len(network["contextRoads"]) > 50 and network["waterways"]
@@ -47,6 +56,8 @@ bridge = next(segment for segment in network["segments"] if segment["id"] == "br
 assert len(bridge["geometry"]) > 5 and bridge["drivingGeometry"] != bridge["reverseDrivingGeometry"]
 
 initial = snapshot()
+assert all(layer["productId"] != archive["productId"] for layer in initial["hazards"])
+assert initial["populationEstimate"]["value"] == 65
 feature = initial["reviewFeatures"][0]
 assert feature["mode"] == "synthetic" and feature["status"] == "Pending"
 assert feature["segmentIds"] == ["bridge-2"], feature["segmentIds"]
@@ -61,6 +72,7 @@ draw = request("/api/routing/commands/draw",
                 "revision": 0, "seed": 1})
 assert "bridge-2" in draw["route"]["segments"]
 
+estimate = {"value": 23, "method": "cell centres", "source": "test GHS-POP", "year": 2025}
 with tempfile.TemporaryDirectory() as directory:
     package = Path(directory)
     polygon = {"type": "FeatureCollection", "features": [
@@ -71,7 +83,7 @@ with tempfile.TemporaryDirectory() as directory:
     manifest.write_text(json.dumps({
         "hazards": [{"source": "sentinel-1", "sourceUrl": "https://browser.dataspace.copernicus.eu/",
                      "productId": "test-sentinel-1", "observedAt": "2026-11-27T18:00:00Z",
-                     "geoJson": "evidence.geojson"}],
+                     "geoJson": "evidence.geojson", "populationEstimate": estimate}],
         "flypix": {"mode": "synthetic", "imageProductId": "test-raster", "layerId": "test-export",
                    "observedAt": "2026-11-27T18:00:00Z", "geoJson": "evidence.geojson"},
     }))
@@ -85,6 +97,7 @@ with tempfile.TemporaryDirectory() as directory:
 recorded = next(item for item in first_import["reviewFeatures"] if item["layerId"] == "test-export")
 assert recorded["segmentIds"] == ["bridge-2"] and recorded["confidence"] == 0.84
 assert first_import["hazards"][-1]["source"] == "copernicus-sentinel-1-operator-import"
+assert first_import["hazards"][-1]["populationEstimate"] == first_import["populationEstimate"] == estimate
 assert distribution()["options"] == baseline
 assert request("/api/routing/queries/draws/warsaw-draw")["state"] == "Active"
 

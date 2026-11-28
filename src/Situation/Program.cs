@@ -8,7 +8,8 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 8 * 1024 * 1024);
 var network = DemoNetwork.Load(builder.Configuration["Demo:Scenario"]);
 var city = network is null ? null : CityNetwork.Load(builder.Configuration["Demo:CityDirectory"]);
-builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situation:StateFile"], network));
+var population = new MockGhslEstimator(Path.Combine(AppContext.BaseDirectory, "population-estimate.json"));
+builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situation:StateFile"], network, population));
 builder.Services.AddSingleton(new ReviewNetwork(network, city));
 builder.Services.AddSingleton<SituationQueries>();
 builder.Services.AddSingleton<SituationCommands>();

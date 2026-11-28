@@ -13,8 +13,10 @@ from shapely.geometry import box as extent, mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "experiments/network"))
+sys.path.insert(0, str(ROOT / "experiments/eo"))
 
 import copernicus
+from ghsl_zonal import estimate_population
 import import_warsaw_evidence as evidence
 import sync_warsaw as sync
 
@@ -36,6 +38,12 @@ with tempfile.TemporaryDirectory() as temporary:
         with rasterio.open(tile) as source:
             assert source.width <= 24 and source.height <= 24 and source.crs.to_epsg() == 4326
     assert copernicus.hazard_geometry({"geoTiff": image.name, "floodValues": [1]}, folder)["features"]
+
+    flood = folder / "population-area.geojson"
+    geometry = mapping(extent(w, s, e, n))
+    feature = {"type": "Feature", "properties": {}, "geometry": geometry}
+    flood.write_text(json.dumps({"type": "FeatureCollection", "features": [feature, feature]}), encoding="utf-8")
+    assert estimate_population(image, flood) == 16
 
     box = [[20.91, 52.11], [20.92, 52.11], [20.92, 52.12], [20.91, 52.12], [20.91, 52.11]]
     polygon = {"type": "Polygon", "coordinates": [box]}

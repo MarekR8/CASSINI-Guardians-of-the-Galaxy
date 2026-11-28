@@ -9,5 +9,7 @@
     <Compile Include="../Demo/CityNetwork.cs" Link="CityNetwork.cs" />
     <Content Include="../../data/demo/network/graph.json" Link="warsaw-graph.json"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../data/demo/population/estimate.json" Link="population-estimate.json"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

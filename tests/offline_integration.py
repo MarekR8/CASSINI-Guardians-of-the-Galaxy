@@ -36,12 +36,28 @@ def post(service, path, body, expected=200):
     return request(f"/api/{service}/commands/{path}", body, expected)
 
 
-assert "Koordynacja ewakuacji" in request("/")
+page = request("/")
+assert "Koordynacja ewakuacji" in page
+assert 'id="satellite-credit"' in page and 'type="file"' not in page
+assert 'id="map-zoom-in"' in page and 'id="map-zoom-reset"' in page
 assert "commands/draw" in request("/app.js")
+assert "createMapViewport" in request("/map-viewport.js")
+scene = request("/maps/satellite.json")["sample"]
+archive = scene["floodArchive"]
+assert archive["productId"] == "EMSR756_AOI03_DEL_PRODUCT_observedEventA_v1"
+assert archive["observedAt"] == "2024-09-15T05:01:00Z" and archive["geometry"]["coordinates"]
+with LOCAL_HTTP.open(BASE + "/maps/" + scene["image"], timeout=10) as image:
+    assert image.headers.get_content_type() == "image/jpeg"
+    assert image.read(3) == b"\xff\xd8\xff"
+with LOCAL_HTTP.open(BASE + "/maps/" + scene["detail"]["image"], timeout=10) as image:
+    assert image.headers.get_content_type() == "image/jpeg"
+    assert image.read(3) == b"\xff\xd8\xff"
 
 initial = get("situation", "snapshot")
 assert initial["revision"] == 0 and initial["closedSegments"] == []
 assert initial["hazards"][0]["source"] == "synthetic"
+assert initial["hazards"][0]["provenance"]["mode"] == "mock"
+assert initial["populationEstimate"]["value"] == 4872
 
 alert_cmd = {"commandId": "alert-retry"}
 first_alert = post("management", "alert", alert_cmd)
@@ -152,8 +168,11 @@ after_import = post("situation", "import-copernicus", {
     "commandId": "import-test", "expectedRevision": 2, "productId": "TEST-PRODUCT",
     "observedAt": "2026-11-27T18:00:00Z", "geoJson": sample,
 })
-assert any(h["source"] == "copernicus-ems-operator-import" and h["productId"] == "TEST-PRODUCT"
-           for h in after_import["hazards"])
+imported = after_import["hazards"][-1]
+assert imported["source"] == "copernicus-ems-operator-import" and imported["productId"] == "TEST-PRODUCT"
+assert imported["provenance"]["mode"] == "recorded"
+assert imported["provenance"]["observedAt"] == imported["observedAt"]
+assert after_import["populationEstimate"] is None
 assert get("routing", "distribution?node=pickup")["options"] == []
 
 print("Offline integration passed: gateway, alert retry, weighted routes, withdrawal, dispatch booking and pickup, blocked exits, local import.")

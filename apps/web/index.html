@@ -12,7 +12,10 @@
 <body>
   <header class="masthead">
     <div class="brand"><img src="/cassini.svg" width="42" height="42" alt=""><div><strong>CASSINI</strong><span>Guardians of the Galaxy</span></div></div>
-    <div class="connection"><span class="beacon" aria-hidden="true"></span> Tryb lokalny offline</div>
+    <div class="masthead-actions">
+      <a class="scenario-link" id="scenario-switch" hidden></a>
+      <div class="connection"><span class="beacon" aria-hidden="true"></span> Tryb lokalny offline</div>
+    </div>
   </header>
   <main>
     <div class="heading">
@@ -24,11 +27,16 @@
     <div class="workspace">
       <section class="card map-card" aria-labelledby="map-title">
         <div class="card-heading"><div><h2 id="map-title">Mapa sytuacji</h2><p id="map-area">Schemat obszaru ćwiczeń</p></div><span class="badge" id="revision">Rewizja —</span></div>
-        <svg id="map" viewBox="0 0 760 420" role="img" aria-label="Graf przejść, wyjścia i obszar zalania"></svg>
+        <div class="map-viewport">
+          <svg id="map" viewBox="0 0 760 420" role="img" tabindex="0" aria-label="Mapa przejść, wyjść i zalania. Użyj plusa, minusa i strzałek, aby zmienić widok."></svg>
+          <div class="map-navigation" role="group" aria-label="Sterowanie mapą">
+            <button id="map-zoom-in" type="button" aria-label="Powiększ mapę">+</button>
+            <button id="map-zoom-out" type="button" aria-label="Pomniejsz mapę">−</button>
+            <button id="map-zoom-reset" type="button">Resetuj widok</button>
+          </div>
+        </div>
         <div class="scenario" id="city-tools" hidden>
-          <div class="buttons">
-            <button id="city-overview" type="button">Cała Warszawa</button>
-            <button id="city-detail" type="button">Most Świętokrzyski</button>
+          <div class="buttons" id="city-routing" hidden>
             <label for="city-mode">Tryb trasy
               <select id="city-mode"><option value="walking">Pieszo</option><option value="driving">Samochodem</option></select>
             </label>
@@ -36,7 +44,12 @@
           </div>
           <p id="city-status" role="status"></p>
         </div>
-        <div class="legend"><span><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span id="review-legend" hidden><i class="legend-review"></i> Detekcja do weryfikacji</span><span><i class="legend-path"></i> Wylosowana trasa</span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span><i class="legend-exit"></i> Wyjście</span></div>
+        <div class="map-layer-tools" id="map-layer-tools" hidden><button id="map-layer" type="button">Pokaż Sentinel-2</button></div>
+        <div class="legend"><span><i class="legend-hazard"></i> Zalanie ćwiczeniowe</span><span id="archive-legend" hidden><i class="legend-archive"></i> <span id="archive-label"></span></span><span id="observed-legend" hidden><i class="legend-observed"></i> Warstwa z obserwacji</span><span id="review-legend" hidden><i class="legend-review"></i> Detekcja do weryfikacji</span><span><i class="legend-path"></i> Wylosowana trasa</span><span><i class="legend-closed"></i> Zamknięty odcinek</span><span><i class="legend-exit"></i> Wyjście</span></div>
+        <p class="map-credit" id="satellite-credit" hidden><a id="satellite-source" target="_blank" rel="noopener noreferrer"></a><span id="satellite-date"></span></p>
+        <p class="map-credit" id="ortho-credit" hidden><a id="ortho-source" target="_blank" rel="noopener noreferrer">Ortofotomapa · Geoportal / GUGiK</a></p>
+        <p class="map-credit" id="archive-credit" hidden><a id="archive-source" target="_blank" rel="noopener noreferrer"></a><span id="archive-date"></span></p>
+        <div class="map-layer-tools" id="archive-tools" hidden><button id="archive-focus" type="button">Zbliż na zalanie archiwalne</button></div>
         <p class="map-credit" id="map-credit" hidden><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors · ODbL</a></p>
         <div class="scenario">
           <h3>Scenariusz drogowy</h3>
@@ -75,16 +88,10 @@
     </div>
 
     <details class="card data">
-      <summary>Źródła satelitarne i lokalny import</summary>
+      <summary>Źródła danych</summary>
       <div class="data-body">
         <p id="sources">Scenariusz korzysta z jawnie oznaczonych danych syntetycznych.</p>
-        <form id="import">
-          <label>Źródło<select id="hazard-source"><option value="ems">Copernicus EMS</option><option value="sentinel-1">Sentinel-1</option></select></label>
-          <label>ID produktu lub sceny<input id="product" required maxlength="120" placeholder="Wpisz ID produktu"></label>
-          <label>Czas obserwacji (UTC)<input id="observed" type="datetime-local" required></label>
-          <label>Warstwa GeoJSON<input id="geojson" type="file" accept=".geojson,.json,application/geo+json,application/json" required></label>
-          <button id="import-button" disabled>Zaimportuj warstwę</button>
-        </form>
+        <p id="population-estimate" hidden></p>
       </div>
     </details>
     <footer>Dane demonstracyjne · czas w UTC. Trasy na mapie służą do ćwiczeń.</footer>

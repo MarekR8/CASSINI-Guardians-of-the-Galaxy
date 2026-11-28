@@ -37,7 +37,15 @@ app.Use(async (context, next) =>
     await next();
 });
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        if (context.Context.Request.Path.StartsWithSegments("/maps") &&
+            Path.GetExtension(context.File.Name) == ".jpg")
+            context.Context.Response.Headers.CacheControl = "private,max-age=86400";
+    },
+});
 var cityDirectory = builder.Configuration["Demo:CityDirectory"];
 if (!string.IsNullOrWhiteSpace(cityDirectory))
 {
@@ -49,6 +57,9 @@ if (!string.IsNullOrWhiteSpace(cityDirectory))
     });
 }
 app.MapGet("/health", () => Results.Ok(new { service = "gateway" }));
+int? companionPort = int.TryParse(builder.Configuration["Demo:CompanionPort"], out var port) &&
+    port is >= 1 and <= 65535 ? port : null;
+app.MapGet("/ui/companion", () => new { port = companionPort });
 app.MapGet("/api/{service}/queries/{operation}/{id?}", (
     string service, string operation, string? id, HttpContext context, IHttpClientFactory clients) =>
     Forward(service, "queries", operation, id, context, clients));

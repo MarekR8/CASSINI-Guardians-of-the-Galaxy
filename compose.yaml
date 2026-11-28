@@ -75,6 +75,7 @@ services:
       Services__Situation: http://situation:8080
       Services__Routing: http://routing:8080
       Services__Dispatch: http://dispatch:8080
+      Demo__CompanionPort: ${CASSINI_COMPANION_PORT:-}
     depends_on: [management, situation, routing, dispatch]
     networks: [operations, local-ui]
     ports: ["127.0.0.1:${CASSINI_PORT:-5080}:8080"]
