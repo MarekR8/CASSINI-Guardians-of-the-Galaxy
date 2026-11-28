@@ -24,6 +24,7 @@ from prepare_warsaw_osm import build, fetch, read_pbf, svg_map
 AREA = [-0.62, 39.24, -0.25, 39.61]
 OUTPUT = ROOT / "artifacts/valencia-city"
 EVIDENCE = ROOT / "artifacts/valencia-evidence"
+BUNDLED_IMAGERY = ROOT / "data/demo/valencia/imagery"
 SOURCE = "https://download.geofabrik.de/europe/spain/valencia-latest.osm.pbf"
 PRODUCT = "EMSR773_AOI01_DEL_PRODUCT_v1"
 EMS_URL = "https://mapping.emergency.copernicus.eu/activations/EMSR773/"
@@ -117,9 +118,9 @@ def write_images(directory, output):
     grid = None
     for name, day in SCENES.items():
         matches = sorted(path for path in directory.glob(day + "*") if path.suffix.lower() in {".tif", ".tiff"})
-        if len(matches) != 1:
-            raise ValueError(f"Place exactly one {day}*.tif or {day}*.tiff in {directory}")
-        path = matches[0]
+        if len(matches) > 1:
+            raise ValueError(f"Keep only one {day}*.tif or {day}*.tiff in {directory}")
+        path = matches[0] if matches else BUNDLED_IMAGERY / f"{day}-sentinel1-vv.tiff"
         with rio.open(path) as raster:
             if raster.crs is None or raster.count < 1 or raster.dtypes[0] != "uint8":
                 raise ValueError(f"{path.name}: expected a georeferenced 8-bit visualisation")

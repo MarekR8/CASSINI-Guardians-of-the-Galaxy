@@ -89,3 +89,5 @@ Thumbs.db
 *.tiff
 *.jp2
 *.log
+!/data/demo/valencia/imagery/2024-10-19-sentinel1-vv.tiff
+!/data/demo/valencia/imagery/2024-10-31-sentinel1-vv.tiff

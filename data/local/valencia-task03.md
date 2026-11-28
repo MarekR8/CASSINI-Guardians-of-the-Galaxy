@@ -35,6 +35,6 @@ Po aktualizacji przygotuj paczkę ponownie z katalogu repozytorium. Skrypt czyta
 .venv/Scripts/python.exe experiments/network/export_valencia_graph.py
 ```
 
-Wynik to `artifacts/valencia-task03.zip`.
+Wynik to `data/demo/routing/valencia-task03.zip`. Paczka i oba GeoTIFF-y w `data/demo/valencia/imagery/` są przeznaczone do współdzielenia w repozytorium. Do prób lokalnych użyj opcji `--output artifacts/valencia-task03.zip`.
 
 Źródła danych. [© OpenStreetMap contributors, ODbL](https://www.openstreetmap.org/copyright) · [Copernicus Emergency Management Service, © European Union 2024, EMSR773 AOI01 Delineation](https://mapping.emergency.copernicus.eu/activations/EMSR773/)
