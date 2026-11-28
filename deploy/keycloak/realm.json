@@ -1,0 +1,107 @@
+{
+  "realm": "cassini",
+  "displayName": "CASSINI · ćwiczenie ewakuacji (dane syntetyczne)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 36000,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["pl", "en"],
+  "defaultLocale": "pl",
+  "roles": {
+    "realm": [
+      { "name": "coordinator", "description": "Koordynator: wszystkie komendy i odczyty." },
+      { "name": "dispatcher", "description": "Dyspozytor: komendy usługi Dispatch." },
+      { "name": "responder", "description": "Ratownik: postęp zadania jednostki i postęp mieszkańca." },
+      { "name": "resident", "description": "Mieszkaniec: potwierdzenia własnego postępu i wyjścia." }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "cassini-dashboard",
+      "name": "CASSINI dashboard (lokalny)",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "fullScopeAllowed": true,
+      "rootUrl": "http://127.0.0.1:${CASSINI_PORT:5080}",
+      "baseUrl": "/",
+      "redirectUris": ["http://127.0.0.1:${CASSINI_PORT:5080}/*", "http://localhost:${CASSINI_PORT:5080}/*"],
+      "webOrigins": ["http://127.0.0.1:${CASSINI_PORT:5080}", "http://localhost:${CASSINI_PORT:5080}"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://127.0.0.1:${CASSINI_PORT:5080}/*##http://localhost:${CASSINI_PORT:5080}/*"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email"],
+      "optionalClientScopes": ["offline_access"],
+      "protocolMappers": [
+        {
+          "name": "audience cassini-gateway",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "cassini-gateway",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "demo-coordinator",
+      "enabled": true,
+      "email": "demo-coordinator@cassini.example",
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Koordynator",
+      "credentials": [{ "type": "password", "value": "${CASSINI_DEMO_PASSWORD}", "temporary": false }],
+      "realmRoles": ["coordinator", "default-roles-cassini"]
+    },
+    {
+      "username": "demo-dispatcher",
+      "enabled": true,
+      "email": "demo-dispatcher@cassini.example",
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Dyspozytor",
+      "credentials": [{ "type": "password", "value": "${CASSINI_DEMO_PASSWORD}", "temporary": false }],
+      "realmRoles": ["dispatcher", "default-roles-cassini"]
+    },
+    {
+      "username": "demo-responder",
+      "enabled": true,
+      "email": "demo-responder@cassini.example",
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Ratownik",
+      "credentials": [{ "type": "password", "value": "${CASSINI_DEMO_PASSWORD}", "temporary": false }],
+      "realmRoles": ["responder", "default-roles-cassini"]
+    },
+    {
+      "username": "demo-resident",
+      "enabled": true,
+      "email": "demo-resident@cassini.example",
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "Mieszkaniec",
+      "credentials": [{ "type": "password", "value": "${CASSINI_DEMO_PASSWORD}", "temporary": false }],
+      "realmRoles": ["resident", "default-roles-cassini"]
+    }
+  ]
+}

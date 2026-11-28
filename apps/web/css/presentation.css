@@ -1,0 +1,51 @@
+/* S4: presentation mode (#presentation-panel). */
+#presentation-panel { margin-top: 1rem; }
+.presentation-head { flex-wrap: wrap; }
+.presentation-head h2 { font-size: 1.1rem; }
+.presentation-body { padding: 0 1.25rem 1.25rem; }
+.presentation-body[hidden] { display: none; }
+.presentation-current { border: 1px solid var(--line); border-radius: .7rem; background: var(--raised); padding: .85rem 1rem; }
+.presentation-current h3 { margin-top: .2rem; }
+.presentation-summary { color: var(--muted); font-size: .88rem; margin-top: .35rem; }
+.presentation-message { margin-top: .6rem; font-weight: 650; }
+.presentation-message.status-done { color: var(--accent); }
+.presentation-message.status-error { color: var(--danger); }
+.presentation-message.status-blocked { color: #ffd78a; }
+.presentation-note { margin-top: .45rem; color: #9fd3ff; font-size: .84rem; }
+.presentation-details { margin: .6rem 0 0; padding-left: 1.1rem; color: var(--muted); font-size: .8rem; overflow-wrap: anywhere; }
+.presentation-controls { margin-top: .75rem; }
+.presentation-controls .primary { width: auto; flex: 1 1 12rem; }
+.presentation-steps { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: .35rem; }
+.presentation-step { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .15rem .6rem;
+  border: 1px solid var(--line); border-left-width: 4px; border-radius: .55rem; padding: .35rem .6rem; }
+.presentation-step.current { background: var(--raised); border-color: var(--accent); }
+.presentation-step-title { display: flex; gap: .55rem; align-items: baseline; text-align: left; background: none; border: 0;
+  padding: .2rem 0; font-weight: 600; min-width: 0; }
+.presentation-step-number { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.3rem; }
+.presentation-status { font-size: .75rem; border-radius: .35rem; border: 1px solid var(--line); padding: .05rem .45rem;
+  white-space: nowrap; color: var(--muted); }
+.presentation-reason { grid-column: 1 / -1; color: #ffd78a; font-size: .78rem; padding-left: 1.85rem; }
+.presentation-step.status-done { border-left-color: var(--accent); }
+.presentation-step.status-done .presentation-status { color: var(--accent); border-color: #3f7d6b; }
+.presentation-step.status-running { border-left-color: #9fd3ff; }
+.presentation-step.status-running .presentation-status { color: #9fd3ff; border-color: #3d6a8a; }
+.presentation-step.status-blocked { border-left-color: #7a6431; border-style: dashed; border-left-style: solid; }
+.presentation-step.status-blocked .presentation-status { color: #ffd78a; border-color: #7a6431; }
+.presentation-step.status-error { border-left-color: var(--danger); }
+.presentation-step.status-error .presentation-status { color: var(--danger); border-color: #8a4a40; }
+.presentation-footnote { color: var(--muted); font-size: .78rem; margin-top: .9rem; }
+
+/* On wide screens the active presentation docks beside the map so both stay visible. */
+@media (min-width: 72rem) {
+  body.presentation-active main { max-width: none; padding-right: 27rem; }
+  body.presentation-active #map { scroll-margin-top: .75rem; }
+  body.presentation-active #presentation-panel { position: fixed; z-index: 1100; top: 1rem; right: 1rem; width: 25rem;
+    max-height: calc(100vh - 2rem); overflow-y: auto; margin: 0; box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .45); }
+}
+.presentation-result { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: .7rem;
+  padding: .7rem 1rem; margin-bottom: .6rem; }
+.presentation-result.status-error { border-left-color: var(--danger); }
+.presentation-result-title { color: var(--muted); font-size: .8rem; font-weight: 650; }
+.presentation-result .presentation-message { margin-top: .25rem; }
+.presentation-message.tone-warning { color: #ffd78a; }
+.presentation-result.tone-warning { border-left-color: #c9a23f; }

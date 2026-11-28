@@ -24,6 +24,7 @@ builder.Services.AddHttpClient("services", client => client.Timeout = TimeSpan.F
         AllowAutoRedirect = false,
         UseCookies = false,
     });
+var auth = builder.AddGatewayAuth();
 
 var app = builder.Build();
 app.Use(async (context, next) =>
@@ -34,11 +35,12 @@ app.Use(async (context, next) =>
         return;
     }
     context.Response.Headers.ContentSecurityPolicy =
-        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+        $"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src {auth.ConnectSrc}; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
     context.Response.Headers.XContentTypeOptions = "nosniff";
     context.Response.Headers.CacheControl = "no-store";
     await next();
 });
+app.UseGatewayAuth(auth);
 app.UseDefaultFiles();
 app.UseStaticFiles(new StaticFileOptions
 {

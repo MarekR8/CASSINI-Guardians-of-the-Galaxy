@@ -21,4 +21,6 @@ Do uruchomienia potrzebny jest .NET 10 SDK i Python 3. [Dane, FlyPix w przegląd
 
 Zobacz [instrukcję demo i transportu obrazów](docs/offline-demo.md), [aplikację Android](apps/offline-android/README.md), [pola na dane zespołu](data/local/README.md) i [instrukcje dla agentów](AGENTS.md).
 
+Panel ma tryb prezentacji z krokami scenariusza Walencji, legendę z pochodzeniem warstw i panel metryk. Ten sam scenariusz w Dockerze uruchamia `docker compose -f compose.yaml -f compose.valencia.yaml up -d`. [Przebieg prezentacji, logowanie Keycloak i testy](docs/offline-demo.md). `sample` (Kłodzko) zostaje jako scenariusz testów i CI: `python scripts/offline_demo.py --test`.
+
 Starszy [plan pełnej architektury](docs/mvp-implementation-guide.md) opisuje następną warstwę wdrożenia, w tym logowanie, bazy relacyjne i dystrybucję zdarzeń.
