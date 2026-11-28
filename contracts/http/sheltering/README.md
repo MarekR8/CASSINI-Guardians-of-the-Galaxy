@@ -79,3 +79,17 @@ These examples use the [hold fixture](../../../data/demo/sheltering/sample-holds
 - seeded places that no tracked case accounts for.
 
 `GET queries/shelter-reception-events` lists the [`ShelterAdmissionConfirmed.v1`](../../events/ShelterAdmissionConfirmed.v1.json) and [`ShelterDepartureConfirmed.v1`](../../events/ShelterDepartureConfirmed.v1.json) entries. Each is written in the same state change as its admission or departure. SH-T06 publishes them.
+
+### Operator scope and transfers (SH-T05 Stage B)
+
+When `Sheltering:OperatorsFile` is set, the reception commands and queries require `Authorization: Bearer <token>`. The Gateway forwards the header. Each account in the file has `operatorId`, `role` (`shelter-operator` or `coordinator`), `incidentId`, `shelterIds` and `tokenSha256`. Only the hash is stored. `scripts/offline_demo.py` writes random exercise tokens into the temporary state directory.
+
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `AuthenticationRequired` | 401 | No token, or a token that matches no account |
+| `RoleNotPermitted` | 403 | Only a shelter operator reports admissions and departures. A coordinator reads. |
+| `ShelterNotAssigned`, `IncidentNotAssigned` | 403 | Outside the account's shelters or incident |
+
+Admissions and departures record the reporting `operatorId`.
+
+A person moves between shelters as two legs. The person is admitted at the new shelter on the next leg, for example `leg-transfer`, while still present at the first. The admission result and the event then carry `transferFrom` and `transferFromShelterId`. The first shelter keeps its occupied places. Its view lists the stay's `onwardAdmission` and counts it under `transferredAwaitingDeparture` until that shelter confirms the departure. A person present at a shelter cannot be admitted there again on another leg (`409 AlreadyPresent`).

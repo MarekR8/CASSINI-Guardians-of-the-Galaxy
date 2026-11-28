@@ -14,6 +14,7 @@ var stateFile = builder.Configuration["Sheltering:StateFile"] ?? Path.Combine("a
 builder.Services.AddSingleton(new CatalogStore<Shelter>(stateFile,
     () => ShelterSeed.WithHolds(ShelterSeed.Read(seedFile), holdsFile), shelter => shelter.ShelterId, shelter => shelter.Version));
 builder.Services.AddSingleton<AllocationStore>();
+builder.Services.AddSingleton(new OperatorDirectory(builder.Configuration["Sheltering:OperatorsFile"]));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<AllocationCommands>();
 builder.Services.AddScoped<AllocationQueries>();
@@ -61,14 +62,16 @@ app.MapGet("/queries/shelter-availability", (DateTimeOffset? at, bool? eligibleO
     CancellationToken cancellation) => handler.GetShelterAvailability(at, eligibleOnly ?? false, cancellation));
 app.MapPost("/commands/configure-shelter", (ConfigureShelterCommand command, ShelterCommands handler,
     CancellationToken cancellation) => handler.ConfigureShelter(command, cancellation));
+// SH-T05 reception. With Sheltering:OperatorsFile, callers need a bearer token and act only within their scope.
 app.MapGet("/queries/shelter-reception", (string? shelterId, string? incidentId, DateTimeOffset? at,
-    ReceptionQueries handler) => handler.GetReception(shelterId, incidentId, at));
-app.MapGet("/queries/shelter-reception-events", (string? shelterId, ReceptionQueries handler) =>
-    handler.GetEvents(shelterId));
-app.MapPost("/commands/confirm-shelter-admission", (ConfirmShelterAdmissionCommand command, ReceptionCommands handler) =>
-    handler.ConfirmAdmission(command));
-app.MapPost("/commands/confirm-shelter-departure", (ConfirmShelterDepartureCommand command, ReceptionCommands handler) =>
-    handler.ConfirmDeparture(command));
+    ReceptionQueries handler, OperatorDirectory operators, HttpContext context) =>
+    handler.GetReception(shelterId, incidentId, at, operators.Authenticate(context)));
+app.MapGet("/queries/shelter-reception-events", (string? shelterId, ReceptionQueries handler,
+    OperatorDirectory operators, HttpContext context) => handler.GetEvents(shelterId, operators.Authenticate(context)));
+app.MapPost("/commands/confirm-shelter-admission", (ConfirmShelterAdmissionCommand command, ReceptionCommands handler,
+    OperatorDirectory operators, HttpContext context) => handler.ConfirmAdmission(command, operators.Authenticate(context)));
+app.MapPost("/commands/confirm-shelter-departure", (ConfirmShelterDepartureCommand command, ReceptionCommands handler,
+    OperatorDirectory operators, HttpContext context) => handler.ConfirmDeparture(command, operators.Authenticate(context)));
 
 // SH-T04 allocation (SH-W4): reads never mutate state; every write commits assignments and shelter holds together.
 app.MapGet("/queries/shelter-assignment", (string? incidentId, string? caseId, string? legId, AllocationQueries handler) =>
