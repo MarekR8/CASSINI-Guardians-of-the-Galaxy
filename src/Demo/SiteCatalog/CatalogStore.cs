@@ -4,38 +4,102 @@ using System.Text.Json;
 namespace Cassini.Demo.SiteCatalog;
 
 internal sealed record CatalogWrite<T>(int Revision, T Item);
+internal sealed record CatalogReceipt<T>(string Fingerprint, CatalogWrite<T> Result);
+internal sealed record CatalogOutcome(string Fingerprint, JsonElement Result);
 
-// The two owner services each instantiate this store with their own domain type and file.
-internal sealed class CatalogStore<T> where T : class
+/// <summary>Everything one catalog commits at once. Aux is an optional owner-defined document (see Mutate).</summary>
+internal sealed record CatalogState<T>(
+    int Revision, Dictionary<string, T> Items, Dictionary<string, CatalogReceipt<T>> Receipts,
+    Dictionary<string, CatalogOutcome>? Outcomes = null, JsonElement? Aux = null);
+
+/// <summary>
+/// Where a catalog keeps its state. <c>Update</c> runs <c>apply</c> on the current committed state and commits the
+/// returned state atomically; a null state or an exception commits nothing.
+/// </summary>
+internal interface ICatalogPersistence<T> where T : class
 {
-    private sealed record Receipt(string Fingerprint, CatalogWrite<T> Result);
-    private sealed record Outcome(string Fingerprint, JsonElement Result);
-    // Aux is an optional owner-defined document committed in the same file as the items (see Mutate).
-    private sealed record State(int Revision, Dictionary<string, T> Items, Dictionary<string, Receipt> Receipts,
-        Dictionary<string, Outcome>? Outcomes = null, JsonElement? Aux = null);
+    CatalogState<T> Read();
+    TResult Update<TResult>(Func<CatalogState<T>, (CatalogState<T>? Next, TResult Result)> apply);
+}
 
+/// <summary>Single-process state in memory, saved to a JSON file with an atomic replace.</summary>
+internal sealed class FileCatalogPersistence<T> : ICatalogPersistence<T> where T : class
+{
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private readonly object gate = new();
     private readonly string? path;
-    private readonly Func<T, string> key;
-    private readonly Func<T, int> version;
-    private State state;
+    private CatalogState<T> state;
 
-    internal CatalogStore(string? path, Func<T[]> seed, Func<T, string> key, Func<T, int> version)
+    internal FileCatalogPersistence(string? path, Func<CatalogState<T>> initial)
     {
         this.path = string.IsNullOrWhiteSpace(path) ? null : Path.GetFullPath(path);
+        state = this.path is not null && File.Exists(this.path)
+            ? JsonSerializer.Deserialize<CatalogState<T>>(File.ReadAllBytes(this.path), Json)
+                ?? throw new InvalidDataException("The site catalog is empty.")
+            : initial();
+    }
+
+    public CatalogState<T> Read()
+    {
+        lock (gate)
+            return state;
+    }
+
+    public TResult Update<TResult>(Func<CatalogState<T>, (CatalogState<T>? Next, TResult Result)> apply)
+    {
+        lock (gate)
+        {
+            var (next, result) = apply(state);
+            if (next is not null)
+            {
+                if (path is not null)
+                    Persist(path, next);
+                state = next;
+            }
+            return result;
+        }
+    }
+
+    private static void Persist(string path, CatalogState<T> next)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var temporary = path + ".tmp";
+        using (var stream = File.Create(temporary))
+        {
+            JsonSerializer.Serialize(stream, next, Json);
+            stream.Flush(flushToDisk: true);
+        }
+        File.Move(temporary, path, overwrite: true);
+    }
+}
+
+// The two owner services each instantiate this store with their own domain type and persistence.
+internal sealed class CatalogStore<T> where T : class
+{
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    private readonly ICatalogPersistence<T> persistence;
+    private readonly Func<T, string> key;
+    private readonly Func<T, int> version;
+
+    internal CatalogStore(string? path, Func<T[]> seed, Func<T, string> key, Func<T, int> version)
+        : this(new FileCatalogPersistence<T>(path, () => Initial(seed, key)), key, version)
+    {
+    }
+
+    internal CatalogStore(ICatalogPersistence<T> persistence, Func<T, string> key, Func<T, int> version)
+    {
+        this.persistence = persistence;
         this.key = key;
         this.version = version;
-        state = this.path is not null && File.Exists(this.path)
-            ? JsonSerializer.Deserialize<State>(File.ReadAllBytes(this.path), Json)
-                ?? throw new InvalidDataException("The site catalog is empty.")
-            : new State(0, seed().ToDictionary(key, StringComparer.Ordinal), new(StringComparer.Ordinal));
     }
+
+    internal static CatalogState<T> Initial(Func<T[]> seed, Func<T, string> key) =>
+        new(0, seed().ToDictionary(key, StringComparer.Ordinal), new(StringComparer.Ordinal));
 
     internal (int Revision, T[] Items) Read()
     {
-        lock (gate)
-            return (state.Revision, state.Items.Values.ToArray());
+        var state = persistence.Read();
+        return (state.Revision, state.Items.Values.ToArray());
     }
 
     internal CatalogWrite<T> Save<TCommand>(string? commandId, int? expectedVersion, string key,
@@ -44,17 +108,13 @@ internal sealed class CatalogStore<T> where T : class
         if (!SiteRules.IsId(commandId) || expectedVersion is null or < 0)
             throw new SiteCatalogError(400, "InvalidCommand", "Specify a commandId and a non-negative expectedVersion.");
 
-        var fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(command, Json)));
-        lock (gate)
+        var fingerprint = Fingerprint(command);
+        return persistence.Update<CatalogWrite<T>>(state =>
         {
             if (state.Outcomes?.ContainsKey(commandId!) == true)
-                throw new SiteCatalogError(409, "CommandConflict", "This commandId was used with different inputs.");
+                throw Conflict();
             if (state.Receipts.TryGetValue(commandId!, out var receipt))
-            {
-                if (receipt.Fingerprint != fingerprint)
-                    throw new SiteCatalogError(409, "CommandConflict", "This commandId was used with different inputs.");
-                return receipt.Result;
-            }
+                return (null, receipt.Fingerprint == fingerprint ? receipt.Result : throw Conflict());
 
             var previous = state.Items.GetValueOrDefault(key);
             var currentVersion = previous is null ? 0 : version(previous);
@@ -63,19 +123,16 @@ internal sealed class CatalogStore<T> where T : class
 
             var item = change(previous, checked(currentVersion + 1));
             var result = new CatalogWrite<T>(checked(state.Revision + 1), item);
-            var next = new State(result.Revision, new Dictionary<string, T>(state.Items, StringComparer.Ordinal)
+            return (state with
             {
-                [key] = item,
-            }, new Dictionary<string, Receipt>(state.Receipts, StringComparer.Ordinal)
-            {
-                [commandId!] = new Receipt(fingerprint, result),
-            }, state.Outcomes, state.Aux);
-
-            if (path is not null)
-                Persist(path, next);
-            state = next;
-            return result;
-        }
+                Revision = result.Revision,
+                Items = WithItems(state.Items, [item]),
+                Receipts = new Dictionary<string, CatalogReceipt<T>>(state.Receipts, StringComparer.Ordinal)
+                {
+                    [commandId!] = new(fingerprint, result),
+                },
+            }, result);
+        });
     }
 
     /// <summary>
@@ -89,40 +146,32 @@ internal sealed class CatalogStore<T> where T : class
         if (!SiteRules.IsId(commandId))
             throw new SiteCatalogError(400, "InvalidCommand", "Specify a commandId.");
 
-        var fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(command, Json)));
-        lock (gate)
+        var fingerprint = Fingerprint(command);
+        return persistence.Update<TResult>(state =>
         {
             if (state.Receipts.ContainsKey(commandId!))
-                throw new SiteCatalogError(409, "CommandConflict", "This commandId was used with different inputs.");
+                throw Conflict();
             if (state.Outcomes?.TryGetValue(commandId!, out var outcome) == true)
-            {
-                if (outcome.Fingerprint != fingerprint)
-                    throw new SiteCatalogError(409, "CommandConflict", "This commandId was used with different inputs.");
-                return outcome.Result.Deserialize<TResult>(Json)!;
-            }
+                return (null, outcome.Fingerprint == fingerprint ? outcome.Result.Deserialize<TResult>(Json)! : throw Conflict());
 
             var (changed, result) = change(state.Items, checked(state.Revision + 1));
-            var items = new Dictionary<string, T>(state.Items, StringComparer.Ordinal);
-            foreach (var item in changed)
-                items[key(item)] = item;
-            var next = new State(changed.Length > 0 ? state.Revision + 1 : state.Revision, items, state.Receipts,
-                new Dictionary<string, Outcome>(state.Outcomes ?? new(), StringComparer.Ordinal)
+            return (state with
+            {
+                Revision = changed.Length > 0 ? state.Revision + 1 : state.Revision,
+                Items = WithItems(state.Items, changed),
+                Outcomes = new Dictionary<string, CatalogOutcome>(state.Outcomes ?? new(), StringComparer.Ordinal)
                 {
-                    [commandId!] = new Outcome(fingerprint, JsonSerializer.SerializeToElement(result, Json)),
-                }, state.Aux);
-
-            if (path is not null)
-                Persist(path, next);
-            state = next;
-            return result;
-        }
+                    [commandId!] = new(fingerprint, JsonSerializer.SerializeToElement(result, Json)),
+                },
+            }, result);
+        });
     }
 
-    /// <summary>Read the items and the auxiliary document under one lock.</summary>
+    /// <summary>Read the items and the auxiliary document from one committed state.</summary>
     internal (int Revision, IReadOnlyDictionary<string, T> Items, TAux? Aux) ReadWith<TAux>() where TAux : class
     {
-        lock (gate)
-            return (state.Revision, state.Items, state.Aux?.Deserialize<TAux>(Json));
+        var state = persistence.Read();
+        return (state.Revision, state.Items, state.Aux?.Deserialize<TAux>(Json));
     }
 
     /// <summary>
@@ -131,34 +180,26 @@ internal sealed class CatalogStore<T> where T : class
     /// while the owner of the auxiliary document keeps its own revision.
     /// </summary>
     internal TResult Mutate<TAux, TResult>(Func<IReadOnlyDictionary<string, T>, TAux?, (T[] Changed, TAux Aux, TResult Result)> change)
-        where TAux : class
-    {
-        lock (gate)
+        where TAux : class => persistence.Update<TResult>(state =>
         {
             var (changed, aux, result) = change(state.Items, state.Aux?.Deserialize<TAux>(Json));
-            var items = new Dictionary<string, T>(state.Items, StringComparer.Ordinal);
-            foreach (var item in changed)
-                items[key(item)] = item;
-            var next = state with { Items = items, Aux = JsonSerializer.SerializeToElement(aux, Json) };
+            return (state with { Items = WithItems(state.Items, changed), Aux = JsonSerializer.SerializeToElement(aux, Json) },
+                result);
+        });
 
-            if (path is not null)
-                Persist(path, next);
-            state = next;
-            return result;
-        }
-    }
-
-    private static void Persist(string path, State next)
+    private Dictionary<string, T> WithItems(Dictionary<string, T> items, IEnumerable<T> changed)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var temporary = path + ".tmp";
-        using (var stream = File.Create(temporary))
-        {
-            JsonSerializer.Serialize(stream, next, Json);
-            stream.Flush(flushToDisk: true);
-        }
-        File.Move(temporary, path, overwrite: true);
+        var next = new Dictionary<string, T>(items, StringComparer.Ordinal);
+        foreach (var item in changed)
+            next[key(item)] = item;
+        return next;
     }
+
+    private static string Fingerprint<TCommand>(TCommand command) =>
+        Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(command, Json)));
+
+    private static SiteCatalogError Conflict() =>
+        new(409, "CommandConflict", "This commandId was used with different inputs.");
 }
 
 internal static class SiteSeed

@@ -29,6 +29,7 @@ The allocation examples were recorded from one fresh exercise for `case-14` on `
 | `GET /api/sheltering/queries/shelter-assignment?incidentId&caseId&legId` | One assignment with `version`, `status`, `needs`, optional `groupPlanRef`, the current `reservation` and the last `withdrawn` hold. `404 AssignmentNotFound` when none was opened. |
 | `GET /api/sheltering/queries/shelter-assignments?incidentId` | All assignments in the incident, for the coordinator view. |
 | `GET /api/sheltering/queries/shelter-candidates` | Takes `incidentId`, `legId`, `caseIds`, `mode` and `at`, plus optional `node`, `clearBy`, `stepFree`, `groupId`, `groupRevision` and `transportId`. It lists only feasible shelters, ranked by group members already held there and then by earlier arrival. Each candidate carries the `route` object for a reservation. `rejected` gives the reason for every other shelter. |
+| `GET /api/sheltering/queries/allocation-evidence?incidentId&caseId&legId` | Reconciliation evidence for every committed assignment change: decision, status and version, shelter and its version, reservation, Routing evidence ID, Situation and plan revisions, withdrawn reservation, finding and evidence reference. `caseId` and `legId` are optional filters. |
 | `GET /api/sheltering/queries/allocation-outbox?after` | Committed `ShelterAssignmentChanged.v1` and `ShelterAvailabilityChanged.v1` events in the shared envelope, numbered by `sequence`, for SH-T06. |
 | `POST /api/sheltering/commands/open-shelter-assignment` | Opens a `Pending` assignment per case and leg with `needs.places` (1–10) and `needs.accessiblePlaces`. A `groupPlanRef` must name the current approved Grouping plan containing the case. The same needs return the existing assignment; different needs return `409 AssignmentAlreadyOpen`. |
 | `POST /api/sheltering/commands/reserve-shelter-places` | Holds every listed `Pending` or `AwaitingReplacement` assignment at one shelter or rejects the whole batch. Each entry carries `expectedVersion` and `route: { evidenceId, query }`. |
@@ -48,7 +49,7 @@ Business rejections are `422` with `InsufficientCapacity`, `InsufficientAccessib
 
 A `route.query` names either `caseIds`, which must include the assignment's case, or a graph `node` for synthetic exercise people that Management does not track. Each hold is written into the shelter's `reception.holds` with its commitments in the same commit as the assignment, so SH-T05 admission converts exactly that hold. The assignment then reads as `Admitted`, and as `Closed` after a confirmed departure. A hold released by a walk-in elsewhere leaves it `AwaitingReplacement`. Allocation commands never move or release admitted occupancy or the baseline occupancy configured in the catalog.
 
-Replay the exercise with `python tests/sheltering_reservations_integration.py`.
+Replay the exercise with `python tests/sheltering_reservations_integration.py`. With `-p:EnableShelteringPostgres=true` and `ConnectionStrings:Sheltering`, the same contract is served from PostgreSQL. `python tests/sheltering_postgres_integration.py` runs it on two instances against a fresh database.
 
 ## Admissions and departures (SH-T05)
 

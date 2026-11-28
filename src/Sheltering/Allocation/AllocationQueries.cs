@@ -41,6 +41,17 @@ internal sealed class AllocationQueries(AllocationStore store, RoutingClient rou
         return new { revision = state.State.Revision, assignments };
     }
 
+    internal object GetEvidence(string? incidentId, string? caseId, string? legId)
+    {
+        if (!SiteRules.IsId(incidentId) || (caseId is not null && !SiteRules.IsId(caseId)) ||
+            (legId is not null && !SiteRules.IsId(legId)))
+            throw new SiteCatalogError(400, "InvalidEvidenceQuery", "Specify incidentId and optional caseId and legId.");
+        var state = store.Read().State;
+        var evidence = (state.Evidence ?? []).Where(item => item.IncidentId == incidentId &&
+            (caseId is null || item.CaseId == caseId) && (legId is null || item.LegId == legId)).ToArray();
+        return new { revision = state.Revision, evidence };
+    }
+
     internal object GetOutbox(long? after)
     {
         var state = store.Read().State;

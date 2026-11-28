@@ -19,8 +19,8 @@ Two requests compete for the last place. Later a shelter closes while a reserved
 
 ### Stage B (completion)
 
-- [ ] Move the transaction into an owned PostgreSQL store with migrations and version checks spanning all affected shelters and assignments. Verify concurrency from two service instances.
-- [ ] Store reconciliation evidence and test duplicate, stale and restart cases against persisted state.
+- [x] Move the transaction into an owned PostgreSQL store with migrations and version checks spanning all affected shelters and assignments. Verify concurrency from two service instances.
+- [x] Store reconciliation evidence and test duplicate, stale and restart cases against persisted state.
 
 ## Dependencies and verification
 
@@ -41,9 +41,28 @@ Stage A is implemented in `src/Sheltering/Allocation/`. The [SH-W4 contract and 
 - **Admission handoff.** An SH-T05 admission of an SH-T04 hold converts exactly that hold, and the free places do not change. The assignment then reads as `Admitted`, and invalidating or releasing it is refused with `OccupancyRequiresDeparture`.
 - **Regression.** These all pass: `offline_demo.py --test`, `offline_demo.py --sheltering --test`, `destination_routing_integration.py`, `grouping_integration.py`, and the Routing, Management, Gateway and Messaging test projects.
 
+**Stage B.** Build with `-p:EnableShelteringPostgres=true` and set `ConnectionStrings:Sheltering` (Compose: add `compose.sheltering-postgres.yaml` with the `full` profile). Sheltering then keeps its whole state in its own PostgreSQL database instead of the JSON file. The code is in `src/Sheltering/Infrastructure/PostgresShelteringPersistence.cs`. Everything else goes through the same `CatalogStore` commands and queries as Stage A, so the file and database modes share the same decisions.
+
+- **Schema and migrations.** The tables are `shelters`, `shelter_assignments`, `sheltering_receipts`, `sheltering_outbox`, `allocation_evidence` and `sheltering_meta`. Migrations are numbered, recorded in `sheltering_schema_migrations` and applied under an advisory lock, so several instances can start at once. The first instance seeds the catalog.
+- **Transactions and version checks.** Every write locks the `sheltering_meta` row and then reads the latest committed state. So in any number of instances each command decides on current shelters and assignments. Only the changed rows are written:
+  - every update of a shelter or an assignment requires its `row_version` to be unchanged;
+  - the meta row requires the same `commit_seq`;
+  - the schema enforces one assignment per case and leg, one assignment per reservation and one receipt per command.
+
+  Reads use a consistent `REPEATABLE READ` snapshot.
+- **Reconciliation evidence.** Every committed assignment change records an `allocation_evidence` row in the same transaction. The row holds the decision, the resulting status and version, the shelter and its version, the reservation, the Routing evidence ID, the Situation revision, the plan revision, any withdrawn reservation, the finding and the evidence reference. Read it with `GET /queries/allocation-evidence`. File mode stores the same evidence.
+- **Verification.** `python tests/sheltering_postgres_integration.py` needs a fresh database in `ConnectionStrings__Sheltering` and is a CI job. It runs the full SH-A04/SH-A06 exercise with two Sheltering processes on one database; the final-place race sends one request to each instance. It also checks:
+  - **duplicates:** the same `open-shelter-assignment` sent concurrently to both instances returns one receipt and creates one row; changed content returns `409 CommandConflict`;
+  - **stale writes:** a reservation with an assignment version, or a shelter edit with a shelter version, that the other instance already advanced returns `409`;
+  - **persisted evidence:** each instance reads the evidence written through the other;
+  - **restart:** after a restart of every process, receipts, holds, versions, the outbox and the evidence come from the database unchanged.
+
+  It passed 3 times on fresh `postgres:17` databases. The image `cassini-offline/sheltering:postgres` builds from the Dockerfile.
+
 Unresolved limits:
 
-- Stage B has not started. There is no PostgreSQL store, migrations or two-instance concurrency check. One Sheltering writer is assumed.
+- Writers across instances are serialized by one row lock. That suits the exercise load. Independent shelters are not committed in parallel.
+- Each request reads the whole Sheltering state, which is sized for the exercise and not for production volumes. The outbox is stored but not published to RabbitMQ (SH-T06).
 - Routing is called before the lock. A Situation change between that call and the commit is caught only by the shelter evidence revision.
 - Routing evidence IDs include the shelter catalog revision, so any shelter edit invalidates outstanding candidates and they must be read again.
 - Intake is counted per clock hour: holds with an arrival window plus admissions observed in that hour. Seeded baseline commitments without a ledger entry do not count.
@@ -51,4 +70,3 @@ Unresolved limits:
 - `Admitted` and `Closed` after departure are derived from the reception ledger and not stored. Publication or withdrawal through Routing belongs to SH-T06.
 - SH-T04 holds do not change the catalog revision or the shelter version. `allocationRevision` tracks them.
 - Node-routed synthetic people are not bound to a Management case.
-- The Docker image was not built because the engine was unavailable.

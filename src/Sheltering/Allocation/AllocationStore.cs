@@ -12,11 +12,21 @@ internal sealed record OutboxEntry(long Sequence, IntegrationEvent Event);
 
 internal sealed record AllocationReceipt(string Fingerprint, JsonElement Result);
 
+/// <summary>
+/// Reconciliation evidence for one committed assignment change: the inputs the decision was checked against
+/// (route evidence, Situation revision, shelter and plan versions) and the finding that justified it.
+/// </summary>
+internal sealed record AllocationEvidence(
+    long Sequence, string CommandId, string Decision, string IncidentId, string CaseId, string LegId,
+    int AssignmentVersion, string Status, string? ShelterId, int? ShelterVersion, string? ReservationId,
+    string? RouteEvidenceId, long? SituationRevision, int? GroupPlanRevision, string? WithdrawnReservationId,
+    string? Finding, string? EvidenceRef, DateTimeOffset RecordedAt);
+
 internal sealed record AllocationState(
     int Revision, Dictionary<string, ShelterAssignment> Assignments, Dictionary<string, AllocationReceipt> Receipts,
-    OutboxEntry[] Outbox)
+    OutboxEntry[] Outbox, AllocationEvidence[]? Evidence = null)
 {
-    internal static AllocationState Empty() => new(0, new(StringComparer.Ordinal), new(StringComparer.Ordinal), []);
+    internal static AllocationState Empty() => new(0, new(StringComparer.Ordinal), new(StringComparer.Ordinal), [], []);
 
     internal ShelterAssignment? Find(AssignmentRef reference) => Assignments.GetValueOrDefault(reference.Key);
 }
@@ -37,7 +47,7 @@ internal sealed record AllocationChange(
 /// reception ledgers (SH-T05). Holds are written into <c>reception.holds</c>, so one commit changes an assignment,
 /// the hold, the shelter commitments and the outbox together, and admission converts exactly the hold issued here.
 /// </summary>
-internal sealed class AllocationStore(CatalogStore<Shelter> catalog)
+internal sealed class AllocationStore(CatalogStore<Shelter> catalog, TimeProvider clock)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -58,14 +68,15 @@ internal sealed class AllocationStore(CatalogStore<Shelter> catalog)
     internal T Execute<T>(string commandId, object command, Func<AllocationView, (AllocationChange Change, Func<int, T> Result)> decide)
     {
         var fingerprint = Fingerprint(command);
+        var decision = command.GetType().Name.Replace("Command", string.Empty, StringComparison.Ordinal);
         return catalog.Mutate<AllocationState, T>((shelters, stored) =>
         {
-            var view = View(0, shelters, stored);
-            var state = view.State;
+            // Decide on the reconciled view, but store raw assignments so derived states keep following the ledger.
+            var state = stored ?? AllocationState.Empty();
             if (state.Receipts.TryGetValue(commandId, out var receipt))
                 return ([], state, Restore<T>(receipt, fingerprint));
 
-            var (change, build) = decide(view);
+            var (change, build) = decide(View(0, shelters, state));
             // A command that returns an existing record stores its receipt without a new revision.
             var revision = change.Assignments.Count == 0 && change.Events.Count == 0 && change.Shelters.Count == 0
                 ? state.Revision : checked(state.Revision + 1);
@@ -80,8 +91,22 @@ internal sealed class AllocationStore(CatalogStore<Shelter> catalog)
             };
             var sequence = state.Outbox.Length == 0 ? 0 : state.Outbox[^1].Sequence;
             var outbox = state.Outbox.Concat(change.Events.Select(message => new OutboxEntry(++sequence, message))).ToArray();
-            return (change.Shelters.ToArray(), new AllocationState(revision, assignments, receipts, outbox), result);
+            var evidence = state.Evidence ?? [];
+            var next = evidence.Length == 0 ? 0 : evidence[^1].Sequence;
+            var now = clock.GetUtcNow();
+            evidence = [.. evidence, .. change.Assignments.Select(item => Evidence(++next, commandId, decision, item, now))];
+            return (change.Shelters.ToArray(), new AllocationState(revision, assignments, receipts, outbox, evidence), result);
         });
+    }
+
+    private static AllocationEvidence Evidence(long sequence, string commandId, string decision, ShelterAssignment item,
+        DateTimeOffset now)
+    {
+        var hold = item.Reservation;
+        return new(sequence, commandId, decision, item.IncidentId, item.CaseId, item.LegId, item.Version, item.Status,
+            hold?.ShelterId ?? item.Withdrawn?.ShelterId, hold?.ShelterVersion, hold?.ReservationId, hold?.Route.EvidenceId,
+            hold?.SituationRevision, item.GroupPlanRef?.PlanRevision, item.Withdrawn?.ReservationId, item.Reason,
+            item.Withdrawn?.EvidenceRef, now);
     }
 
     private static AllocationView View(int revision, IReadOnlyDictionary<string, Shelter> shelters, AllocationState? stored)
