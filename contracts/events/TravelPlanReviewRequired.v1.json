@@ -1,0 +1,12 @@
+{
+  "eventId": "ee9274aa-af75-4d90-81fd-f2ab118f6dc3",
+  "type": "TravelPlanReviewRequired.v1",
+  "producer": "management",
+  "subjectId": "incident-42/group-household/plans",
+  "subjectVersion": 6,
+  "occurredAt": "2026-11-27T19:22:00Z",
+  "correlationId": "incident-42",
+  "causationId": "group-position-1",
+  "payload": {"incidentId": "incident-42", "groupId": "group-household", "legId": "leg-shelter", "planRevision": 3,
+              "reason": "CaseVersionChanged", "evidenceRef": "care-handover"}
+}

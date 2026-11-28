@@ -1,0 +1,12 @@
+{
+  "eventId": "073e1091-1c98-4067-9433-0e7d67a02b8c",
+  "type": "CareHandoverRecorded.v1",
+  "producer": "management",
+  "subjectId": "incident-42/group-household/care",
+  "subjectVersion": 3,
+  "occurredAt": "2026-11-27T19:20:30Z",
+  "correlationId": "incident-42",
+  "causationId": "group-handover-1",
+  "payload": {"incidentId": "incident-42", "groupId": "group-household", "groupRevision": 3,
+              "handoverRef": "synthetic-confirmed-handover", "effectiveAt": "2026-11-27T19:19:00Z"}
+}

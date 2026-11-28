@@ -80,17 +80,20 @@ internal sealed class ManagementStore(IManagementPersistence persistence, Outbox
 
     /// <summary>Grouping's tuple form of <see cref="Execute{TCommand}"/>.</summary>
     public IResult ExecuteState<TCommand>(
-        string? id, TCommand command, Func<ManagementState, (ManagementState? Changed, object Payload, int Status)> apply) =>
+        string? id, TCommand command, Func<ManagementState, (ManagementState? Changed, object Payload, int Status)> apply)
+        where TCommand : IGroupingCommand =>
         Execute(id, command, state =>
         {
             var (changed, payload, status) = apply(state);
             return new Outcome(changed, payload, status);
-        });
+        }, state => state.Incident.IncidentId == command.IncidentId ? null :
+            Error("IncidentNotFound", "Unknown incident.", 404));
 
     /// <summary>
     /// Applies a command once. An exact retry returns the original result; another body under the same ID is a conflict.
     /// </summary>
-    public IResult Execute<TCommand>(string? id, TCommand command, Func<ManagementState, Outcome> apply)
+    public IResult Execute<TCommand>(string? id, TCommand command, Func<ManagementState, Outcome> apply,
+        Func<ManagementState, IResult?>? precondition = null)
     {
         if (string.IsNullOrWhiteSpace(id) || id.Length > 128)
             return Error("CommandIdRequired", "Provide a command ID of at most 128 characters.", 400);
@@ -100,6 +103,8 @@ internal sealed class ManagementStore(IManagementPersistence persistence, Outbox
         {
             return persistence.Update(state =>
             {
+                if (precondition?.Invoke(state) is { } rejection)
+                    return (null, rejection);
                 if (state.Receipts.TryGetValue(id, out var receipt))
                     return (null, receipt.Command == identity
                         ? Results.Ok(receipt.Result)

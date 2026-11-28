@@ -125,6 +125,8 @@ async Task Forward(string service, string group, string operation, string? id, H
         using var response = await clients.CreateClient("services").SendAsync(
             request, HttpCompletionOption.ResponseContentRead, context.RequestAborted);
         context.Response.StatusCode = (int)response.StatusCode;
+        if (response.Headers.TryGetValues("WWW-Authenticate", out var challenges))
+            context.Response.Headers.WWWAuthenticate = challenges.ToArray();
         context.Response.ContentType = response.Content.Headers.ContentType?.ToString();
         await response.Content.CopyToAsync(context.Response.Body, context.RequestAborted);
     }

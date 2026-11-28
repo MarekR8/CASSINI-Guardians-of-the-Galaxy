@@ -71,6 +71,7 @@ def sql(query):
 
 def start(output, log):
     env = {**os.environ, "Integrations__Bus__Mode": "live", "Integrations__Bus__Uri": os.environ["RABBITMQ_URI"],
+           "Grouping__EvidenceFile": str(ROOT / "data/demo/sheltering/sample-grouping.json"),
            "Situation__BaseUrl": "http://127.0.0.1:9", "HTTP_PROXY": "", "HTTPS_PROXY": "",
            "DOTNET_CLI_TELEMETRY_OPTOUT": "1"}
     process = subprocess.Popen(["dotnet", str(output / "Cassini.Management.dll"), "--urls", BASE], cwd=ROOT, env=env,
@@ -106,6 +107,38 @@ def assignment_event(event_id, version, state):
             "causationId": None, "payload": {"requestId": "request-case-15-1", "assignmentId": "assignment-ci",
                                              "caseId": "case-15", "unitId": "unit-3", "state": state,
                                              "reportedAt": "2026-11-27T19:42:00Z"}}
+
+
+def verify_grouping(tap):
+    path = "/queries/approved-travel-plans/group-household?incidentId=incident-42"
+    current = call(BASE + path, expected=(200, 404))
+    if current.get("code") == "GroupNotFound":
+        rabbit(f"bindings/%2F/e/{EXCHANGE}/q/{tap}", {"routing_key": "grouping.#"}, "POST")
+        example = json.loads((ROOT / "contracts/http/grouping/household-split.json").read_text(encoding="utf-8"))
+        call(BASE + "/commands/register-evacuation-group", example["register"])
+        plan = call(BASE + "/commands/approve-travel-plan", example["approve"])
+        assert plan["status"] == "Approved" and plan["planRevision"] == 1
+        call(BASE + "/commands/progress", {"commandId": "full-grouping-position", "caseId": "case-14",
+             "step": "position", "expectedVersion": 1, "node": "east-junction", "observedAt": "2026-11-27T19:20:00Z"})
+
+        received = []
+
+        def drain_grouping():
+            messages = rabbit(f"queues/%2F/{tap}/get", {
+                "count": 10, "ackmode": "ack_requeue_false", "encoding": "auto"}, "POST")
+            for message in messages:
+                event = json.loads(message["payload"])
+                assert message["properties"]["message_id"] == event["eventId"]
+                received.append(event)
+            return received if any(event["type"] == "TravelPlanReviewRequired.v1" for event in received) else None
+
+        events = eventually(drain_grouping)
+        assert [event["type"] for event in events] == [
+            "EvacuationGroupChanged.v1", "TravelPlanApproved.v1", "TravelPlanReviewRequired.v1"], events
+        assert events[-1]["payload"]["planRevision"] == 1 and events[-1]["payload"]["reason"] == "CaseVersionChanged"
+        current = call(BASE + path)
+    assert (current["planRevision"], current["status"], current["reviewReason"]) == (1, "ReviewRequired", "CaseVersionChanged")
+    return path, current
 
 
 with tempfile.TemporaryDirectory(prefix="management-full-") as directory:
@@ -157,13 +190,15 @@ with tempfile.TemporaryDirectory(prefix="management-full-") as directory:
 
             # PostgreSQL keeps the state across a restart.
             before = call(BASE + "/queries/cases/case-16")
+            plan_path, reviewed = verify_grouping(tap)
             stop(process)
             process = start(output, log)
             assert call(BASE + "/queries/cases/case-16") == before
             assert call(BASE + "/commands/alert", command) == alert, "The receipt survives the restart."
+            assert call(BASE + plan_path) == reviewed, "The Grouping revision and review flag survive the restart."
         finally:
             stop(process)
             rabbit(f"queues/%2F/{tap}", method="DELETE", expected=(204, 404))
 
-print("Management full profile passed: PostgreSQL state and receipts, outbox to RabbitMQ, "
+print("Management full profile passed: PostgreSQL state, Grouping revisions and receipts, outbox to RabbitMQ, "
       "stop/publish/start delivered once, pickup is not an exit.")

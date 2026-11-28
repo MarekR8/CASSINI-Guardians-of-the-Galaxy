@@ -26,13 +26,15 @@ jobs:
         run: python3 scripts/offline_demo.py --test
       - name: Verify the shelter and assembly point catalogs
         run: python3 scripts/offline_demo.py --sheltering --test --no-build
+      - name: Verify Grouping through the Gateway (SH-A02, SH-A03 and incident scope)
+        run: python3 tests/grouping_integration.py --no-build
       - name: Verify shelter reservations and reassignment (SH-A04, SH-A06)
         run: python3 tests/sheltering_reservations_integration.py --no-build
       - name: Verify Dispatch with replay and an ORS HTTP stub
         run: python3 tests/dispatch_ors_integration.py
       - name: Verify Routing rules
         run: dotnet run --no-build --project src/Routing/tests/Cassini.Routing.Tests.csproj
-      - name: Verify Management progress, counters and EWSS
+      - name: Verify Management progress, counters, EWSS and the Grouping outbox
         run: dotnet run --no-build --project src/Management/tests/Cassini.Management.Tests.csproj
       - name: Verify the Gateway link simulator
         run: dotnet run --no-build --project src/Gateway/tests/Gateway.Tests.csproj

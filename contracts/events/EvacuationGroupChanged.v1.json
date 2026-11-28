@@ -1,0 +1,11 @@
+{
+  "eventId": "417f9784-cfa2-43ea-80f9-f4489d3df996",
+  "type": "EvacuationGroupChanged.v1",
+  "producer": "management",
+  "subjectId": "incident-42/group-household",
+  "subjectVersion": 1,
+  "occurredAt": "2026-11-27T19:20:00Z",
+  "correlationId": "incident-42",
+  "causationId": "group-register-1",
+  "payload": {"incidentId": "incident-42", "groupId": "group-household", "groupRevision": 1, "reason": "Registered"}
+}
