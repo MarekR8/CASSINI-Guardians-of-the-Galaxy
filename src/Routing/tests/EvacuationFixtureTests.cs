@@ -29,13 +29,37 @@ internal static class EvacuationFixtureTests
         Console.WriteLine($"Evacuation model matches expected.json for {count} fixture cases.");
     }
 
+    private static void CompareStatus(string path, JsonElement expected, Dictionary<string, double> actual, double tolerance,
+        List<string> errors)
+    {
+        var status = expected.EnumerateObject().ToDictionary(item => item.Name, item => item.Value.GetDouble());
+        if (!status.Keys.Order().SequenceEqual(actual.Keys.Order()))
+            errors.Add($"{path} keys {string.Join(",", status.Keys)} != {string.Join(",", actual.Keys)}");
+        foreach (var (key, value) in status)
+            Near($"{path}.{key}", value, actual.GetValueOrDefault(key), tolerance, errors);
+    }
+
     private static void Compare(JsonElement expected, EvacuationResult actual, double tolerance, List<string> errors)
     {
-        var status = expected.GetProperty("status").EnumerateObject().ToDictionary(item => item.Name, item => item.Value.GetDouble());
-        if (!status.Keys.Order().SequenceEqual(actual.Status.Keys.Order()))
-            errors.Add($"status keys {string.Join(",", status.Keys)} != {string.Join(",", actual.Status.Keys)}");
-        foreach (var (key, value) in status)
-            Near($"status.{key}", value, actual.Status.GetValueOrDefault(key), tolerance, errors);
+        CompareStatus("status", expected.GetProperty("status"), actual.Status, tolerance, errors);
+        CompareStatus("statusAll", expected.GetProperty("statusAll"), actual.StatusAll, tolerance, errors);
+        var uninformed = expected.GetProperty("uninformed");
+        CompareStatus("uninformed.status", uninformed.GetProperty("status"), actual.UninformedStatus, tolerance, errors);
+        foreach (var node in uninformed.GetProperty("nodes").EnumerateObject())
+            foreach (var profile in node.Value.EnumerateObject())
+            {
+                var path = $"uninformed.nodes.{node.Name}.{profile.Name}";
+                var group = actual.UninformedNodes[long.Parse(node.Name)][profile.Name];
+                if (profile.Value.GetProperty("status").GetString() != group.Status)
+                    errors.Add($"{path}.status {profile.Value.GetProperty("status").GetString()} != {group.Status}");
+                var minutes = profile.Value.GetProperty("leaveFloodMinutes");
+                if (minutes.ValueKind == JsonValueKind.Null != group.LeaveFloodMinutes is null)
+                    errors.Add($"{path}.leaveFloodMinutes null mismatch");
+                else if (group.LeaveFloodMinutes is { } value)
+                    Near($"{path}.leaveFloodMinutes", minutes.GetDouble(), value, tolerance, errors);
+            }
+        if (uninformed.GetProperty("nodes").EnumerateObject().Count() != actual.UninformedNodes.Count)
+            errors.Add("uninformed node count differs");
 
         var shelters = expected.GetProperty("shelters").EnumerateArray().ToArray();
         for (var row = 0; row < shelters.Length; row++)
@@ -43,9 +67,15 @@ internal static class EvacuationFixtureTests
                 actual.Shelters[row].ExpectedLoad, tolerance, errors);
 
         var waves = expected.GetProperty("waves").EnumerateArray().ToArray();
-        for (var wave = 0; wave < waves.Length; wave++)
+        if (waves.Length != actual.Waves.Length)
+            errors.Add($"wave count {waves.Length} != {actual.Waves.Length}");
+        for (var wave = 0; wave < Math.Min(waves.Length, actual.Waves.Length); wave++)
+        {
             if (waves[wave].GetProperty("iterations").GetInt32() != actual.Waves[wave].Iterations)
                 errors.Add($"wave {wave + 1} iterations {waves[wave].GetProperty("iterations").GetInt32()} != {actual.Waves[wave].Iterations}");
+            if (waves[wave].GetProperty("priceIterations").GetInt32() != actual.Waves[wave].PriceIterations)
+                errors.Add($"wave {wave + 1} price iterations {waves[wave].GetProperty("priceIterations").GetInt32()} != {actual.Waves[wave].PriceIterations}");
+        }
 
         foreach (var node in expected.GetProperty("nodes").EnumerateObject())
         {

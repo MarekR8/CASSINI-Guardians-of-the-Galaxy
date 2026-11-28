@@ -88,6 +88,21 @@ def cases(params):
                      [road("ramp", 1, 10, 300, cls="footway"), road("stairs", 1, 20, 150, cls="steps"),
                       road("promenade", 10, 20, 200, zone="safe", cls="footway")]),
                {1: 1000}, {1: 30}, [shelter("s10", 10, 2000, step_free=False), shelter("s20", 20, 2000)])
+    yield case("mixed-compliance", "Half the people are reached. The uninformed half takes the narrow bridge to the "
+               "nearest dry node; the guided half is assigned on what is left and avoids it.",
+               congested, {1: 14000, 2: 6000}, {1: 60, 2: 60},
+               [shelter("s10", 10, 3000, intake=6000), shelter("s20", 20, 30000)], complianceShare=0.5)
+    yield case("no-guidance", "Nobody is reached: everyone walks the free-flow shortest path to the nearest dry node.",
+               congested, {1: 14000, 2: 6000}, {1: 60, 2: 60},
+               [shelter("s10", 10, 3000, intake=6000), shelter("s20", 20, 30000)], complianceShare=0.0)
+    wet_or_dry = graph([(1, "hazard"), (2, "hazard"), (3, "safe"), (10, "safe")],
+                       [road("wet-1", 1, 2, 100), road("wet-2", 2, 10, 100), road("exit", 1, 3, 60),
+                        road("dry", 3, 10, 250, zone="safe")])
+    yield case("hazard-weight", "The quickest way to the shelter stays 200 s in the water; with lambda 5 the route "
+               "leaves the water after 60 s and walks 250 s on dry ground.",
+               wet_or_dry, {1: 500}, {1: 30}, [shelter("s10", 10, 2000)])
+    yield case("hazard-weight-off", "The same network with lambda 1: plain travel time keeps people in the water.",
+               wet_or_dry, {1: 500}, {1: 30}, [shelter("s10", 10, 2000)], hazardTimeWeight=1.0)
     yield case("no-reentry", "A short path re-enters the flood from dry ground; the dry detour must be used.",
                graph([(1, "hazard"), (2, "safe"), (3, "safe"), (10, "safe")],
                      [road("a", 1, 2, 50), road("wet", 2, 10, 60), road("b", 1, 3, 200),
@@ -101,7 +116,7 @@ def run_case(document):
     deadlines = {network.index[item["nodeId"]]: (item["minutes"], "fixture") for item in document["deadlines"]}
     model = Model(network, people, deadlines, document["shelters"], document["params"], closed=document["closed"])
     result = model.run(exact=True)
-    return {key: result[key] for key in ("status", "shelters", "nodes", "waves")}
+    return {key: result[key] for key in ("status", "statusAll", "uninformed", "shelters", "nodes", "waves")}
 
 
 def compare(expected, actual, path=""):
