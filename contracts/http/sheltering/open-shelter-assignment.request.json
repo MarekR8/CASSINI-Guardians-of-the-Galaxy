@@ -1,0 +1,12 @@
+{
+  "commandId": "cmd-open-case-14-shelter",
+  "correlationId": "corr-incident-42-shelter",
+  "incidentId": "incident-42",
+  "caseId": "case-14",
+  "legId": "leg-shelter",
+  "needs": {
+    "places": 1,
+    "accessiblePlaces": 0
+  },
+  "groupPlanRef": null
+}

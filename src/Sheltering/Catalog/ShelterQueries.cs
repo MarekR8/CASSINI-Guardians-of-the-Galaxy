@@ -1,4 +1,5 @@
 using Cassini.Demo.SiteCatalog;
+using Cassini.Sheltering.Allocation;
 using Cassini.Sheltering.Infrastructure;
 
 namespace Cassini.Sheltering.Catalog;
@@ -8,10 +9,12 @@ internal sealed record ShelterAvailabilityView(
     SiteEvidence Evidence, int Version, ShelterResources Resources, ShelterCommitments Commitments,
     AvailablePlaces Available, bool Overcommitted, bool Eligible, string? IneligibleReason);
 
+// Commitments combine the configured baseline with active holds; AllocationRevision identifies the holds read.
 internal sealed record ShelterCatalogView(int Revision, int? SituationRevision, DateTimeOffset At,
-    ShelterAvailabilityView[] Shelters);
+    ShelterAvailabilityView[] Shelters, int AllocationRevision);
 
-internal sealed class ShelterQueries(CatalogStore<Shelter> catalog, SituationClient situation, TimeProvider clock)
+internal sealed class ShelterQueries(CatalogStore<Shelter> catalog, AllocationStore allocations, SituationClient situation,
+    TimeProvider clock)
 {
     internal async Task<ShelterCatalogView> GetShelterAvailability(DateTimeOffset? at, bool eligibleOnly,
         CancellationToken cancellation)
@@ -21,12 +24,16 @@ internal sealed class ShelterQueries(CatalogStore<Shelter> catalog, SituationCli
         if (eligibleOnly && situationRevision is null)
             throw SituationClient.Unavailable();
 
-        var (revision, shelters) = catalog.Read();
+        var (revision, shelters, allocation) = allocations.Exclusive(() =>
+        {
+            var (catalogRevision, items) = catalog.Read();
+            return (catalogRevision, items, allocations.Read());
+        });
         var results = shelters.OrderBy(shelter => shelter.ShelterId, StringComparer.Ordinal)
-            .Select(shelter => Evaluate(shelter, checkedAt, situationRevision));
+            .Select(shelter => Evaluate(AllocationQueries.WithAllocations(allocation, shelter), checkedAt, situationRevision));
         if (eligibleOnly)
             results = results.Where(shelter => shelter.Eligible);
-        return new ShelterCatalogView(revision, situationRevision, checkedAt, results.ToArray());
+        return new ShelterCatalogView(revision, situationRevision, checkedAt, results.ToArray(), allocation.Revision);
     }
 
     private static ShelterAvailabilityView Evaluate(Shelter shelter, DateTimeOffset at, int? situationRevision)

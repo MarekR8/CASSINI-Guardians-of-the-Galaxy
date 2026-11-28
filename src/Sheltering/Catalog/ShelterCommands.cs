@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Cassini.Demo.SiteCatalog;
+using Cassini.Sheltering.Allocation;
 using Cassini.Sheltering.Infrastructure;
 
 namespace Cassini.Sheltering.Catalog;
@@ -12,15 +13,16 @@ internal sealed record ConfigureShelterCommand(
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 internal sealed record ConfigureShelterResources(int? Places, int? AccessiblePlaces, int? IntakePerHour);
 
-internal sealed class ShelterCommands(CatalogStore<Shelter> catalog, SituationClient situation)
+internal sealed class ShelterCommands(CatalogStore<Shelter> catalog, AllocationStore allocations, SituationClient situation)
 {
     internal async Task<CatalogWrite<Shelter>> ConfigureShelter(ConfigureShelterCommand command, CancellationToken cancellation)
     {
         // Resolve evidence outside the catalog lock. Examinations and failures run in the callback so a
         // retry can still return its prior receipt if the Situation revision changed or became unavailable.
         var situationRevision = command.Status == "open" ? await situation.GetRevision(cancellation) : null;
-        return catalog.Save(command.CommandId, command.ExpectedVersion, command.ShelterId ?? string.Empty, command,
-            (current, version) => Apply(command, current, version, situationRevision));
+        // Share the allocation gate so a capacity or status change cannot interleave with a booking decision.
+        return allocations.Exclusive(() => catalog.Save(command.CommandId, command.ExpectedVersion,
+            command.ShelterId ?? string.Empty, command, (current, version) => Apply(command, current, version, situationRevision)));
     }
 
     private static Shelter Apply(ConfigureShelterCommand command, Shelter? current, int version, int? situationRevision)

@@ -13,9 +13,9 @@ Two requests compete for the last place. Later a shelter closes while a reserved
 
 ### Stage A (demo)
 
-- [ ] Implement `OpenShelterAssignment`, `ReserveShelterPlaces`, `ReassignShelterPlaces`, `InvalidateShelterAssignment` and `ReleaseShelterReservation`.
-- [ ] Rank only feasible shelters, preferring a common destination where appropriate and then a shorter eligible journey. Recheck actual capacity, intake windows, care constraints and route evidence before assigning.
-- [ ] Atomically persist all parts of each booking or transfer with receipts and outbox entries. Verify one current assignment per case and leg, rejection of incomplete batches, and no release of existing occupancy during a transfer. Deliver the SH-W4 state and contract.
+- [x] Implement `OpenShelterAssignment`, `ReserveShelterPlaces`, `ReassignShelterPlaces`, `InvalidateShelterAssignment` and `ReleaseShelterReservation`.
+- [x] Rank only feasible shelters, preferring a common destination where appropriate and then a shorter eligible journey. Recheck actual capacity, intake windows, care constraints and route evidence before assigning.
+- [x] Atomically persist all parts of each booking or transfer with receipts and outbox entries. Verify one current assignment per case and leg, rejection of incomplete batches, and no release of existing occupancy during a transfer. Deliver the SH-W4 state and contract.
 
 ### Stage B (completion)
 
@@ -28,4 +28,25 @@ Receive SH-W1, SH-W2 and SH-W3. Give SH-W4 to SH-T05, SH-T06 and SH-T07. Coordin
 
 ## Results
 
-_(Fill in concurrency outcomes, rejected cases, storage checks and unresolved limits.)_
+Stage A is implemented in `src/Sheltering/Allocation/`. The [SH-W4 contract and examples](../../../contracts/http/sheltering/README.md#sh-w4-assignments-and-reservations) describe it. Run `python tests/sheltering_reservations_integration.py`, which is also a CI step. It starts fresh local services, replays the exercise and repeats the checks after a restart.
+
+- **Concurrency.** `shelter-a` is reduced to one free place. Two simultaneous single-place requests from synthetic, node-routed people `case-31` and `case-32` give exactly one `200` and one `422 InsufficientCapacity`. In repeated runs each person won at least once. The loser stays `Pending` at version 1 and is then booked at `shelter-b`. Replaying the winning command returns its receipt. Reusing the command ID with changed content returns `409 CommandConflict`.
+- **Rejected batches.** The required-care pair `case-15` and `case-16` (Grouping plan revision 2, assisted transport `transport-demo-north`) needs two accessible places where one remains. The whole batch gets `InsufficientAccessiblePlaces`, and availability and both assignments are unchanged. The following are also rejected:
+  - reserving one member of the pair: `RequiredCareSplit`;
+  - omitting the plan reference: `GroupPlanRefMismatch`;
+  - using route evidence from before a catalog change: `RouteIneligible`;
+  - adding `case-14` after `shelter-b` reached three arrivals in that hour: `IntakeLimitReached`.
+- **Transfers.** A transfer to a shelter at its intake limit fails, and the original hold and assignment stay unchanged. A fresh Routing check confirms that the original route is still eligible, and invalidation is refused with `AssignmentStillEligible`. After `shelter-a` closes, `ReassignShelterPlaces` moves the hold to `shelter-b` in one commit, and the withdrawn reservation is recorded. Baseline occupancy at `shelter-a` is unchanged. After `shelter-b` also closes, no candidate remains. `InvalidateShelterAssignment` sets the assignment to `AwaitingReplacement` with the reason `SiteClosed` and releases its hold. The outbox holds the `ShelterAssignmentChanged.v1` events with withdrawn shelter references for SH-T06.
+- **Storage.** Assignments, holds, receipts and outbox entries are written as one JSON state file per command (`Sheltering:AllocationFile`, a temporary file then an atomic rename). Shelter configuration changes take the same lock. After a restart the receipt, the assignment version, the hold counts and the outbox sequence are unchanged.
+- **Regression.** These all pass: `offline_demo.py --test`, `offline_demo.py --sheltering --test`, `destination_routing_integration.py`, `grouping_integration.py`, and the Routing, Management, Gateway and Messaging test projects.
+
+Unresolved limits:
+
+- Stage B has not started. There is no PostgreSQL store, migrations or two-instance concurrency check. One Sheltering writer is assumed.
+- Routing is called before the lock. A Situation change between that call and the commit is caught only by the shelter evidence revision.
+- Routing evidence IDs include the shelter catalog revision, so any shelter edit invalidates outstanding candidates and they must be read again.
+- Intake is counted per clock hour of expected arrival. Baseline holds from the catalog fixture have no arrival time and do not count toward intake.
+- Hold expiry is not applied automatically. It takes an explicit `HoldExpired` release with an observation time.
+- `Admitted` is reserved for SH-T05, and publication or withdrawal through Routing belongs to SH-T06.
+- Node-routed synthetic people are not bound to a Management case.
+- The Docker image was not built because the engine was unavailable.

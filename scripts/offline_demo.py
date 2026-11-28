@@ -70,6 +70,7 @@ def start_services(port, data_dir, scenario="sample", city_directory=None, shelt
             "AssemblyPoints__StateFile": str(data_dir / "assembly-points.json"),
             "Sheltering__SeedFile": str(fixture),
             "Sheltering__StateFile": str(data_dir / "shelters.json"),
+            "Sheltering__AllocationFile": str(data_dir / "shelter-allocations.json"),
             "Sheltering__BaseUrl": local_url(port + 5),
         })
     children = []
