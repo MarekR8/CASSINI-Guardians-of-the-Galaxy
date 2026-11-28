@@ -19,6 +19,8 @@ public sealed class MainActivity : Activity
     private TextView distributionStatus = null!;
     private TextView gnssStatus = null!;
     private TextView layerStatus = null!;
+    private TextView exitStatus = null!;
+    private LocalExitReports exitReports = null!;
     private DemoMapView map = null!;
     private GalileoReader reader = null!;
     private Button nextStage = null!;
@@ -72,6 +74,17 @@ public sealed class MainActivity : Activity
         gnssStatus = AddText("Odczyt Galileo jest wyłączony.", 15);
         reader = new GalileoReader(this, text => gnssStatus.Text = text);
         AddButton("Sprawdź odbiornik Galileo", EnableGnss);
+
+        AddText("Potwierdzenie wyjścia", 20);
+        AddText("OSNMA: symulacja. EGNOS: brak potwierdzenia zastosowania korekt.", 15);
+        exitReports = new LocalExitReports(Path.Combine(FilesDir!.AbsolutePath, "exit-reports"));
+        exitStatus = AddText("", 15);
+        RefreshExitStatus();
+        AddButton("Potwierdź wyjście z pozycją Galileo", ConfirmExit);
+        AddButton("Zapisz zgłoszenie testowe · symulacja", SaveSimulatedExit);
+        AddButton("Pokaż JSON ostatniego zgłoszenia", ShowLastExitReport);
+
+        AddText("Archiwalne warstwy zalania", 20);
         layerStatus = AddText("Brak zapisanej warstwy Copernicus EMS.", 15);
         AddButton("Wczytaj lokalny GeoJSON Copernicus EMS", PickLayer);
         viewSwitch = AddButton("Pokaż Copernicus", () =>
@@ -118,6 +131,78 @@ public sealed class MainActivity : Activity
         {
             RequestPermissions([Manifest.Permission.AccessFineLocation, Manifest.Permission.AccessCoarseLocation],
                 LocationRequest);
+        }
+    }
+
+    private void ConfirmExit()
+    {
+        if (reader.CurrentPosition() is { } position)
+        {
+            SaveExit(position, simulated: false);
+            return;
+        }
+
+        exitStatus.Text = "Poczekaj na świeży pomiar Galileo z dokładnością i wybierz potwierdzenie ponownie.";
+        EnableGnss();
+    }
+
+    private void SaveSimulatedExit()
+    {
+        var exit = OfflineScenario.Nodes[selected?.Route.Exit ?? OfflineScenario.Exits[0]];
+        SaveExit(new GalileoPosition(exit.Latitude, exit.Longitude, 8, DateTimeOffset.UtcNow), simulated: true);
+    }
+
+    private void SaveExit(GalileoPosition position, bool simulated)
+    {
+        try
+        {
+            exitReports.Save(ExitReport.Create(position, simulated));
+            RefreshExitStatus(simulated ? "Zapisano zgłoszenie testowe (symulacja)." : "Zapisano oświadczenie o wyjściu.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            exitStatus.Text = "Nie udało się zapisać zgłoszenia na urządzeniu.";
+        }
+    }
+
+    private void RefreshExitStatus(string? message = null)
+    {
+        try
+        {
+            var count = exitReports.PendingFiles().Length;
+            var pending = $"Oczekujące lokalnie: {count}.";
+            exitStatus.Text = message is null ? pending : $"{message}\n{pending}";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            exitStatus.Text = "Nie można odczytać kolejki lokalnej.";
+        }
+    }
+
+    private void ShowLastExitReport()
+    {
+        try
+        {
+            if (exitReports.PendingFiles().FirstOrDefault() is not { } path)
+            {
+                exitStatus.Text = "Brak zapisanych zgłoszeń.";
+                return;
+            }
+
+            var preview = new TextView(this) { Text = File.ReadAllText(path) };
+            preview.SetTextIsSelectable(true);
+            preview.SetPadding(Dp(16), 0, Dp(16), 0);
+            var scroll = new ScrollView(this);
+            scroll.AddView(preview);
+            new AlertDialog.Builder(this)
+                .SetTitle("Zgłoszenie lokalne · JSON")!
+                .SetView(scroll)!
+                .SetPositiveButton("Zamknij", (_, _) => { })!
+                .Show();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            exitStatus.Text = "Nie udało się odczytać zapisanego zgłoszenia.";
         }
     }
 

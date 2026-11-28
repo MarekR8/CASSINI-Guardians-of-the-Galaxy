@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Cassini.Offline;
 
 var baseline = OfflineScenario.Distribution(OfflineScenario.InitialNode, OfflineScenario.Closures(0), 0);
@@ -35,7 +36,43 @@ catch (InvalidDataException)
 {
 }
 
-Console.WriteLine("Offline Android schedule, weighted draw, closure and GeoJSON tests passed.");
+var exitDirectory = Directory.CreateTempSubdirectory();
+try
+{
+    var queue = new LocalExitReports(exitDirectory.FullName);
+    var measuredAt = new DateTimeOffset(2026, 11, 28, 14, 20, 0, TimeSpan.FromHours(1));
+    var position = new GalileoPosition(50.431, 16.653, 8, measuredAt);
+    var measured = ExitReport.Create(position, simulated: false);
+    queue.Save(measured);
+    queue.Save(ExitReport.Create(position, simulated: true));
+    File.WriteAllText(Path.Combine(exitDirectory.FullName, "incomplete.json.tmp"), "");
+
+    var pending = new LocalExitReports(exitDirectory.FullName).PendingFiles();
+    Check(pending.Length == 2, "Complete reports survive reopening and incomplete writes stay out of the queue.");
+    using var saved = JsonDocument.Parse(File.ReadAllText(
+        pending.Single(path => Path.GetFileNameWithoutExtension(path) == measured.CommandId.ToString("D"))));
+    var report = saved.RootElement;
+    var evidence = report.GetProperty("evidence");
+    Check(report.GetProperty("commandId").GetGuid() == measured.CommandId &&
+          report.GetProperty("observedAt").GetDateTimeOffset() == measuredAt &&
+          report.GetProperty("observedAt").GetDateTimeOffset().Offset == TimeSpan.Zero &&
+          report.GetProperty("accuracy").GetDouble() == 8 &&
+          report.GetProperty("mode").GetString() == "measured" &&
+          evidence.GetProperty("galileoUsed").GetBoolean() &&
+          evidence.GetProperty("osnma").GetString() == "simulated" &&
+          evidence.GetProperty("egnos").GetString() == "unknown",
+        "The saved report must preserve identity, UTC time, accuracy and explicitly label position evidence.");
+    using var simulated = JsonDocument.Parse(File.ReadAllText(
+        pending.Single(path => Path.GetFileNameWithoutExtension(path) != measured.CommandId.ToString("D"))));
+    Check(simulated.RootElement.GetProperty("mode").GetString() == "simulated",
+        "Sample positions must be distinguishable from receiver measurements.");
+}
+finally
+{
+    exitDirectory.Delete(recursive: true);
+}
+
+Console.WriteLine("Offline Android schedule, closure, GeoJSON and exit report tests passed.");
 
 static void Check(bool condition, string message)
 {

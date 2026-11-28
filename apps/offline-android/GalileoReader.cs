@@ -112,9 +112,7 @@ internal sealed class GalileoReader(Context context, Action<string> show) : Java
 
     private bool ShowMeasurement()
     {
-        if (!galileoOnly || lastLocation is not { } location ||
-            Math.Abs(location.ElapsedRealtimeNanos - statusObservedAt) > Second ||
-            SystemClock.ElapsedRealtimeNanos() - location.ElapsedRealtimeNanos > Second * 2)
+        if (CurrentMeasurement() is not { } location)
             return false;
 
         var time = DateTimeOffset.FromUnixTimeMilliseconds(location.Time);
@@ -123,6 +121,20 @@ internal sealed class GalileoReader(Context context, Action<string> show) : Java
              $"{time:HH:mm:ss} UTC • odbiornik raportuje tylko Galileo");
         return true;
     }
+
+    internal GalileoPosition? CurrentPosition()
+    {
+        if (CurrentMeasurement() is not { HasAccuracy: true } location)
+            return null;
+
+        return new GalileoPosition(location.Latitude, location.Longitude, location.Accuracy,
+            DateTimeOffset.FromUnixTimeMilliseconds(location.Time));
+    }
+
+    private Location? CurrentMeasurement() =>
+        galileoOnly && lastLocation is { } location &&
+        Math.Abs(location.ElapsedRealtimeNanos - statusObservedAt) <= Second &&
+        SystemClock.ElapsedRealtimeNanos() - location.ElapsedRealtimeNanos <= Second * 2 ? location : null;
 
     public void OnProviderDisabled(string provider)
     {
