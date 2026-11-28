@@ -696,9 +696,10 @@ function renderOperations(incident, dispatch) {
       Open: ['acknowledgement', 'Potwierdź odbiór'], Acknowledged: ['moving', 'Zgłoś przejście'],
       Moving: ['exit-confirmed', 'Potwierdź wyjście'], PickedUp: ['exit-confirmed', 'Potwierdź wyjście'],
     }[item.progress];
-    const fix = step?.[0] === 'exit-confirmed' ? exerciseExitFix(item) : {};
-    if (step && fix) actions.append(button(step[1], () => api('management', 'commands/progress', {
-      commandId: commandId(), caseId: item.caseId, step: step[0], expectedVersion: item.version, ...fix,
+    const exit = step?.[0] === 'exit-confirmed';
+    if (step && (!exit || exerciseExitFix(item))) actions.append(button(step[1], () => api('management', 'commands/progress', {
+      commandId: commandId(), caseId: item.caseId, step: step[0], expectedVersion: item.version,
+      ...(exit ? exerciseExitFix(item) : {}),
     }).then(() => step[0] === 'exit-confirmed'
       ? 'Zapisano wyjście z pozycją ćwiczebną (SYMULACJA).' : 'Zapisano status mieszkańca.')));
     if (actions.childElementCount) row.append(actions);
