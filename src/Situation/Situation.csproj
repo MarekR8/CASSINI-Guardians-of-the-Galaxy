@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Demo/CityNetwork.cs" Link="CityNetwork.cs" />
+    <Compile Include="../Demo/SiteCatalog/*.cs" Link="SiteCatalog/%(Filename)%(Extension)" />
     <Content Include="../../data/demo/population/estimate.json" Link="population-estimate.json"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

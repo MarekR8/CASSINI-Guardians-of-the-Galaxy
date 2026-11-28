@@ -1,4 +1,5 @@
 using Situation;
+using Situation.AssemblyPoints;
 using Cassini.Demo;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,9 @@ builder.Services.AddSingleton(new SituationStore(builder.Configuration["Situatio
 builder.Services.AddSingleton(new ReviewNetwork(city));
 builder.Services.AddSingleton<SituationQueries>();
 builder.Services.AddSingleton<SituationCommands>();
+var assemblyPointsSeed = scenario == "sample" ? builder.Configuration["AssemblyPoints:SeedFile"] : null;
+if (!string.IsNullOrWhiteSpace(assemblyPointsSeed))
+    builder.Services.AddAssemblyPoints(assemblyPointsSeed, builder.Configuration["AssemblyPoints:StateFile"]);
 
 var app = builder.Build();
 app.Use(async (context, next) =>
@@ -49,5 +53,7 @@ app.MapPost("/commands/import-flypix", (ImportReviewCommand command, SituationCo
     commands.ImportReview(command));
 app.MapPost("/commands/review-decision", (ReviewDecisionCommand command, SituationCommands commands) =>
     commands.DecideReview(command));
+if (!string.IsNullOrWhiteSpace(assemblyPointsSeed))
+    app.MapAssemblyPoints();
 
 app.Run();
