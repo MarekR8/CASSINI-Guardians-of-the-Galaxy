@@ -20,6 +20,7 @@ jobs:
       - name: Check Compose
         run: |
           docker compose config --quiet
+          docker compose -f compose.yaml -f compose.valencia.yaml config --quiet
           docker compose -f compose.yaml -f compose.sheltering.yaml config --quiet
           SHELTERING_DB_CONNECTION=ci SHELTERING_DB_PASSWORD=ci docker compose -f compose.yaml -f compose.sheltering.yaml -f compose.sheltering-postgres.yaml --profile full config --quiet
           RABBITMQ_PASSWORD=ci docker compose -f compose.yaml -f compose.sheltering.yaml -f compose.sheltering-full.yaml --profile full config --quiet
@@ -140,7 +141,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Build the images (the only step with network access to registries)
-        run: docker compose -f compose.yaml -f compose.sheltering.yaml build
+        run: docker compose build
       - name: Rehearse on prebuilt images
         run: python3 tests/sheltering_rehearsal.py --images-only
       - name: Keep the rehearsal report and service logs

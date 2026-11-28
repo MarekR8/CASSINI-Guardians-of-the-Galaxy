@@ -1,6 +1,6 @@
 # CASSINI Guardians of the Galaxy
 
-A prototype for coordinating civilian evacuation during a flood. The offline demo follows a hazard alert, draws a timed pedestrian route, dispatches assistance, and revises instructions after a bridge closure. Capacity planning and shelter allocation are part of the wider project design.
+A prototype for coordinating civilian evacuation during a flood. The offline demo follows a hazard alert, draws a timed pedestrian route, dispatches assistance, and revises instructions after a bridge closure. The local sample stack also includes the Sheltering owner for allocation, reservations and reception.
 
 - [Pitch and flood demo](docs/pitch/README.md) and [project one-pager](docs/pitch/project-one-pager.md)
 - [Business processes](docs/domain/business-processes.md) and [domain invariants](docs/domain/domain-invariants.md)
@@ -27,7 +27,7 @@ Starszy [plan pełnej architektury](docs/mvp-implementation-guide.md) opisuje na
 
 ## Aplikacja mieszkańca
 
-Uruchom `python scripts/offline_demo.py --scenario sample` lub wybierz `--scenario warsaw` i otwórz
+Uruchom `python scripts/offline_demo.py --scenario sample` (lub `docker compose up -d --wait` po przygotowaniu obrazów) i otwórz
 [aplikację mieszkańca](http://127.0.0.1:5080/resident/). Panel koordynatora jest dostępny pod adresem głównym.
 W panelu dodaj alert ćwiczeniowy, aby mieszkaniec zobaczył komunikat. Widok mieszkańca pokazuje status pomocy
 i punkt odbioru, gdy system je udostępnia, oraz pozwala przekazać oświadczenie o opuszczeniu strefy.

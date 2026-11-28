@@ -2,7 +2,7 @@
 
 Prezentacja odbywa się na [Walencji](../data/local/valencia.md) (powódź z 29 października 2024 r.). Scenariusz Warszawy i przełącznik między scenariuszami (`/ui/companion`) usunięto na develop. Scenariusz `sample` (Kłodzko) uruchamiany bez Dockera obejmuje teraz domyślnie katalog punktów zbiórki i usługę Sheltering. Walencja nie używa syntetycznego katalogu Kłodzka.
 
-Panel koordynatora działa na jednym komputerze z czterema niezależnymi usługami ASP.NET Core .NET 10 oraz bramą HTTP. Android ma własny scenariusz ćwiczeniowy działający bez bramy. Mieszkańcy, jednostki, zgłoszenia i detekcje użyte w ćwiczeniu są syntetyczne. Sieć dróg OSM, obserwacja Copernicus EMS i obrazy Sentinel‑1 to dane archiwalne przygotowane lokalnie.
+Panel koordynatora działa na jednym komputerze z niezależnymi usługami ASP.NET Core .NET 10 oraz bramą HTTP: pięć usług w `sample`, cztery w Walencji bez katalogu Sheltering. Android ma własny scenariusz ćwiczeniowy działający bez bramy. Mieszkańcy, jednostki, zgłoszenia i detekcje użyte w ćwiczeniu są syntetyczne. Sieć dróg OSM, obserwacja Copernicus EMS i obrazy Sentinel‑1 to dane archiwalne przygotowane lokalnie.
 
 ## Przygotowanie danych Walencji
 
@@ -106,14 +106,14 @@ python scripts/offline_demo.py --scenario sample --port 5480
 
 W [panelu lokalnym](http://127.0.0.1:5480) rozwiń **Punkty zbiórki i schronienia**. Panel pojawia się tylko, gdy `GET /features` zwraca `{"sheltering": true}`, i nie występuje w Walencji. Scenariusz pokazuje punkt północny i dwa schronienia z syntetycznymi limitami, rezerwacjami i zajętością. Właściciele katalogów obsługują zmiany przez [komendy HTTP](sheltering-interfaces.md#sh-t01-site-catalog-and-destination-reads). Zamknięte schronienie zostaje w panelu, a Routing pomija je w liście kandydatów. Ta lista nie potwierdza przejezdności trasy. Dotychczasowe `--sheltering` nadal wybiera ćwiczenie `sample` i dotychczasowy katalog stanu `artifacts/sheltering-demo`; `--scenario sample` zachowuje `artifacts/offline-demo`. Oba polecenia uruchamiają szósty proces na porcie Gateway + 5. Przy `--test` flaga nadal wybiera osobny zestaw testów katalogu i przyjęć.
 
-Przygotowanie obrazów i uruchomienie alternatywne (Compose nadal potrzebuje nakładki z własnym healthcheck, więc działa z `--wait`):
+Przygotowanie obrazów i uruchomienie alternatywne (podstawowy Compose zawiera teraz Sheltering i jego healthcheck):
 
 ```sh
-docker compose -p cassini-sheltering -f compose.yaml -f compose.sheltering.yaml build
-docker compose -p cassini-sheltering -f compose.yaml -f compose.sheltering.yaml up -d --no-build --pull never --wait
+docker compose -p cassini-sheltering build
+docker compose -p cassini-sheltering up -d --no-build --pull never --wait
 ```
 
-Ustaw `CASSINI_PORT` na wolny port, gdy zwykłe demo już działa na 5080. Test katalogów uruchom przez `python scripts/offline_demo.py --sheltering --test --port 5480`.
+Ustaw `CASSINI_PORT` na wolny port, gdy zwykłe demo już działa na 5080. Test katalogów uruchom przez `python scripts/offline_demo.py --sheltering --test --port 5480`. Dotychczasowa nakładka `compose.sheltering.yaml` pozostaje zgodna ze starszymi poleceniami. Nakładka `compose.valencia.yaml` wyłącza katalog Kłodzka, którego nie można traktować jako danych Walencji.
 
 #### Panel „Schronienia i przydziały” (SH-T07)
 

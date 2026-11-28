@@ -1,49 +1,8 @@
+# Legacy overlay. The sample catalog and Sheltering service are now in compose.yaml.
 services:
   situation:
     environment:
       Demo__Scenario: sample
-      AssemblyPoints__SeedFile: /app/sample-sites.json
-      AssemblyPoints__StateFile: /state/assembly-points.json
-      SiteCatalog__AccessMode: demo
-
   routing:
     environment:
       Demo__Scenario: sample
-      Sheltering__BaseUrl: http://sheltering:8080
-      Management__BaseUrl: http://management:8080
-    depends_on: [sheltering]
-
-  sheltering:
-    image: cassini-offline/sheltering:demo
-    pull_policy: never
-    init: true
-    networks: [operations]
-    build:
-      context: .
-      args:
-        PROJECT: src/Sheltering/Cassini.Sheltering.csproj
-    command: ["Cassini.Sheltering.dll"]
-    # Same check as the services in compose.yaml, so `docker compose up --wait` also waits for Sheltering.
-    healthcheck:
-      interval: 5s
-      timeout: 3s
-      retries: 24
-      start_period: 10s
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3 && head -n 1 <&3 | grep -q ' 200 '"]
-    environment:
-      Situation__BaseUrl: http://situation:8080
-      Routing__BaseUrl: http://routing:8080
-      Management__BaseUrl: http://management:8080
-      Sheltering__SeedFile: /app/sample-sites.json
-      Sheltering__StateFile: /state/shelters.json
-      SiteCatalog__AccessMode: demo
-    depends_on: [situation]
-    volumes: [sheltering:/state]
-
-  gateway:
-    environment:
-      Services__Sheltering: http://sheltering:8080
-    depends_on: [sheltering]
-
-volumes:
-  sheltering:

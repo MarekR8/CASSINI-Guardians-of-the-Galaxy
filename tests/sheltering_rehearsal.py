@@ -112,6 +112,8 @@ def images(port):
     steps = []
     try:
         with Stack(docker, "cassini-rehearsal-sample", ["compose.yaml", override], port) as stack:
+            with build_opener(ProxyHandler({})).open(stack.url + "/features", timeout=10) as response:
+                assert json.load(response) == {"sheltering": True}, "default Compose must expose Sheltering"
             for script in ("offline_integration.py", "connectivity_integration.py"):
                 steps.append(run(f"images:{script}", [PYTHON, f"tests/{script}", stack.url]))
         with Stack(docker, "cassini-rehearsal-sheltering", ["compose.yaml", "compose.sheltering.yaml"], port) as stack:

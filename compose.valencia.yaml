@@ -3,16 +3,24 @@ services:
     environment:
       Demo__Scenario: valencia
       Demo__CityDirectory: /city
+      AssemblyPoints__SeedFile: ""
     volumes:
       - ./artifacts/valencia-city:/city:ro
   routing:
     environment:
       Demo__Scenario: valencia
       Demo__CityDirectory: /city
+      Sheltering__BaseUrl: ""
+    depends_on: !override [situation]
     volumes:
       - ./artifacts/valencia-city:/city:ro
   gateway:
     environment:
       Demo__CityDirectory: /city
+      Services__Sheltering: ""
+    depends_on: !override [management, situation, routing, dispatch]
     volumes:
       - ./artifacts/valencia-city:/city:ro
+  sheltering:
+    # No verified Valencia shelter catalog is available. Never expose the sample sites here.
+    profiles: [sample-only]
