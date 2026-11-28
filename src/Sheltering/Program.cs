@@ -39,6 +39,7 @@ else
     throw new InvalidOperationException("Build Sheltering with EnableShelteringPostgres=true to use a PostgreSQL connection.");
 #endif
 }
+builder.Services.AddSingleton<CatalogEventOutbox<Shelter>>();
 builder.Services.AddSingleton<AllocationStore>();
 builder.Services.AddSingleton<IOutboxStore>(services => services.GetRequiredService<AllocationStore>());
 builder.Services.AddScoped<InstructionWorkflow>();

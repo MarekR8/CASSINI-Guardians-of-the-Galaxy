@@ -2,6 +2,10 @@ using Situation;
 using Situation.AssemblyPoints;
 using Cassini.Demo;
 using Cassini.Demo.SiteCatalog;
+using Cassini.Messaging;
+#if MESSAGING_RABBITMQ
+using Cassini.Messaging.RabbitMq;
+#endif
 
 var builder = WebApplication.CreateBuilder(args);
 if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
@@ -29,6 +33,12 @@ if (assemblyPointsEnabled)
     builder.Services.AddAssemblyPoints(assemblyPointsSeed!,
         builder.Configuration["AssemblyPoints:StateFile"] ?? Path.Combine("artifacts", "sheltering", "assembly-points.json"),
         builder.Configuration.GetConnectionString("AssemblyPointCatalog"));
+    builder.Services.AddSingleton<IOutboxStore, CatalogEventOutbox<AssemblyPoint>>();
+#if MESSAGING_RABBITMQ
+    builder.Services.AddLiveEventBus(builder.Configuration, uri => new RabbitMqEventBus(new(uri, "situation")));
+#else
+    builder.Services.AddLiveEventBus(builder.Configuration, null);
+#endif
 }
 builder.Services.AddSingleton<ICopernicusSource, MockCopernicusSource>();
 builder.Services.AddSingleton<IFlyPixSource, MockFlyPixSource>();

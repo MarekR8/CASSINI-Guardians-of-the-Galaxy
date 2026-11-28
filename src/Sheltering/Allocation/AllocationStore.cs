@@ -48,12 +48,13 @@ internal sealed record AllocationChange(
 /// reception ledgers (SH-T05). Holds are written into <c>reception.holds</c>, so one commit changes an assignment,
 /// the hold, the shelter commitments and the outbox together, and admission converts exactly the hold issued here.
 /// </summary>
-internal sealed class AllocationStore(CatalogStore<Shelter> catalog, TimeProvider clock) : IOutboxStore
+internal sealed class AllocationStore(CatalogStore<Shelter> catalog, CatalogEventOutbox<Shelter> siteOutbox,
+    TimeProvider clock) : IOutboxStore
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     /// <summary>
-    /// Both Sheltering outboxes, the allocation outbox and every reception ledger's, in commit order. An event stays
+    /// Sheltering's catalog, allocation, and reception outboxes. An event stays
     /// pending until the broker confirmed it, so a restart after commit publishes it then (at least once).
     /// </summary>
     public IReadOnlyList<IntegrationEvent> PendingEvents()
@@ -64,15 +65,22 @@ internal sealed class AllocationStore(CatalogStore<Shelter> catalog, TimeProvide
             .Concat(shelters.Values.SelectMany(shelter => shelter.Ledger.Outbox).Select(item => new IntegrationEvent(
                 item.EventId.ToString("D"), item.Type, item.Producer, item.SubjectId, item.SubjectVersion, item.OccurredAt,
                 item.CorrelationId, item.CausationId, JsonSerializer.SerializeToElement(item.Payload, Json))))
-            .Where(message => !published.Contains(message.EventId)).OrderBy(message => message.OccurredAt).ToArray();
+            .Where(message => !published.Contains(message.EventId))
+            .Concat(siteOutbox.PendingEvents()).OrderBy(message => message.OccurredAt).ToArray();
     }
 
-    public void MarkPublished(IReadOnlyCollection<string> eventIds) => catalog.Mutate<AllocationState, int>((_, stored) =>
+    public void MarkPublished(IReadOnlyCollection<string> eventIds)
     {
-        var state = stored ?? AllocationState.Empty();
-        var published = state.Published ?? [];
-        return ([], state with { Published = [.. published, .. eventIds.Except(published, StringComparer.Ordinal)] }, 0);
-    });
+        var otherIds = siteOutbox.ConfirmCatalogEvents(eventIds);
+        if (otherIds.Length == 0)
+            return;
+        catalog.Mutate<AllocationState, int>((_, stored) =>
+        {
+            var state = stored ?? AllocationState.Empty();
+            var published = state.Published ?? [];
+            return ([], state with { Published = [.. published, .. otherIds.Except(published, StringComparer.Ordinal)] }, 0);
+        });
+    }
 
     internal AllocationView Read()
     {

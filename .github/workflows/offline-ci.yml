@@ -301,6 +301,17 @@ jobs:
           RABBITMQ_API: http://127.0.0.1:${{ job.services.rabbitmq.ports[15672] }}
           ConnectionStrings__Sheltering: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=sheltering;Username=sheltering;Password=sheltering-ci-only
         run: python3 tests/sheltering_events_integration.py --no-build
+      - name: Verify site catalog publication and RabbitMQ redelivery
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+          RABBITMQ_URI: amqp://guest:guest@127.0.0.1:${{ job.services.rabbitmq.ports[5672] }}/
+          RABBITMQ_API: http://127.0.0.1:${{ job.services.rabbitmq.ports[15672] }}
+          ConnectionStrings__Sheltering: Host=127.0.0.1;Port=${{ job.services.postgres.ports[5432] }};Database=site_catalog_events;Username=sheltering;Password=sheltering-ci-only
+        run: |
+          docker exec "$POSTGRES_CONTAINER" createdb -U sheltering site_catalog_events
+          python3 tests/sheltering_site_events_integration.py
+          query="SELECT count(*) FROM sheltering_catalog_outbox WHERE document->>'publishedAt' IS NOT NULL"
+          test "$(docker exec "$POSTGRES_CONTAINER" psql -XAt -U sheltering -d site_catalog_events -c "$query")" = "1"
 
   e2e:
     runs-on: ubuntu-24.04
